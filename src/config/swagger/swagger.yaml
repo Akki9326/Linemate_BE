@@ -1,0 +1,325 @@
+swagger: "2.0"
+info:
+  version: 1.0.0
+  title: IPVWebPortal
+securityDefinitions:
+  api_key:
+    type: apiKey
+    name: Authorization
+    in: header
+security:
+  - api_key: []
+
+paths:
+  # [GET] login
+  /auth/v1/register:
+    post:
+      tags:
+        - Auth
+      summary: User Registration
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/register"
+      responses:
+        200:
+          description: "Success"
+        400:
+          description: "Bad Request"
+        500:
+          description: "Server Error"
+  /auth/v1/login:
+    post:
+      tags:
+        - Auth
+      summary: User Login
+      parameters:
+        - name: body
+          in: body
+          description: Login Data
+          required: true
+          schema:
+            $ref: "#/definitions/login"
+      responses:
+        200:
+          schema:
+            $ref: "#/definitions/login_success"
+          description: "Success"
+        401:
+          schema:
+            $ref: "#/definitions/login_error"
+          description: "Unauthorized"
+  /auth/v1/forgotPassword:
+    post:
+      tags:
+        - Auth
+      summary: Forgot Password
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/forgotPassword"
+      responses:
+        200:
+          schema:
+          description: "Success"
+        401:
+          schema:
+          description: "Unauthorized"
+        406:
+          schema:
+          description: "Not Acceptable"
+        422:
+          schema:
+          description: "Bad Request"
+        500:
+          schema:
+          description: "Internal server error"
+  /auth/v1/userByForgotToken:
+    get:
+      tags:
+        - Auth
+      summary: Get user info from token.
+      parameters:
+        - name: token
+          in: query
+          required: true
+          schema:
+            $ref: "#/definitions/userByForgotToken"
+      responses:
+        200:
+          schema:
+          description: "Success"
+        401:
+          schema:
+          description: "Unauthorized"
+        406:
+          schema:
+          description: "Not Acceptable"
+        422:
+          schema:
+          description: "Bad Request"
+        500:
+          schema:
+          description: "Internal server error"
+  /auth/v1/resetPasswordByToken:
+    post:
+      tags:
+        - Auth
+      summary: Resetting password by validating token
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/resetPasswordByToken"
+      responses:
+        200:
+          description: "Success"
+        400:
+          description: "Bad Request"
+        406:
+          description: "Not Acceptable error"
+        422:
+          description: "Bad Request or API error message"
+        500:
+          description: "Server Error"    
+  /auth/v1/updatePassword:
+    put:
+      tags:
+        - Auth
+      summary: Update Password
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            $ref: "#/definitions/updatePassword"
+      responses:
+        200:
+          schema:
+          description: "Success"
+        401:
+          schema:
+          description: "Unauthorized"
+        404:
+          schema:
+          description: "Not Found"
+        406:
+          schema:
+          description: "Not Acceptable"
+        422:
+          schema:
+          description: "Bad Request"
+        500:
+          schema:
+          description: "Internal server error"    
+  /auth/v1/logout:
+    put:
+      tags:
+        - Auth
+      summary: Logout
+      responses:
+        200:
+          schema:
+          description: "Success"
+        401:
+          schema:
+          description: "Unauthorized"
+        403:
+          schema:
+          description: "Forbidden"
+        404:
+          schema:
+          description: "Not Found"
+        406:
+          schema:
+          description: "Not Acceptable"
+        422:
+          schema:
+          description: "Bad Request"
+        500:
+          schema:
+          description: "Internal server error"    
+# definitions
+definitions:
+  register:
+    type: object
+    required:
+      - username
+      - email
+      - mobileNumber
+      - firstName
+      - lastName
+      - password
+      - roleId
+      - organisationIds
+    properties:
+      username:
+        type: string
+        example: Admin
+      email:
+        type: string
+        example: admin@ipv.com
+      mobileNumber:
+        type: string
+        example: +919999334455
+      firstName:
+        type: string
+        example: Admin
+      lastName:
+        type: string
+        example: Admin
+      password:
+        type: string
+        example: Admin@123
+      organisationIds:
+        type: array
+        items:
+          type: number
+        example: [1]
+  login:
+    type: object
+    required:
+      - username
+      - password
+    properties:
+      username:
+        type: string
+        description: Username
+        example: Admin
+      password:
+        type: string
+        description: password
+        example: Admin@123
+  login_success:
+    type: object
+    properties:
+      data:
+        type: object
+        properties:
+          expiresIn:
+            type: number
+          token:
+            type: string
+      success:
+        type: boolean
+        example: true
+      code:
+        type: number
+        example: 200
+      message:
+        type: string
+        example: success
+  login_error:
+    type: object
+    properties:
+      success:
+        type: boolean
+        example: false
+      code:
+        type: number
+        example: 401
+      message:
+        type: string
+        example: "Invalid Username"
+  forgotPassword:
+    type: object
+    required:
+      - email
+    properties:
+      email:
+        type: string
+        example: admin@ipv.com
+  userByForgotToken:
+    type: string
+    required:
+      - token
+    properties:
+      token:
+        type: string
+        example: e03fd0b8877d685530c2db0627c9ed9151471b160933976738bfeb46cfc69901
+  resetPasswordByToken:
+    type: object
+    required:
+      - resetToken
+      - userId
+      - newPassword
+      - confirmPassword
+    properties:
+      resetToken:
+        type: string
+        example: e03fd0b8877d685530c2db0627c9ed9151471b160933976738bfeb46cfc69901
+      userId:
+        type: number
+        example: 2
+      newPassword:
+        type: string
+        example: "Password1@"
+      confirmPassword:
+        type: string
+        example: "Password1@"
+  updatePassword:
+    type: object
+    required:
+      - oldPassword
+      - newPassword
+      - confirmPassword
+    properties:
+      oldPassword:
+        type: string
+        example: "Password1@"
+      newPassword:
+        type: string
+        example: "Newpass1@"
+      confirmPassword:
+        type: string
+        example: "Newpass1@"
+    logout:
+    
+schemes:
+  - https
+  - http
