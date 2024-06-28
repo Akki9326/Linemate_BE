@@ -5,8 +5,6 @@ export interface JwtTokenData {
   email: string;
   username: string;
   id: number;
-  sessionId: string;
-  roleIds?: number[];
   userType: UserType;
-  orgId: number;
+  tenantId: number;
 }

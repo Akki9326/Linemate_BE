@@ -1,13 +1,11 @@
-import { NextFunction, Response } from 'express';
-import { RequestWithUser } from '@/models/interfaces/auth.interface';
-import { AppPermission } from '@/models/enums/app-access.enum';
-import authMiddleware from './auth.middleware';
 import { UnauthorizedException } from '@/exceptions/UnauthotizedException';
+import { AppPermission } from '@/models/enums/app-access.enum';
+import { RequestWithUser } from '@/models/interfaces/auth.interface';
+import { NextFunction, Response } from 'express';
 
-export const accessMiddlerware = (access: AppPermission[]) => {
+export const accessMiddleWare = (access: AppPermission[]) => {
   const accessValidator = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
-
       if (req.user) {
         if (req.userAccess.some(f => access.some(a => a == f))) {
           next();
@@ -25,4 +23,3 @@ export const accessMiddlerware = (access: AppPermission[]) => {
   return accessValidator;
 };
 
-export default authMiddleware;

@@ -1,6 +1,6 @@
-import { IsString, IsEmail, IsNotEmpty, IsNumber, IsArray, IsMobilePhone } from 'class-validator';
+import { IsString, IsEmail, IsNotEmpty, IsNumber, IsArray, IsMobilePhone, IsOptional } from 'class-validator';
 
-export class RegisterUserDto {
+export class UserDto {
 
   @IsNotEmpty()
   public username: string;
@@ -14,6 +14,10 @@ export class RegisterUserDto {
   public password: string;
 
   @IsNotEmpty()
+  @IsNumber()
+  public userType: number;
+
+  @IsNotEmpty()
   @IsString()
   public firstName: string;
 
@@ -23,9 +27,7 @@ export class RegisterUserDto {
   @IsMobilePhone()
   public mobileNumber: string;
 
-  @IsArray()
-  public roleIds: number[];
-
-  @IsArray()
-  public organisationIds: number[];
+  @IsNumber()
+  @IsOptional()
+  public tenantId: number;
 }

@@ -7,6 +7,7 @@ import { RequestWithUser } from '@/models/interfaces/auth.interface';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { RoleService } from '@/services/role.service';
 import { UserCaching } from '@/utils/helpers/caching-user.helper';
+import { AppPermission } from '@/models/enums/app-access.enum';
 
 const authMiddleware = async (req: RequestWithUser, res: Response, next: NextFunction) => {
   try {
@@ -17,17 +18,11 @@ const authMiddleware = async (req: RequestWithUser, res: Response, next: NextFun
       const verificationResponse = verify(Authorization, secretKey) as JwtTokenData;
       const emailId = verificationResponse.email;
 
-      //We validate token by session id existence and its expiry time
-      const isValidSession = await UserCaching.isValidSession(verificationResponse.email, verificationResponse.sessionId)
-
-
-      if (!isValidSession) next(new HttpException(401, 'Invalid session.'));
-
       if (!emailId) {
         next(new HttpException(401, 'Invalid authentication token'));
       } else {
         req.user = verificationResponse;
-        req.userAccess = await new RoleService().getAccessByRoleIds(req.user.roleIds);
+        req.userAccess  =  await new RoleService().getAccessByRoleIds(req.user.id) as AppPermission[]
         next();
       }
     } else {

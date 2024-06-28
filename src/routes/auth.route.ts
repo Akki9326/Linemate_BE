@@ -1,16 +1,9 @@
-import { Router } from 'express';
-import AuthController from '@controllers/auth.controller';
-import { Routes } from '@/models/interfaces/routes.interface';
-import authMiddleware from '@middlewares/auth.middleware';
-import validationMiddleware from '@middlewares/validation.middleware';
 import { LoginDto } from '@/models/dtos/login.dto';
-import { accessMiddlerware } from '@/middlewares/access.middulerware';
-import { AppPermission } from '@/models/enums/app-access.enum';
-import { RegisterUserDto } from '@/models/dtos/register-user.dto';
-import { ForgotPasswordDto } from '@/models/dtos/forgot-password.dto';
-import { ResetPasswordByTokenDto } from '@/models/dtos/reset-password.dto';
-import { UpdatePasswordDto } from '@/models/dtos/update-password.dto';
-import { GetUserByForgotToken } from '@/models/dtos/user-by-forgot-token.dto';
+import { UserDto } from '@/models/dtos/user.dto';
+import { Routes } from '@/models/interfaces/routes.interface';
+import AuthController from '@controllers/auth.controller';
+import validationMiddleware from '@middlewares/validation.middleware';
+import { Router } from 'express';
 
 
 class AuthRoute implements Routes {
@@ -23,8 +16,8 @@ class AuthRoute implements Routes {
   }
 
   private initializeRoutes() {
-    // this.router.post(`${this.path}/v1/login`, validationMiddleware(LoginDto, 'body'), this.authController.logIn);
-    // this.router.post(`${this.path}/v1/register`, validationMiddleware(RegisterUserDto, 'body'), this.authController.register);
+    this.router.post(`${this.path}/v1/login`, validationMiddleware(LoginDto, 'body'), this.authController.logIn);
+    this.router.post(`${this.path}/v1/register`, validationMiddleware(UserDto, 'body'), this.authController.register);
     // this.router.get(`${this.path}/v1/profile`, authMiddleware, accessMiddlerware([AppPermission.AUTH]), this.authController.profile);
     // this.router.post(`${this.path}/v1/forgotPassword`, validationMiddleware(ForgotPasswordDto, 'body'), this.authController.forgotPassword);
     // this.router.post(`${this.path}/v1/resetPasswordByToken`, validationMiddleware(ResetPasswordByTokenDto, 'body'), this.authController.resetPasswordByToken);

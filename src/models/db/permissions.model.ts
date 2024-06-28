@@ -1,12 +1,13 @@
-import { Sequelize, DataTypes } from 'sequelize';
-import { AppDBModel, AppDB_Common_Fields } from './app-db.model';
+import { DataTypes, Sequelize } from 'sequelize';
 import { AppPermission } from '../enums/app-access.enum';
-import { RoleModel } from './role.model';
+import { AppDBModel, AppDB_Common_Fields } from './app-db.model';
+import { PermissionType } from '../enums/permissions.enum';
+
 
 export class PermissionModel extends AppDBModel {
   public id: number;
   public name: AppPermission;
-  public type: string;
+  public type: PermissionType;
   public parentId: number;
   public description: string;
 }
@@ -27,14 +28,15 @@ export default function (sequelize: Sequelize): typeof PermissionModel {
       },
       type: {
         allowNull: false,
-        type: DataTypes.ENUM('tenantId', 'custom')
+        type: DataTypes.ENUM,
+        values: Object.values(PermissionType)
       },
       parentId: {
         allowNull: true,
         type: DataTypes.INTEGER,
       },
       description: {
-        allowNull: false,
+        allowNull: true,
         type: DataTypes.STRING,
       },
     },

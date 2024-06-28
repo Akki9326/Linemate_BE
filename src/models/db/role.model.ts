@@ -1,4 +1,5 @@
-import { Sequelize, DataTypes } from 'sequelize';
+import { DataTypes, Sequelize } from 'sequelize';
+import { RoleType } from '../enums/role.enum';
 import { AppDBModel, AppDB_Common_Fields } from './app-db.model';
 import { PermissionModel } from './permissions.model';
 import { UserModel } from './users.model';
@@ -7,7 +8,7 @@ export class RoleModel extends AppDBModel {
   public id: number;
   public name: string;
   public description: string;
-  public type: string;
+  public type: RoleType
   public permissions?: PermissionModel[]
   public users?: UserModel[]
 }
@@ -31,21 +32,30 @@ export default function (sequelize: Sequelize): typeof RoleModel {
       },
       type: {
         allowNull: false,
-        type: DataTypes.ENUM('stander', 'custom')
+         type: DataTypes.ENUM,
+        values: Object.values(RoleType)
       },
       permissionsIds: {
         type: DataTypes.ARRAY(DataTypes.INTEGER),
-        allowNull: true,
+        allowNull: false,
         references: {
           model: 'permissions',
-          key: 'id'
-        }
+          key: 'id',
+        },
       },
       userIds: {
         type: DataTypes.ARRAY(DataTypes.INTEGER),
         allowNull: true,
         references: {
           model: 'users',
+          key: 'id',
+        },
+      },
+      tenantId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+         references: {
+          model: 'tenant',
           key: 'id'
         }
       }
@@ -53,10 +63,9 @@ export default function (sequelize: Sequelize): typeof RoleModel {
     {
       tableName: 'role',
       sequelize,
-    },
-  );
+    }, 
+  )
 
-  
 
   return RoleModel;
 }

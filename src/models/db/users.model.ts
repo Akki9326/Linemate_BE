@@ -14,8 +14,6 @@ export class UserModel extends AppDBModel {
   public lastName: string;
   public mobileNumber: string;
   public tenantId: number;
-  public tenant?: TenantModel;
-  public roles?: RoleModel[];
   public failedLoginAttempts: number;
   public lastLoggedInAt: Date;
   public userType: UserType;
@@ -72,7 +70,8 @@ export default function (sequelize: Sequelize): typeof UserModel {
       },
       mobileNumber: {
         allowNull: true,
-        type: DataTypes.STRING
+        type: DataTypes.STRING,
+         unique: true
       },
       userType: {
          type: DataTypes.INTEGER,

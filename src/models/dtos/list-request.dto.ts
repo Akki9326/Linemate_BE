@@ -1,5 +1,6 @@
 import { IsString, IsEmail, IsNotEmpty, IsOptional, IsEnum, IsObject } from 'class-validator';
-import { SortOrder } from '../enums/sort-order.enum'
+import { SortOrder } from '../enums/sort-order.enum';
+
 
 export class ListRequestDto<T> {
 
