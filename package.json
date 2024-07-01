@@ -1,7 +1,7 @@
 {
-    "name": "IPVWebPortal_Backend",
+    "name": "Linemate",
     "version": "1.0.0",
-    "description": "API Solution for the IPV Web Portal",
+    "description": "API Solution for the Linemate Portal",
     "author": "",
     "license": "ISC",
     "scripts": {
