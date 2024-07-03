@@ -19,7 +19,7 @@ class RoleRoute implements Routes {
     this.router.post(`${this.path}/v1/add`, validationMiddleware(TenantDto, 'body'), authMiddleware, this.tenantController.create);
     this.router.get(`${this.path}/v1/list`, authMiddleware, this.tenantController.list);
     this.router.get(`${this.path}/v1/:id`, authMiddleware, this.tenantController.getById);
-    this.router.delete(`${this.path}/v1/:id`, authMiddleware, this.tenantController.deleteById);
+    this.router.delete(`${this.path}/v1/:id`, this.tenantController.deleteById);
   }
 }
 
