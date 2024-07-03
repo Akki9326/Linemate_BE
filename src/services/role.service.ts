@@ -1,105 +1,143 @@
 import DB from "@/databases";
-import { PermissionModel } from "@/models/db/permissions.model";
-import { RoleListRequestDto } from "@/models/dtos/role-list.dto";
-import { RoleDto } from "@/models/dtos/role.dto";
+import { UserModel } from "@/models/db/users.model";
+
+import { RoleDto, RoleListRequestDto } from "@/models/dtos/role.dto";
+import { UserType } from "@/models/enums/user-types.enum";
+import { User } from "@/models/interfaces/users.interface";
 import { Op } from "sequelize";
 
 export class RoleService {
-  private roleModel = DB.Roles;
-  constructor() {
-  }
-  async add(roleDetails: RoleDto): Promise<number> {
-    const role = await this.roleModel.create({
+  private role = DB.Roles;
+  private permissionModel = DB.Permission;
+
+  constructor() { }
+
+  async add(roleDetails: RoleDto, user: User): Promise<number> {
+    const role = new this.role({
       name: roleDetails.name,
       type: roleDetails.type,
       description: roleDetails.description,
-      permissionsIds: roleDetails.permissionId,
-      userIds: roleDetails.userId,
-      tenantId: roleDetails.tenantId
+      permissionsIds: roleDetails.permissionIds,
+      userIds: roleDetails.userIds,
+      tenantId: user.userType === UserType["Tenant Admin"] ? user.id : null,
+      createdBy: user.id.toString()
     });
+    await role.save();
     return role.id;
   }
-  public async update(roleDetails: RoleDto, roleId: number): Promise<number> {
-    const [numberOfAffectedRows] = await this.roleModel.update(
-      {
-        name: roleDetails.name,
-        type: roleDetails.type,
-        description: roleDetails.description,
-        permissionsIds: roleDetails.permissionId,
-        userIds: roleDetails.userId,
-        tenantId: roleDetails.tenantId
-      },
-      {
-        where: { id: roleId },
-      },
-    );
 
-    if (numberOfAffectedRows === 0) {
-      throw new Error('Role not found or no changes made');
+  public async update(roleDetails: RoleDto, roleId: number, user: User): Promise<number> {
+    const role = await this.role.findOne({
+      where: { isDeleted: false, id: roleId }
+    });
+
+    if (!role) {
+      throw new Error('Role not found');
+    }
+    role.set({
+      name: roleDetails.name,
+      type: roleDetails.type,
+      description: roleDetails.description,
+      permissionsIds: roleDetails.permissionIds,
+      userIds: roleDetails.userIds,
+      tenantId: roleDetails.tenantId,
+      updatedBy: user.id.toString()
+    });
+
+    await role.save();
+    return role.id;
+  }
+
+  async fetchPermissionDetails(permissionId: number) {
+    const permission = await this.permissionModel.findByPk(permissionId, {
+    });
+    return permission.name;
+  }
+
+  public async one(roleId: number) {
+    const rolesResult = await this.role.findOne({
+      where: { id: roleId, isDeleted: false }
+    });
+    const rolesWithPermission = await Promise.all(rolesResult.dataValues.permissionsIds.map(async (permissionId: number) => {
+      const permissionData = await this.fetchPermissionDetails(permissionId);
+      return permissionData;
+    }));
+
+    if (!rolesResult) {
+      throw new Error('Role not found');
     }
 
-    return roleId;
+    return {
+      name: rolesResult.dataValues.name,
+      description: rolesResult.description,
+      permission: rolesWithPermission
+    };
   }
-  public async one(roleId: number) {
-    const roleResponse = await this.roleModel.findOne(
-      {
-        where: { id: roleId, isDeleted: false },
+
+  async fetchUserDetails(userId: number) {
+    const user = await UserModel.findByPk(userId, {
+      attributes: ['id', 'firstName', "lastName"],
+    });
+    return user;
+  }
+
+  public async all(pageModel: RoleListRequestDto) {
+    const { page = 1, pageSize = 10, sortField = 'id', sortOrder = 'ASC' } = pageModel;
+    const offset = (page - 1) * pageSize;
+    const rolesResult = await this.role.findAndCountAll({
+      where: { isDeleted: false },
+      offset,
+      limit: pageSize,
+      order: [[sortField, sortOrder]],
+      attributes: ['id', 'name', 'description', 'createdAt', 'createdBy'],
+    });
+    const rolesWithCreator = await Promise.all(rolesResult.rows.map(async (role) => {
+      const creator = await this.fetchUserDetails(parseInt(role.createdBy));
+      return { ...role.toJSON(), creator };
+    }));
+
+    return {
+      count: rolesResult.count,
+      rows: rolesWithCreator,
+    };
+  }
+
+  public async remove(roleId: number) {
+    const role = await this.role.findOne({
+      where: { isDeleted: false, id: roleId }
+    });
+
+    if (!role) {
+      throw new Error('Role not found');
+    }
+
+    role.set({
+      isDeleted: true
+    });
+
+    await role.save();
+    return role.id;
+  }
+
+  public async getAccessByRoleIds(userId: number): Promise<string[]> {
+    const roleResponse = await this.role.findOne({
+      where: {
+        userIds: { [Op.contains]: [userId] },
       },
-    );
+    });
+
     if (!roleResponse) {
       throw new Error('Role not found');
     }
-    return roleResponse;
-  }
-  public async all(pageModel: RoleListRequestDto) {
-    let page = pageModel.page || 1,
-      limit = pageModel.pageSize || 10,
-      orderByField = pageModel.sortField || 'id',
-      sortDirection = pageModel.sortOrder || 'ASC';
-    const offset = (page - 1) * limit;
-
-    return await this.roleModel.findAndCountAll({
-      where: { isDeleted: false },
-      offset,
-      limit,
-      order: [[orderByField, sortDirection]]
-    });
-  }
-  public async remove(roleId: number) {
-    const roleResponse = await this.roleModel.update(
-      {
-        isDeleted: true
-      },
-      {
-        where: { id: roleId },
-      },
-    );
-    return roleResponse;
-  }
-  public async getAccessByRoleIds(userId: number) {
-    const roleResponse = await this.roleModel.findOne({
-      where: {
-        userIds: {
-          [Op.contains]: [userId],
-        },
-      },
-    });
-    let permissionsIds = [];
-    if (roleResponse?.dataValues?.permissionsIds) {
-      permissionsIds = roleResponse.dataValues.permissionsIds;
-    }
-    if (permissionsIds && permissionsIds.length > 0) {
-      const permissions = await PermissionModel.findAll({
-        where: {
-          id: {
-            [Op.in]: permissionsIds,
-          },
-        },
+    const permissionsIds = roleResponse.dataValues.permissionsIds || [];
+    if (permissionsIds.length > 0) {
+      const permissions = await this.permissionModel.findAll({
+        where: { id: { [Op.in]: permissionsIds } },
         attributes: ['name'],
       });
       const permissionNames = permissions.map(permission => permission.name);
       return permissionNames
     }
+    return [];
   }
-
 }

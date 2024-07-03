@@ -9,8 +9,10 @@ export class RoleModel extends AppDBModel {
   public name: string;
   public description: string;
   public type: RoleType
-  public permissions?: PermissionModel[]
-  public users?: UserModel[]
+  public permissionsIds?: number[]
+  public userIds?: number[]
+  public tenantId?: number
+  
 }
 
 export default function (sequelize: Sequelize): typeof RoleModel {

@@ -1,5 +1,5 @@
-import { RoleListRequestDto } from '@/models/dtos/role-list.dto';
-import { RoleDto } from '@/models/dtos/role.dto';
+import { RoleDto,RoleListRequestDto } from '@/models/dtos/role.dto';
+import { User } from '@/models/interfaces/users.interface';
 import { RoleService } from '@/services/role.service';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
 import { NextFunction, Request, Response } from 'express-serve-static-core';
@@ -7,21 +7,23 @@ import { NextFunction, Request, Response } from 'express-serve-static-core';
 class RoleController {
   public roleService = new RoleService();
 
-  public create = async (req: Request, res: Response, next: NextFunction) => {
+  public add = async (req: Request & { user: User }, res: Response, next: NextFunction) => {
     try {
       const roleDetails: RoleDto = req.body;
-      const rolePermission = await this.roleService.add(roleDetails);
+      const user= req.user as User
+      const rolePermission = await this.roleService.add(roleDetails,user);
       AppResponseHelper.sendSuccess(res, 'Success', rolePermission);
     }
     catch (ex) {
       next(ex)
     }
   };
-  public update = async (req: Request, res: Response, next: NextFunction) => {
+  public update = async (req: Request & { user: User }, res: Response, next: NextFunction) => {
     try {
       const role: RoleDto = req.body;
       const roleId = parseInt(req.params.id)
-      const roleResponse = await this.roleService.update(role, roleId);
+      const user= req.user as User
+      const roleResponse = await this.roleService.update(role, roleId,user);
       AppResponseHelper.sendSuccess(res, 'Success', roleResponse);
     }
     catch (ex) {
