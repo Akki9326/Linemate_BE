@@ -1,0 +1,189 @@
+swagger: '2.0'
+info:
+  title: Linemate
+  version: 1.0.0
+host: localhost:3000
+schemes:
+- http
+paths:
+  /create_usertype:
+    get:
+      summary: Create UserType
+      responses:
+        '200':
+          description: Successful response
+  /permission/v1/add:
+    post:
+      summary: Create Permission
+      responses:
+        '200':
+          description: Successful response
+      parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          example:
+            name: can create cohort
+            type: tenant
+            description: user can create cohort
+  /permission/v1/1:
+    put:
+      summary: update Permission
+      responses:
+        '200':
+          description: Successful response
+      parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          example:
+            name: can create  login
+            type: tenant
+            description: user can login
+    get:
+      summary: Permission getBy Id
+      responses:
+        '200':
+          description: Successful response
+    delete:
+      summary: Permission Delete
+      responses:
+        '200':
+          description: Successful response
+  /permission/v1/list:
+    post:
+      summary: Permission List
+      responses:
+        '200':
+          description: Successful response
+      parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          example:
+            page: 1
+            limit: 10
+            sortField: id
+            sortOrder: ASC
+  /role/v1/add:
+    post:
+      summary: Create Role
+      responses:
+        '200':
+          description: Successful response
+      parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          example:
+            name: compmay Admin
+            type: stander
+            description: have all access
+            permissionId:
+            - 1
+            - 2
+            - 3
+            - 4
+            userId: []
+  /role/v1/1:
+    put:
+      summary: update Roles
+      responses:
+        '200':
+          description: Successful response
+      parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          example:
+            name: chief Admin
+            type: stander
+            description: have all access
+            permissionId:
+            - 1
+            - 2
+            - 3
+            - 4
+            - 5
+            userId:
+            - 1
+  /role/v1/2:
+    get:
+      summary: Role getBy  Id
+      responses:
+        '200':
+          description: Successful response
+    delete:
+      summary: Role Delete
+      responses:
+        '200':
+          description: Successful response
+  /role/v1/list:
+    post:
+      summary: Role List
+      responses:
+        '200':
+          description: Successful response
+      parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          example:
+            page: 1
+            limit: 10
+            sortField: id
+            sortOrder: ASC
+  /auth/v1/register:
+    post:
+      summary: register
+      responses:
+        '200':
+          description: Successful response
+      parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          example:
+            username: Jone Doe
+            firstName: Jone
+            lastName: Doe
+            email: jone.doe@gail.com
+            mobileNumber: '9898787878'
+            userType: 1
+            password: '123456'
+  /auth/v1/login:
+    post:
+      summary: Login User
+      responses:
+        '200':
+          description: Successful response
+      parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          example:
+            username: jone.doe@gail.com
+            password: '123456'
+  /create_user:
+    get:
+      summary: Create User
+      responses:
+        '200':
+          description: Successful response
+definitions: {}
