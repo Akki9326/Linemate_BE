@@ -1,5 +1,4 @@
 import UserTypeController from '@/controllers/userType.controller';
-import { LoginDto } from '@/models/dtos/login.dto';
 import { userTypeDto } from '@/models/dtos/userType.dto';
 import { Routes } from '@/models/interfaces/routes.interface';
 import AuthController from '@controllers/auth.controller';
