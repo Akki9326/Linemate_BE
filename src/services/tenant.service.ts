@@ -1,30 +1,28 @@
 import DB from "@/databases";
-import { PermissionModel } from "@/models/db/permissions.model";
-import { ListRequestDto } from "@/models/dtos/list-request.dto";
-import { RoleListRequestDto } from "@/models/dtos/role-list.dto";
-import { TanantDto } from "@/models/dtos/tenant.dto";
+import { NotFoundException } from "@/exceptions/NotFoundException";
+import { TenantDto } from "@/models/dtos/tenant.dto";
 import { SortOrder } from "@/models/enums/sort-order.enum";
 import { Op } from "sequelize";
 
-export class TanantService {
-  private tanantModel = DB.Tenant;
+export class TenantService {
+  private tenantModel = DB.Tenant;
   constructor() {
   }
-  async add(tanantDetails: TanantDto): Promise<number> {
-    const tanant = await this.tanantModel.create({
-      ...tanantDetails
+  async add(tenantDetails: TenantDto): Promise<number> {
+    const tenant = await this.tenantModel.create({
+      ...tenantDetails
     });
-    return tanant.id;
+    return tenant.id;
   }
 
   public async one(tenantId: number) {
-    const tenantResponse = await this.tanantModel.findOne(
+    const tenantResponse = await this.tenantModel.findOne(
       {
         where: { id: tenantId, isDeleted: false },
       },
     );
     if (!tenantResponse) {
-      throw new Error('Tenant not found');
+      throw new NotFoundException('Tenant not found');
     }
     return tenantResponse;
   }
@@ -51,7 +49,7 @@ export class TanantService {
       };
     }
 
-    const { count, rows } = await this.tanantModel.findAndCountAll({
+    const { count, rows } = await this.tenantModel.findAndCountAll({
       where: {
         ...whereClause,
         isActive: true,

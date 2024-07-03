@@ -1,6 +1,6 @@
 import { IsString, IsEmail, IsNotEmpty, IsNumber, IsOptional, IsArray } from 'class-validator';
 
-export class TanantDto {
+export class TenantDto {
 
     @IsString()
     @IsNotEmpty()

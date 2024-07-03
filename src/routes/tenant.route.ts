@@ -1,8 +1,6 @@
-import TanantController from '@/controllers/tenant.controller';
-import { accessMiddleWare } from '@/middlewares/access.middulerware';
+import TenantController from '@/controllers/tenant.controller';
 import authMiddleware from '@/middlewares/auth.middleware';
-import { TanantDto } from '@/models/dtos/tenant.dto';
-import { AppPermission } from '@/models/enums/app-access.enum';
+import { TenantDto } from '@/models/dtos/tenant.dto';
 import { Routes } from '@/models/interfaces/routes.interface';
 import validationMiddleware from '@middlewares/validation.middleware';
 import { Router } from 'express';
@@ -11,16 +9,16 @@ import { Router } from 'express';
 class RoleRoute implements Routes {
   public path = '/tenant';
   public router = Router();
-  public tanantController = new TanantController();
+  public tenantController = new TenantController();
 
   constructor() {
     this.initializeRoutes();
   }
 
-  private initializeRoutes() {
-    this.router.post(`${this.path}/v1/add`, validationMiddleware(TanantDto, 'body'), authMiddleware, accessMiddleWare([AppPermission.AUTH]), this.tanantController.create);
-    this.router.get(`${this.path}/v1/list`, this.tanantController.list);
-    this.router.get(`${this.path}/v1/:id`, this.tanantController.getById);
+  private initializeRoutes() {  
+    this.router.post(`${this.path}/v1/add`, validationMiddleware(TenantDto, 'body'), authMiddleware, this.tenantController.create);
+    this.router.get(`${this.path}/v1/list`, this.tenantController.list);
+    this.router.get(`${this.path}/v1/:id`, this.tenantController.getById);
   }
 }
 
