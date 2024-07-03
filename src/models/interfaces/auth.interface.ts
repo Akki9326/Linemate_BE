@@ -11,3 +11,16 @@ export interface RequestWithUser extends Request {
   user: JwtTokenData;
   userAccess: AppPermission[]
 }
+export interface UserData {
+  access: AppPermission[];
+  email: string;
+  mobileNumber: string;
+  firstName: string;
+  lastName: string;
+  tenantIds: number[];
+}
+
+export class LoginResponseData {
+  token: string;
+  userData: UserData
+}

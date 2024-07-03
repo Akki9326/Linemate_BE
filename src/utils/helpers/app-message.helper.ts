@@ -1,3 +1,12 @@
 export const AppMessages = {
-    ForgotPasswordSuccess: 'We’ll send you an email with password reset link if your email is registered with us.'
+    forgotPasswordSuccess: 'We’ll send you an email with a password reset link if your email is registered with us.',
+    invalidUsername: 'Please check the email or mobile number.',
+    emptyUsername: 'Email or phone number must be provided.',
+    invalidPassword: 'Invalid password.',
+    inactiveUser: 'User is not active.',
+    lockedUser: 'User is locked. Please contact admin.',
+    accountLocked: 'Account is locked due to too many failed login attempts.',
+    expiredOtp: 'OTP has expired.',
+    userNotFound: 'User not found.',
+    passwordReused: 'New password cannot be the same as the last 5 passwords.'
 }

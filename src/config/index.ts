@@ -22,4 +22,6 @@ export const {
   FORGOT_PASSWORD_LINK_EXP,
   WEB_APP_URL,
   DB_LIQUIBASE_PATH, 
+  TOKEN_EXPIRY,
+  OTP_EXPIRY
 } = process.env;
