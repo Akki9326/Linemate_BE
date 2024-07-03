@@ -4,7 +4,6 @@ import { RoleService } from './role.service';
 
 class UserTypeServices {
   private users = DB.Users;
-  private resetPasswordToken = DB.ResetPasswordToken;
   private roleService: RoleService;
 
 
