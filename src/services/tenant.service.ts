@@ -27,12 +27,25 @@ export class TenantService {
     return tenantResponse;
   }
   public async delete(tenantId: number) {
-    const tenant = await this.tenantModel.findOne({ where: { id: tenantId } })
+    const tenant = await this.tenantModel.findOne({ where: { id: tenantId, isDeleted: false } })
     if (!tenant) {
       throw new NotFoundException('Tenant not found');
     }
     const tenantResponse = await this.tenantModel.update(
       { isDeleted: true },
+      {
+        where: { id: tenantId, isDeleted: false },
+      },
+    );
+    return tenantResponse;
+  }
+  public async update(tenantId: number, updateObj: TenantDto) {
+    const tenant = await this.tenantModel.findOne({ where: { id: tenantId, isDeleted: false } })
+    if (!tenant) {
+      throw new NotFoundException('Tenant not found');
+    }
+    const tenantResponse = await this.tenantModel.update(
+      { ...updateObj },
       {
         where: { id: tenantId, isDeleted: false },
       },

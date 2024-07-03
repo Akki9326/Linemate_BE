@@ -47,6 +47,17 @@ class TenantController {
       next(ex)
     }
   };
+  public updateById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = parseInt(req.params.id)
+      const updateObj: TenantDto = req.body
+      const tenantResponse = await this.tenantService.update(tenantId, updateObj);
+      AppResponseHelper.sendSuccess(res, 'Success', tenantResponse);
+    }
+    catch (ex) {
+      next(ex)
+    }
+  };
 }
 
 export default TenantController;
