@@ -96,7 +96,6 @@ export class RoleService {
         attributes: ['name'],
       });
        const permissionNames = permissions.map(permission => permission.name);
-       console.log('permissionNames :>> ', permissionNames);
       return permissionNames
     }
   }

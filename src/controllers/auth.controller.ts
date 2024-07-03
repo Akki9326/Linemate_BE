@@ -1,4 +1,4 @@
-import { LoginDto } from '@/models/dtos/login.dto';
+import { LoginOTPDto,ForgotPasswordDto, ResetPasswordDto } from '@/models/dtos/login.dto';
 import { UserDto } from '@/models/dtos/user.dto';
 import UserService from '@/services/user.service';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
@@ -20,11 +20,42 @@ class AuthController {
     }
   };
 
-  public logIn = async (req: Request, res: Response, next: NextFunction) => {
+  public login = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userData: LoginDto = req.body;
-      const tokenInfo = await this.authService.login(userData);
+      const loginOTPDto: LoginOTPDto = req.body;
+      const tokenInfo = await this.authService.loginUser(loginOTPDto);
 
+      AppResponseHelper.sendSuccess(res, 'Success', tokenInfo);
+    }
+    catch (ex) {
+      next(ex)
+    }
+  };
+  public forgotPassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const forgotPasswordDto: ForgotPasswordDto = req.body;
+      const tokenInfo = await this.authService.sendResetPasswordOTP(forgotPasswordDto);
+
+      AppResponseHelper.sendSuccess(res, 'Success', tokenInfo);
+    }
+    catch (ex) {
+      next(ex)
+    }
+  };
+  public verifyOtp = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const {otp} = req.body;
+      const tokenInfo = await this.authService.verifyOtp(otp);
+      AppResponseHelper.sendSuccess(res, 'Success', tokenInfo);
+    }
+    catch (ex) {
+      next(ex)
+    }
+  };
+  public resetPassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const resetPasswordDto:ResetPasswordDto = req.body;
+      const tokenInfo = await this.authService.resetPassword(resetPasswordDto);
       AppResponseHelper.sendSuccess(res, 'Success', tokenInfo);
     }
     catch (ex) {

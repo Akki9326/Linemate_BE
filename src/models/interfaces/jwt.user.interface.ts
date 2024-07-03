@@ -6,5 +6,4 @@ export interface JwtTokenData {
   username: string;
   id: number;
   userType: UserType;
-  tenantId: number;
 }

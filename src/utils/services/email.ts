@@ -18,7 +18,6 @@ export class Email {
           tls: { rejectUnauthorized: false },
         });
 
-        //console.log(html)
         transporter
           .sendMail({
             from: SMTP_FROM,
