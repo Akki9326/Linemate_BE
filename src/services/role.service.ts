@@ -84,8 +84,10 @@ export class RoleService {
         },
       },
     });
-    const { permissionsIds } = roleResponse.dataValues;
-
+    let permissionsIds = [];
+    if (roleResponse?.dataValues?.permissionsIds) {
+      permissionsIds = roleResponse.dataValues.permissionsIds;
+    }
     if (permissionsIds && permissionsIds.length > 0) {
       const permissions = await PermissionModel.findAll({
         where: {
@@ -95,7 +97,7 @@ export class RoleService {
         },
         attributes: ['name'],
       });
-       const permissionNames = permissions.map(permission => permission.name);
+      const permissionNames = permissions.map(permission => permission.name);
       return permissionNames
     }
   }
