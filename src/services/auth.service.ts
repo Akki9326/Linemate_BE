@@ -2,7 +2,6 @@
 import { OTP_EXPIRY, SECRET_KEY, TOKEN_EXPIRY } from '@/config';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { ForgotPasswordDto, LoginOTPDto, ResetPasswordDto } from '@/models/dtos/login.dto';
-import { TokenTypes } from '@/models/enums/OTPValidationStatus';
 import { LoginResponseData, TokenData } from '@/models/interfaces/auth.interface';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { PasswordHelper } from '@/utils/helpers/password.helper';
@@ -12,6 +11,8 @@ import { addMinutes } from 'date-fns';
 import JWT from 'jsonwebtoken';
 import { Op } from 'sequelize';
 import { RoleService } from './role.service';
+import { TokenTypes } from '@/models/enums/tokenType';
+import { AppMessages } from '@/utils/helpers/app-message.helper';
 
 
 export default class AuthService {
@@ -24,7 +25,7 @@ export default class AuthService {
 
   public async findUserByContactInfo(username: string, isActive: boolean) {
     if (!username) {
-      throw new BadRequestException('Email or Phone Number must be provided');
+      throw new BadRequestException(AppMessages.emptyUsername);
     }
     const user = await this.users.findOne({
       where: {
@@ -84,28 +85,28 @@ export default class AuthService {
     const user = await this.findUserByContactInfo(loginOTPDto.username, true);
     if (!user) {
       await this.incrementFailedLoginAttempts(user);
-      throw new BadRequestException('Please check the Email or Mobile.');
+      throw new BadRequestException(AppMessages.invalidUsername);
     }
     const isValid = user.validatePassword(loginOTPDto.password);
 
     if (!isValid) {
       await this.incrementFailedLoginAttempts(user);
-      throw new BadRequestException('Invalid Password!');
+      throw new BadRequestException(AppMessages.invalidPassword);
     }
 
     if (!user.isActive) {
-      throw new BadRequestException('User is not active.');
+      throw new BadRequestException(AppMessages.inactiveUser);
     }
 
     if (user.isLocked) {
-      throw new BadRequestException('User is locked. Please contact admin.');
+      throw new BadRequestException(AppMessages.lockedUser);
     }
 
 
     if (user.failedLoginAttempts >= 5) {
       user.isLocked = true;
       await user.save();
-      throw new BadRequestException('Account is locked due to too many failed login attempts.');
+      throw new BadRequestException(AppMessages.accountLocked);
     }
 
     const userToken = this.createToken({
@@ -128,6 +129,8 @@ export default class AuthService {
 
     await this.updateSuccessfulLogin(user);
 
+    // TODO: Add tenant after tenant Apis ready
+
     return loginResponse;
   }
   private async incrementFailedLoginAttempts(user:any): Promise<void> {
@@ -143,7 +146,7 @@ export default class AuthService {
     const otp = generateOtp().toString();
     const user = await this.findUserByContactInfo(forgotPasswordDto.username, true);
     if (!user) {
-      throw new BadRequestException('Invalid Email Address');
+      throw new BadRequestException(AppMessages.invalidUsername);
     }
     await this.saveTokenInDB(user.id, TokenTypes.FORGOT_PASSWORD, otp);
     await this.triggerLoginOTPs(user.id, otp);
@@ -157,11 +160,11 @@ export default class AuthService {
       },
     });
     if (!userToken || userToken.expiresAt < new Date()) {
-      throw new BadRequestException('ResetPassword  Link Expired');
+      throw new BadRequestException(AppMessages.expiredOtp);
     }
     const userDetails = await this.users.findOne({ where: { id: userToken.userId ,isActive:true,isDeleted:false} });
     if (!userDetails) {
-      throw new BadRequestException('User not found');
+      throw new BadRequestException(AppMessages.userNotFound);
 
     }
     return {
@@ -181,7 +184,7 @@ export default class AuthService {
       where: { id: userToken.userId,isActive:true,isDeleted:false }
     });
     if (!user) {
-      throw new BadRequestException('User not found.');
+      throw new BadRequestException(AppMessages.userNotFound);
     }
 
     const userPasswords = await this.userPasswordModel.findAll({
@@ -194,7 +197,7 @@ export default class AuthService {
 
     for (const userPassword of userPasswords) {
       if (PasswordHelper.validatePassword(resetPasswordDto.password, userPassword.password)) {
-        throw new BadRequestException('New password cannot be the same as the last 5 passwords.');
+        throw new BadRequestException(AppMessages.passwordReused);
       }
     }
     user.password = hashedPassword;

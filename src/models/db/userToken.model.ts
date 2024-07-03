@@ -1,6 +1,6 @@
 import { DataTypes, Sequelize } from 'sequelize';
 import { AppDBModel, AppDB_Common_Fields } from './app-db.model';
-import { TokenTypes } from '../enums/OTPValidationStatus';
+import { TokenTypes } from '../enums/tokenType';
 
 export class UserTokenModel extends AppDBModel {
   public id: number;
@@ -29,8 +29,8 @@ export default function (sequelize: Sequelize): typeof UserTokenModel {
         allowNull: true,
       },
       tokenType: {
-         allowNull: false,
-         type: DataTypes.ENUM,
+        allowNull: false,
+        type: DataTypes.ENUM,
         values: Object.values(TokenTypes)
       },
       expiresAt: {
