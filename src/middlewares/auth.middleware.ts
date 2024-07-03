@@ -1,13 +1,11 @@
-import { NextFunction, Response } from 'express';
-import { verify } from 'jsonwebtoken';
-import { SECRET_KEY } from '@config';
-import DB from '@databases';
-import { HttpException } from '@exceptions/HttpException';
+import { AppPermission } from '@/models/enums/app-access.enum';
 import { RequestWithUser } from '@/models/interfaces/auth.interface';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { RoleService } from '@/services/role.service';
-import { UserCaching } from '@/utils/helpers/caching-user.helper';
-import { AppPermission } from '@/models/enums/app-access.enum';
+import { SECRET_KEY } from '@config';
+import { HttpException } from '@exceptions/HttpException';
+import { NextFunction, Response } from 'express';
+import { verify } from 'jsonwebtoken';
 
 const authMiddleware = async (req: RequestWithUser, res: Response, next: NextFunction) => {
   try {
