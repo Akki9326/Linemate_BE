@@ -26,6 +26,18 @@ export class TenantService {
     }
     return tenantResponse;
   }
+  public async delete(tenantId: number) {
+    const tenantResponse = await this.tenantModel.update(
+      { isDeleted: true },
+      {
+        where: { id: tenantId, isDeleted: false },
+      },
+    );
+    if (!tenantResponse) {
+      throw new NotFoundException('Tenant not found');
+    }
+    return tenantResponse;
+  }
 
   public async list(pageModel) {
 

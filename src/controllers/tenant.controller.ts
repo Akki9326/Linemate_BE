@@ -37,6 +37,16 @@ class TenantController {
       next(ex)
     }
   };
+  public deleteById = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const tenantId = parseInt(req.params.id)
+      const tenantResponse = await this.tenantService.delete(tenantId);
+      AppResponseHelper.sendSuccess(res, 'Success', tenantResponse);
+    }
+    catch (ex) {
+      next(ex)
+    }
+  };
 }
 
 export default TenantController;
