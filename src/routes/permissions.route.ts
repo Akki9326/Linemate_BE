@@ -1,4 +1,5 @@
 import PermissionController from '@/controllers/permissions.controller';
+import authMiddleware from '@/middlewares/auth.middleware';
 import { PermissionDto } from '@/models/dtos/permissions.dto';
 
 import { Routes } from '@/models/interfaces/routes.interface';
@@ -16,11 +17,11 @@ class PermissionRoute implements Routes {
   }
 
   private initializeRoutes() {
-    this.router.post(`${this.path}/v1/add`, validationMiddleware(PermissionDto, 'body'), this.permissionController.create);
-    this.router.put(`${this.path}/v1/:id`,validationMiddleware(PermissionDto, 'body'), this.permissionController.update);
-    this.router.get(`${this.path}/v1/:id`, this.permissionController.getById);
-    this.router.post(`${this.path}/v1/list`, this.permissionController.list);
-    this.router.delete(`${this.path}/v1/:id`, this.permissionController.delete);
+    this.router.post(`${this.path}/v1/add`, validationMiddleware(PermissionDto, 'body'),authMiddleware, this.permissionController.create);
+    this.router.put(`${this.path}/v1/:id`,validationMiddleware(PermissionDto, 'body'),authMiddleware, this.permissionController.update);
+    this.router.get(`${this.path}/v1/:id`,authMiddleware, this.permissionController.getById);
+    this.router.post(`${this.path}/v1/list`,authMiddleware, this.permissionController.list);
+    this.router.delete(`${this.path}/v1/:id`,authMiddleware, this.permissionController.delete);
 
   }
 }

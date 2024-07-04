@@ -72,7 +72,9 @@ export class RoleService {
     return {
       name: rolesResult.dataValues.name,
       description: rolesResult.description,
-      permission: rolesWithPermission
+      permission: rolesWithPermission,
+      userIds:rolesResult.userIds,
+      type:rolesResult.type,
     };
   }
 

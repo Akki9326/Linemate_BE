@@ -1,33 +1,45 @@
-import { IsString, IsEmail, IsNotEmpty, IsNumber, IsArray, IsMobilePhone, IsOptional } from 'class-validator';
+import { IsArray, IsEmail, IsMobilePhone, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class UserDto {
 
-  @IsNotEmpty()
-  public username: string;
-
-  @IsNotEmpty()
-  @IsEmail()
-  public email: string;
-
-  @IsNotEmpty()
-  @IsString()
-  public password: string;
-
-  @IsNotEmpty()
-  @IsNumber()
-  public userType: number;
-
-  @IsNotEmpty()
   @IsString()
   public firstName: string;
 
   @IsString()
   public lastName: string;
 
+  @IsEmail()
+  public email: string;
+
+  @IsNumber()
+  public userType: number;
+
   @IsMobilePhone()
   public mobileNumber: string;
 
-  @IsNumber()
+
+  @IsArray()
   @IsOptional()
-  public tenantId: number;
+  public tenantIds: number[];
 }
+
+export class AdminDto {
+
+  @IsString()
+  public firstName: string;
+
+  @IsString()
+  public lastName: string;
+
+  @IsEmail()
+  public email: string;
+
+    @IsMobilePhone()
+  public mobileNumber: string;  
+
+  @IsString()
+  public password: string;
+
+}
+
+

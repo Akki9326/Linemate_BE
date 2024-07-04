@@ -1,4 +1,3 @@
-import { AppPermission } from '../enums/app-access.enum';
 import { UserType } from '../enums/user-types.enum';
 
 export interface JwtTokenData {

@@ -19,7 +19,7 @@ export class UserModel extends AppDBModel {
   public isLocked: boolean;
   public isTemporaryPassword: boolean;
 
-  
+
 
   hashPassword() {
     this.password = PasswordHelper.hashPassword(this.password)
@@ -67,31 +67,23 @@ export default function (sequelize: Sequelize): typeof UserModel {
         type: DataTypes.DATE
       },
       mobileNumber: {
-        allowNull: true,
+        allowNull: false,
         type: DataTypes.STRING,
-         unique: true
+        unique: true
       },
       userType: {
-         type: DataTypes.INTEGER,
+        type: DataTypes.INTEGER,
         allowNull: true,
-        references: {
-          model: 'userType',
-          key: 'id'
-        }
       },
-        tenantIds: {
+      tenantIds: {
         type: DataTypes.ARRAY(DataTypes.INTEGER),
-        defaultValue:[],
-        references: {
-          model: 'tenant',
-          key: 'id',
-        },
+        defaultValue: [],
       },
       isLocked: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
-      isTemporaryPassword:{
+      isTemporaryPassword: {
         type: DataTypes.BOOLEAN,
         defaultValue: true
       }
@@ -101,10 +93,6 @@ export default function (sequelize: Sequelize): typeof UserModel {
       sequelize,
     },
   );
-    UserModel.belongsTo(TenantModel, {
-    foreignKey: 'tenantId',
-    as: 'tenant'
-})
 
 
 

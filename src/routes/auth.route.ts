@@ -1,5 +1,5 @@
 import { ForgotPasswordDto, LoginOTPDto, ResetPasswordDto } from '@/models/dtos/login.dto';
-import { UserDto } from '@/models/dtos/user.dto';
+import { AdminDto, UserDto } from '@/models/dtos/user.dto';
 import { Routes } from '@/models/interfaces/routes.interface';
 import AuthController from '@controllers/auth.controller';
 import validationMiddleware from '@middlewares/validation.middleware';
@@ -20,7 +20,7 @@ class AuthRoute implements Routes {
     this.router.post(`${this.path}/v1/forgot-password`, validationMiddleware(ForgotPasswordDto, 'body'), this.authController.forgotPassword);
     this.router.post(`${this.path}/v1/verify-otp`, this.authController.verifyOtp);
     this.router.post(`${this.path}/v1/reset-password`, validationMiddleware(ResetPasswordDto, 'body'), this.authController.resetPassword);
-    this.router.post(`${this.path}/v1/register`, validationMiddleware(UserDto, 'body'), this.authController.register);
+    this.router.post(`${this.path}/v1/register`, validationMiddleware(AdminDto, 'body'), this.authController.register);
   }
 }
 

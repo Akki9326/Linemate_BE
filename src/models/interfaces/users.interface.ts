@@ -8,5 +8,7 @@ export interface User {
   lastName: string;
   lastLoggedInAt: Date;
   userType: UserType;
+  mobileNumber: string;
   failedLoginAttempts: number;
+  tenantIds: string[];
 }
