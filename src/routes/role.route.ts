@@ -1,6 +1,6 @@
 import RoleController from '@/controllers/role.controller';
+import authMiddleware from '@/middlewares/auth.middleware';
 import { RoleDto } from '@/models/dtos/role.dto';
-import { userTypeDto } from '@/models/dtos/userType.dto';
 import { Routes } from '@/models/interfaces/routes.interface';
 import validationMiddleware from '@middlewares/validation.middleware';
 import { Router } from 'express';
@@ -16,11 +16,11 @@ class RoleRoute implements Routes {
   }
 
   private initializeRoutes() {
-    this.router.post(`${this.path}/v1/add`, validationMiddleware(RoleDto, 'body'), this.roleController.create);
-    this.router.put(`${this.path}/v1/:id`, validationMiddleware(RoleDto, 'body'), this.roleController.update);
-    this.router.get(`${this.path}/v1/:id`, this.roleController.getById);
-    this.router.post(`${this.path}/v1/list`, this.roleController.list);
-    this.router.delete(`${this.path}/v1/:id`, this.roleController.delete);
+    this.router.post(`${this.path}/v1/add`, validationMiddleware(RoleDto, 'body'), authMiddleware, this.roleController.add);
+    this.router.put(`${this.path}/v1/:id`, validationMiddleware(RoleDto, 'body'), authMiddleware, this.roleController.update);
+    this.router.get(`${this.path}/v1/:id`, authMiddleware, this.roleController.getById);
+    this.router.post(`${this.path}/v1/list`, authMiddleware, this.roleController.list);
+    this.router.delete(`${this.path}/v1/:id`, authMiddleware, this.roleController.delete);
   }
 }
 

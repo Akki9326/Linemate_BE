@@ -10,3 +10,7 @@ export const AppMessages = {
     userNotFound: 'User not found.',
     passwordReused: 'New password cannot be the same as the last 5 passwords.'
 }
+
+export const roleMessage = {
+    roleNotFound: "Role not found"
+}

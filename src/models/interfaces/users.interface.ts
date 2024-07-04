@@ -1,3 +1,5 @@
+import { UserType } from "../enums/user-types.enum";
+
 export interface User {
   id: number;
   email: string;
@@ -5,5 +7,6 @@ export interface User {
   firstName: string;
   lastName: string;
   lastLoggedInAt: Date;
+  userType: UserType;
   failedLoginAttempts: number;
 }
