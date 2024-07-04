@@ -84,7 +84,6 @@ export default class AuthService {
   public async loginUser(loginOTPDto: LoginOTPDto): Promise<LoginResponseData> {
     const user = await this.findUserByContactInfo(loginOTPDto.username, true);
     if (!user) {
-      await this.incrementFailedLoginAttempts(user);
       throw new BadRequestException(AppMessages.invalidUsername);
     }
     const isValid = user.validatePassword(loginOTPDto.password);
@@ -101,7 +100,6 @@ export default class AuthService {
     if (user.isLocked) {
       throw new BadRequestException(AppMessages.lockedUser);
     }
-
 
     if (user.failedLoginAttempts >= 5) {
       user.isLocked = true;
@@ -179,6 +177,10 @@ export default class AuthService {
         token: resetPasswordDto.otp
       }
     });
+
+    if (!userToken || userToken.expiresAt < new Date()) {
+      throw new BadRequestException(AppMessages.expiredOtp);
+    }
 
     const user = await this.users.findOne({
       where: { id: userToken.userId,isActive:true,isDeleted:false }
