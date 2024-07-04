@@ -84,7 +84,6 @@ export default class AuthService {
   public async loginUser(loginOTPDto: LoginOTPDto): Promise<LoginResponseData> {
     const user = await this.findUserByContactInfo(loginOTPDto.username, true);
     if (!user) {
-      await this.incrementFailedLoginAttempts(user);
       throw new BadRequestException(AppMessages.invalidUsername);
     }
     const isValid = user.validatePassword(loginOTPDto.password);
@@ -102,7 +101,7 @@ export default class AuthService {
       throw new BadRequestException(AppMessages.lockedUser);
     }
 
-
+    
     if (user.failedLoginAttempts >= 5) {
       user.isLocked = true;
       await user.save();
