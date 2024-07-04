@@ -178,6 +178,10 @@ export default class AuthService {
       }
     });
 
+    if (!userToken || userToken.expiresAt < new Date()) {
+      throw new BadRequestException(AppMessages.expiredOtp);
+    }
+
     const user = await this.users.findOne({
       where: { id: userToken.userId,isActive:true,isDeleted:false }
     });
