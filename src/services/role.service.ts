@@ -1,9 +1,11 @@
 import DB from "@/databases";
+import { BadRequestException } from "@/exceptions/BadRequestException";
 import { UserModel } from "@/models/db/users.model";
 
 import { RoleDto, RoleListRequestDto } from "@/models/dtos/role.dto";
 import { UserType } from "@/models/enums/user-types.enum";
 import { User } from "@/models/interfaces/users.interface";
+import { roleMessage } from "@/utils/helpers/app-message.helper";
 import { Op } from "sequelize";
 
 export class RoleService {
@@ -32,7 +34,7 @@ export class RoleService {
     });
 
     if (!role) {
-      throw new Error('Role not found');
+      throw new BadRequestException(roleMessage.roleNotFound);
     }
     role.set({
       name: roleDetails.name,
@@ -64,7 +66,7 @@ export class RoleService {
     }));
 
     if (!rolesResult) {
-      throw new Error('Role not found');
+      throw new BadRequestException(roleMessage.roleNotFound);
     }
 
     return {
@@ -108,7 +110,7 @@ export class RoleService {
     });
 
     if (!role) {
-      throw new Error('Role not found');
+      throw new BadRequestException(roleMessage.roleNotFound);
     }
 
     role.set({
@@ -126,10 +128,7 @@ export class RoleService {
       },
     });
 
-    if (!roleResponse) {
-      throw new Error('Role not found');
-    }
-    const permissionsIds = roleResponse.dataValues.permissionsIds || [];
+    const permissionsIds = roleResponse?.dataValues?.permissionsIds || [];
     if (permissionsIds.length > 0) {
       const permissions = await this.permissionModel.findAll({
         where: { id: { [Op.in]: permissionsIds } },
