@@ -101,7 +101,6 @@ export default class AuthService {
       throw new BadRequestException(AppMessages.lockedUser);
     }
 
-    
     if (user.failedLoginAttempts >= 5) {
       user.isLocked = true;
       await user.save();
