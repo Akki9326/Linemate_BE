@@ -9,6 +9,7 @@ import { PasswordHelper } from '@/utils/helpers/password.helper';
 import DB from '@databases';
 import { Op } from 'sequelize';
 import { TenantService } from './tenant.service';
+import { AppMessages, roleMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
 
 
 class UserService {
@@ -19,7 +20,7 @@ class UserService {
   constructor() {
   }
   public async addAdmin(userData: any) {
-        let user = await this.users.findOne({
+    let user = await this.users.findOne({
       where: {
         [Op.and]: [
           { isDeleted: false },
@@ -32,8 +33,8 @@ class UserService {
         ],
       },
     });
-     if (user) {
-      throw new BadRequestException(`User already exists`)
+    if (user) {
+      throw new BadRequestException(AppMessages.existedUser)
     }
     user = new this.users();
     user.firstName = userData.firstName
@@ -65,7 +66,7 @@ class UserService {
       });
 
       if (!role) {
-        throw new BadRequestException(`Role not found`);
+        throw new BadRequestException(roleMessage.roleNotFound);
       }
       const updatedUserIds = [...role.userIds, userId];
       role.userIds = updatedUserIds;
@@ -87,7 +88,7 @@ class UserService {
       },
     });
     if (user) {
-      throw new BadRequestException(`User already exists`)
+      throw new BadRequestException(AppMessages.existedUser)
     }
     if (userData.userType === UserType['Chief admin']) {
       const existingAdmin = await this.users.findAll({
@@ -95,8 +96,12 @@ class UserService {
           userType: UserType['Chief admin']
         }
       });
-      if(existingAdmin.length > parseInt(MAX_CHIEF)) {
-        throw new BadRequestException(`more than 5 chief admin not allowed`)
+      if (existingAdmin.length > parseInt(MAX_CHIEF)) {
+        throw new BadRequestException(AppMessages.maxAdmin)
+      }
+    } else {
+      if (!userData.tenantIds || !userData.tenantIds.length) {
+        throw new BadRequestException(TenantMessage.requiredTenant)
       }
     }
     const temporaryPassword = PasswordHelper.generateTemporaryPassword()
@@ -108,11 +113,10 @@ class UserService {
     user.isTemporaryPassword = true
     user.createdBy = userId.toString()
     user.password = PasswordHelper.hashPassword(temporaryPassword)
-    user.tenantIds = userData.userType !== UserType['Chief admin'] ?   userData.tenantIds :[]
+    user.tenantIds = userData.userType !== UserType['Chief admin'] ? userData.tenantIds : []
     user.userType = userData.userType
     //  TODO: Add variable fields
     //  TODO: Send Email with password
-    console.log('user', user)
     user = await user.save()
     this.mapUserTypeToRole(user.dataValues?.userType, user.id);
     return { id: user.id };
@@ -123,15 +127,29 @@ class UserService {
         id: userId,
         isDeleted: false
       },
-      attributes: ['id', 'firstName', 'lastName', 'email', 'mobileNumber', 'tenantIds', 'isTemporaryPassword','userType']
+      attributes: ['id', 'firstName', 'lastName', 'email', 'mobileNumber', 'tenantIds', 'isTemporaryPassword', 'userType']
     });
     const tenantDetails = await this.findMultipleTenant(user.tenantIds);
     if (!user) {
-      throw new BadRequestException(`User not found`)
+      throw new BadRequestException(AppMessages.userNotFound)
     }
     return { ...user.dataValues, tenantDetails };
   }
   public async update(userData: UserDto, userId: number) {
+    const existingUser = await this.users.findOne({
+      where: {
+        id: { [Op.not]: userId }, 
+        [Op.or]: [
+          { email: userData.email },
+          { mobileNumber: userData.mobileNumber }
+        ],
+        isDeleted: false,
+      },
+    });
+
+    if (existingUser) {
+      throw new BadRequestException(`Email or mobile number already in use`);
+    }
     const user = await this.users.findOne({
       where: {
         id: userId,
@@ -139,7 +157,10 @@ class UserService {
       },
     });
     if (!user) {
-      throw new BadRequestException(`User not found`)
+      throw new BadRequestException(AppMessages.userNotFound)
+    }
+    if (!user.tenantIds || !user.tenantIds.length) {
+      throw new BadRequestException(TenantMessage.requiredTenant)
     }
     user.firstName = userData.firstName
     user.lastName = userData.lastName
@@ -157,7 +178,7 @@ class UserService {
       },
     });
     if (!user) {
-      throw new BadRequestException(`User not found`);
+      throw new BadRequestException(AppMessages.userNotFound);
     }
     user.isDeleted = true;
     await user.save();
@@ -170,11 +191,11 @@ class UserService {
       sortDirection = pageModel.sortOrder || 'ASC';
     const offset = (page - 1) * limit;
     const condition = {}
-    if(user.userType !== UserType['Chief admin']){
+    if (user.userType !== UserType['Chief admin']) {
       condition['createdBy'] = user.id
     }
     const userList = await this.users.findAndCountAll({
-      where: { isDeleted: false,...condition  },
+      where: { isDeleted: false, ...condition },
       offset,
       limit,
       attributes: [
