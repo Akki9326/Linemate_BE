@@ -1,4 +1,5 @@
-import { IsArray, IsEmail, IsMobilePhone, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsEmail, IsEnum, IsMobilePhone, IsNumber, IsOptional, IsString } from 'class-validator';
+import { UserType } from '../enums/user-types.enum';
 
 export class UserDto {
 
@@ -11,8 +12,8 @@ export class UserDto {
   @IsEmail()
   public email: string;
 
-  @IsNumber()
-  public userType: number;
+  @IsEnum(UserType)
+  public userType: UserType;
 
   @IsMobilePhone()
   public mobileNumber: string;

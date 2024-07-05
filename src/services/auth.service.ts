@@ -15,7 +15,6 @@ import { TokenTypes } from '@/models/enums/tokenType';
 import { AppMessages } from '@/utils/helpers/app-message.helper';
 import { TenantService } from './tenant.service';
 import { AppPermission } from '@/models/enums/app-access.enum';
-import { User } from '@/models/interfaces/users.interface';
 import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.transaction';
 import { Email } from '@/utils/services/email';
 

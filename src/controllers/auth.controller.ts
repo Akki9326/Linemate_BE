@@ -1,5 +1,5 @@
-import { LoginOTPDto,ForgotPasswordDto, ResetPasswordDto } from '@/models/dtos/login.dto';
-import { AdminDto, UserDto } from '@/models/dtos/user.dto';
+import { ForgotPasswordDto, LoginOTPDto, ResetPasswordDto } from '@/models/dtos/login.dto';
+import { User } from '@/models/interfaces/users.interface';
 import UserService from '@/services/user.service';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
 import AuthService from '@services/auth.service';
@@ -11,7 +11,7 @@ class AuthController {
 
   public register = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userData:AdminDto = req.body;
+      const userData:User = req.body;
       const userResponse = await this.userService.addAdmin(userData);
       AppResponseHelper.sendSuccess(res, 'Success', userResponse);
     }

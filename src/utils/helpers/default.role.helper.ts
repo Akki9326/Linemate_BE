@@ -1,8 +1,8 @@
 import { UserType } from "@/models/enums/user-types.enum";
 
 const userTypeDefaultRoles = {
-    "Company admin": [1],
-    "Support user": [2],
+    "CompanyAdmin": [1],
+    "SupportUser": [2],
     "User": [3],
 };
 

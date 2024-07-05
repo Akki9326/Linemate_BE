@@ -12,6 +12,7 @@ import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.
 import DB from '@databases';
 import { Op } from 'sequelize';
 import { TenantService } from './tenant.service';
+import { User } from '@/models/interfaces/users.interface';
 
 
 class UserService {
@@ -29,7 +30,7 @@ class UserService {
       await Email.sendEmail(userData.email, emailSubject, emailBody);
     }));
   }
-  public async addAdmin(userData: any) {
+  public async addAdmin(userData: User) {
     let user = await this.users.findOne({
       where: {
         [Op.and]: [
@@ -53,8 +54,8 @@ class UserService {
     user.mobileNumber = userData.mobileNumber
     user.isTemporaryPassword = false
     user.password = PasswordHelper.hashPassword(userData.password);
-    user.userType = UserType['Chief admin']
-    console.log('userData', userData)
+    user.userType = UserType['ChiefAdmin']
+    user.countryCode = userData.countryCode
     user = await user.save()
     return user.id;
   }
@@ -100,10 +101,10 @@ class UserService {
     if (user) {
       throw new BadRequestException(AppMessages.existedUser)
     }
-    if (userData.userType === UserType['Chief admin']) {
+    if (userData.userType === UserType['ChiefAdmin']) {
       const existingAdmin = await this.users.findAll({
         where: {
-          userType: UserType['Chief admin']
+          userType: UserType['ChiefAdmin']
         }
       });
       if (existingAdmin.length > parseInt(MAX_CHIEF)) {
@@ -123,14 +124,14 @@ class UserService {
     user.isTemporaryPassword = true
     user.createdBy = createdUser.id.toString()
     user.password = PasswordHelper.hashPassword(temporaryPassword)
-    user.tenantIds = userData.userType !== UserType['Chief admin'] ? userData.tenantIds : []
+    user.tenantIds = userData.userType !== UserType['ChiefAdmin'] ? userData.tenantIds : []
     user.userType = userData.userType
     user.countryCode = userData.countyCode
     //  TODO: Add variable fields
     //  TODO: Send Email with password
     user = await user.save()
     this.mapUserTypeToRole(user.dataValues?.userType, user.id);
-    if(userData.userType !== UserType['Chief admin']){
+    if(userData.userType !== UserType['ChiefAdmin']){
       this.sendAccountActivationEmail(user, temporaryPassword, createdUser)
     }
     return { id: user.id };
@@ -207,7 +208,7 @@ class UserService {
       sortDirection = pageModel.sortOrder || 'ASC';
     const offset = (page - 1) * limit;
     const condition = {}
-    if (user.userType !== UserType['Chief admin']) {
+    if (user.userType !== UserType['ChiefAdmin']) {
       condition['createdBy'] = user.id
     }
     const userList = await this.users.findAndCountAll({

@@ -5,7 +5,6 @@ import { UserModel } from "@/models/db/users.model";
 import { RoleDto, RoleListRequestDto } from "@/models/dtos/role.dto";
 import { UserType } from "@/models/enums/user-types.enum";
 import { JwtTokenData } from "@/models/interfaces/jwt.user.interface";
-import { User } from "@/models/interfaces/users.interface";
 import { RoleMessage, TenantMessage } from "@/utils/helpers/app-message.helper";
 import { Op } from "sequelize";
 
@@ -16,7 +15,7 @@ export class RoleService {
   constructor() { }
 
   async add(roleDetails: RoleDto, user: JwtTokenData): Promise<number> {
-    if(user.userType === UserType["Company admin"]){
+    if(user.userType === UserType["CompanyAdmin"]){
       if(!roleDetails.tenantId){
         throw new BadRequestException(TenantMessage.requiredTenant);
       }
