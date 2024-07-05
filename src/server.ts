@@ -19,10 +19,11 @@ import RoleRoute from './routes/role.route';
 import PermissionRoute from './routes/permissions.route';
 import UserRoute from './routes/user.route';
 import TenantRoute from "./routes/tenant.route"
+import CountryRoute from './routes/country.route';
 
 validateEnv();
 
-const app = new App([new IndexRoute(), new AuthRoute(), new UserTypeRoute(),  new PermissionRoute(), new RoleRoute(),new UserRoute(),new TenantRoute()]);
+const app = new App([new IndexRoute(), new AuthRoute(), new UserTypeRoute(), new PermissionRoute(), new RoleRoute(), new UserRoute(), new TenantRoute(), new CountryRoute()]);
 
 app.init();
 
