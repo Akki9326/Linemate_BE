@@ -5,7 +5,7 @@ import { UserModel } from "@/models/db/users.model";
 import { RoleDto, RoleListRequestDto } from "@/models/dtos/role.dto";
 import { UserType } from "@/models/enums/user-types.enum";
 import { User } from "@/models/interfaces/users.interface";
-import { roleMessage } from "@/utils/helpers/app-message.helper";
+import { roleMessage, TenantMessage } from "@/utils/helpers/app-message.helper";
 import { Op } from "sequelize";
 
 export class RoleService {
@@ -15,13 +15,18 @@ export class RoleService {
   constructor() { }
 
   async add(roleDetails: RoleDto, user: User): Promise<number> {
+    if(user.userType === UserType["Company admin"]){
+      if(!roleDetails.tenantId){
+        throw new BadRequestException(TenantMessage.requiredTenant);
+      }
+    }
     const role = new this.role({
       name: roleDetails.name,
       type: roleDetails.type,
       description: roleDetails.description,
       permissionsIds: roleDetails.permissionIds,
       userIds: roleDetails.userIds,
-      tenantId: user.userType === UserType["Tenant Admin"] ? user.id : null,
+      tenantId: roleDetails.tenantId,
       createdBy: user.id.toString()
     });
     await role.save();
