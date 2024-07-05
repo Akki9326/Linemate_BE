@@ -24,5 +24,6 @@ export const {
   DB_LIQUIBASE_PATH,
   TOKEN_EXPIRY,
   OTP_EXPIRY,
-  MAX_CHIEF
+  MAX_CHIEF,
+  FRONTEND_URL
 } = process.env;

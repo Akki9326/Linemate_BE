@@ -1,4 +1,4 @@
-import { MAX_CHIEF } from '@/config';
+import { FRONTEND_URL, MAX_CHIEF } from '@/config';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { ListRequestDto } from '@/models/dtos/list-request.dto';
 import { UserDto } from '@/models/dtos/user.dto';
@@ -10,6 +10,8 @@ import DB from '@databases';
 import { Op } from 'sequelize';
 import { TenantService } from './tenant.service';
 import { AppMessages, roleMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
+import { Email } from '@/utils/services/email';
+import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.transaction';
 
 
 class UserService {
@@ -18,6 +20,14 @@ class UserService {
   private tenantService = new TenantService();
 
   constructor() {
+  }
+  public async sendAccountActivationEmail(userData, temporaryPassword: string, createdUser: User) {
+    await Promise.all(userData.tenantIds.map(async (tenantId) => {
+      const tenantDetail = await this.tenantService.one(tenantId);
+      const emailSubject = await EmailSubjects.accountActivationSubject(tenantDetail.name);
+      const emailBody = EmailTemplates.accountActivationEmail(tenantDetail.name, userData.firstName, createdUser.firstName, userData.email, temporaryPassword, FRONTEND_URL);
+      await Email.sendEmail(userData.email, emailSubject, emailBody);
+    }));
   }
   public async addAdmin(userData: any) {
     let user = await this.users.findOne({
@@ -73,7 +83,7 @@ class UserService {
       await role.save();
     }));
   }
-  public async add(userData: UserDto, userId: number) {
+  public async add(userData: UserDto, createdUser: User) {
     let user = await this.users.findOne({
       where: {
         [Op.and]: [
@@ -111,14 +121,18 @@ class UserService {
     user.email = userData.email
     user.mobileNumber = userData.mobileNumber
     user.isTemporaryPassword = true
-    user.createdBy = userId.toString()
+    user.createdBy = createdUser.id.toString()
     user.password = PasswordHelper.hashPassword(temporaryPassword)
     user.tenantIds = userData.userType !== UserType['Chief admin'] ? userData.tenantIds : []
     user.userType = userData.userType
+    user.countryCode = userData.countyCode
     //  TODO: Add variable fields
     //  TODO: Send Email with password
     user = await user.save()
     this.mapUserTypeToRole(user.dataValues?.userType, user.id);
+    if(userData.userType !== UserType['Chief admin']){
+      this.sendAccountActivationEmail(user, temporaryPassword, createdUser)
+    }
     return { id: user.id };
   }
   public async one(userId: number) {
@@ -127,7 +141,7 @@ class UserService {
         id: userId,
         isDeleted: false
       },
-      attributes: ['id', 'firstName', 'lastName', 'email', 'mobileNumber', 'tenantIds', 'isTemporaryPassword', 'userType']
+      attributes: ['id', 'firstName', 'lastName', 'email', 'mobileNumber', 'tenantIds', 'isTemporaryPassword', 'userType', 'countryCode']
     });
     const tenantDetails = await this.findMultipleTenant(user.tenantIds);
     if (!user) {
@@ -138,7 +152,7 @@ class UserService {
   public async update(userData: UserDto, userId: number) {
     const existingUser = await this.users.findOne({
       where: {
-        id: { [Op.not]: userId }, 
+        id: { [Op.not]: userId },
         [Op.or]: [
           { email: userData.email },
           { mobileNumber: userData.mobileNumber }
@@ -167,6 +181,7 @@ class UserService {
     user.email = userData.email
     user.mobileNumber = userData.mobileNumber
     user.tenantIds = userData.tenantIds
+    user.countryCode = userData.countyCode
     await user.save()
     return { id: user.id };
   }

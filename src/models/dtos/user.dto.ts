@@ -16,11 +16,14 @@ export class UserDto {
 
   @IsMobilePhone()
   public mobileNumber: string;
-
+  
 
   @IsArray()
   @IsOptional()
   public tenantIds: number[];
+
+  @IsString()
+  public countyCode: string;
 }
 
 export class AdminDto {

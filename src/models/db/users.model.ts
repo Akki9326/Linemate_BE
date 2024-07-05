@@ -18,6 +18,7 @@ export class UserModel extends AppDBModel {
   public userType: UserType;
   public isLocked: boolean;
   public isTemporaryPassword: boolean;
+  public countryCode: string;
 
 
 
@@ -86,6 +87,10 @@ export default function (sequelize: Sequelize): typeof UserModel {
       isTemporaryPassword: {
         type: DataTypes.BOOLEAN,
         defaultValue: true
+      },
+      countryCode: {
+        type: DataTypes.STRING,
+        allowNull: false
       }
     },
     {

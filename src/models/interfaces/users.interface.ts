@@ -10,5 +10,6 @@ export interface User {
   userType: UserType;
   mobileNumber: string;
   failedLoginAttempts: number;
+  countryCode: string;
   tenantIds: string[];
 }

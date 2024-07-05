@@ -11,8 +11,8 @@ class UserController {
   public add = async (req: Request & { user: User }, res: Response, next: NextFunction) => {
     try {
       const userData: UserDto = req.body;
-      const userId= req.user.id
-      const userResponse = await this.userService.add(userData,userId);
+      const user= req.user
+      const userResponse = await this.userService.add(userData,user);
       AppResponseHelper.sendSuccess(res, 'Success', userResponse);
     }
     catch (ex) {

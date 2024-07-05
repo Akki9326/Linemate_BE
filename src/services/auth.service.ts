@@ -15,6 +15,9 @@ import { TokenTypes } from '@/models/enums/tokenType';
 import { AppMessages } from '@/utils/helpers/app-message.helper';
 import { TenantService } from './tenant.service';
 import { AppPermission } from '@/models/enums/app-access.enum';
+import { User } from '@/models/interfaces/users.interface';
+import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.transaction';
+import { Email } from '@/utils/services/email';
 
 
 export default class AuthService {
@@ -81,8 +84,10 @@ export default class AuthService {
 
     return { expiresIn, token: JWT.sign(tokenRawData, secretKey, { expiresIn }) };
   }
-  private async triggerLoginOTPs(userId: number, token: string) {
-    // Implement logic to send OTP via email
+  private async triggerLoginOTPs(user, otp: string) {
+    const emailSubject = await EmailSubjects.resetPasswordEmailSubject;
+    const emailBody = EmailTemplates.resetPasswordEmail(user.firstName, user.email, otp);
+    await Email.sendEmail(user.email, emailSubject, emailBody);
   }
   public async loginUser(loginOTPDto: LoginOTPDto): Promise<LoginResponseData> {
     const user = await this.findUserByContactInfo(loginOTPDto.username, true);
@@ -112,7 +117,8 @@ export default class AuthService {
 
     const userToken = this.createToken({
       email: user.email,
-      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
       id: user.id,
       userType: user.userType,
     });
@@ -129,6 +135,7 @@ export default class AuthService {
         mobileNumber: user.mobileNumber,
         firstName: user.firstName,
         lastName: user.lastName,
+        countryCode: user.countryCode,
         tenantIds: tenantDetails,
       },
       token: userToken.token,
@@ -153,7 +160,7 @@ export default class AuthService {
       throw new BadRequestException(AppMessages.invalidUsername);
     }
     await this.saveTokenInDB(user.id, TokenTypes.FORGOT_PASSWORD, otp);
-    await this.triggerLoginOTPs(user.id, otp);
+    await this.triggerLoginOTPs(user, otp);
   }
   public async verifyOtp(otp: string): Promise<{ email: string }> {
     const userToken = await this.userToken.findOne({

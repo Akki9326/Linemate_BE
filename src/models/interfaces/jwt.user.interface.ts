@@ -2,7 +2,8 @@ import { UserType } from '../enums/user-types.enum';
 
 export interface JwtTokenData {
   email: string;
-  username: string;
+  firstName: string;
+  lastName: string;
   id: number;
   userType: UserType;
 }

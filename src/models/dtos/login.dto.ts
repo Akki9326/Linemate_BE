@@ -3,6 +3,9 @@ import { IsString, IsEmail, IsNotEmpty, IsNumberString, IsNumber } from 'class-v
 export class LoginOTPDto {
 
   @IsString()
+  public countryCode: string;
+
+  @IsString()
   public username: string;
 
   @IsString()
