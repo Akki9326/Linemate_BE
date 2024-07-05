@@ -3,15 +3,15 @@ import { BadRequestException } from '@/exceptions/BadRequestException';
 import { ListRequestDto } from '@/models/dtos/list-request.dto';
 import { UserDto } from '@/models/dtos/user.dto';
 import { UserType } from '@/models/enums/user-types.enum';
-import { User } from '@/models/interfaces/users.interface';
+import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
+import { AppMessages, RoleMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
 import { findDefaultRole } from '@/utils/helpers/default.role.helper';
 import { PasswordHelper } from '@/utils/helpers/password.helper';
+import { Email } from '@/utils/services/email';
+import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.transaction';
 import DB from '@databases';
 import { Op } from 'sequelize';
 import { TenantService } from './tenant.service';
-import { AppMessages, roleMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
-import { Email } from '@/utils/services/email';
-import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.transaction';
 
 
 class UserService {
@@ -21,7 +21,7 @@ class UserService {
 
   constructor() {
   }
-  public async sendAccountActivationEmail(userData, temporaryPassword: string, createdUser: User) {
+  public async sendAccountActivationEmail(userData, temporaryPassword: string, createdUser: JwtTokenData) {
     await Promise.all(userData.tenantIds.map(async (tenantId) => {
       const tenantDetail = await this.tenantService.one(tenantId);
       const emailSubject = await EmailSubjects.accountActivationSubject(tenantDetail.name);
@@ -76,14 +76,14 @@ class UserService {
       });
 
       if (!role) {
-        throw new BadRequestException(roleMessage.roleNotFound);
+        throw new BadRequestException(RoleMessage.roleNotFound);
       }
       const updatedUserIds = [...role.userIds, userId];
       role.userIds = updatedUserIds;
       await role.save();
     }));
   }
-  public async add(userData: UserDto, createdUser: User) {
+  public async add(userData: UserDto, createdUser: JwtTokenData) {
     let user = await this.users.findOne({
       where: {
         [Op.and]: [
@@ -149,7 +149,7 @@ class UserService {
     }
     return { ...user.dataValues, tenantDetails };
   }
-  public async update(userData: UserDto, userId: number) {
+  public async update(userData: UserDto, userId: number,updatedBy:number) {
     const existingUser = await this.users.findOne({
       where: {
         id: { [Op.not]: userId },
@@ -182,6 +182,7 @@ class UserService {
     user.mobileNumber = userData.mobileNumber
     user.tenantIds = userData.tenantIds
     user.countryCode = userData.countyCode
+    user.updatedBy = updatedBy.toString()
     await user.save()
     return { id: user.id };
   }
@@ -199,7 +200,7 @@ class UserService {
     await user.save();
     return { id: user.id };
   }
-  public async all(pageModel: ListRequestDto<{}>, user: User) {
+  public async all(pageModel: ListRequestDto<{}>, user: JwtTokenData) {
     let page = pageModel.page || 1,
       limit = pageModel.pageSize || 10,
       orderByField = pageModel.sortField || 'id',

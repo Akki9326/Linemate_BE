@@ -14,7 +14,7 @@ export const AppMessages = {
 
 }
 
-export const roleMessage = {
+export const RoleMessage = {
     roleNotFound: "Role not found"
 }
 export const TenantMessage={

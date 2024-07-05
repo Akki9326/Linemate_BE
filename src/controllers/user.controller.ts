@@ -1,6 +1,6 @@
 import { ListRequestDto } from '@/models/dtos/list-request.dto';
 import { UserDto } from '@/models/dtos/user.dto';
-import { User } from '@/models/interfaces/users.interface';
+import { RequestWithUser } from '@/models/interfaces/auth.interface';
 import UserService from '@/services/user.service';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
 import { NextFunction, Request, Response } from 'express-serve-static-core';
@@ -8,7 +8,7 @@ import { NextFunction, Request, Response } from 'express-serve-static-core';
 class UserController {
   public userService = new UserService();
 
-  public add = async (req: Request & { user: User }, res: Response, next: NextFunction) => {
+  public add = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
       const userData: UserDto = req.body;
       const user= req.user
@@ -19,7 +19,7 @@ class UserController {
       next(ex)
     }
   };
-  public one = async (req: Request & { user: User }, res: Response, next: NextFunction) => {
+  public one = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId= parseInt(req.params.id)
       const userResponse = await this.userService.one(userId);
@@ -29,7 +29,7 @@ class UserController {
       next(ex)
     }
   };
-  public delete = async (req: Request & { user: User }, res: Response, next: NextFunction) => {
+  public delete = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId= parseInt(req.params.id)
       const userResponse = await this.userService.delete(userId);
@@ -39,18 +39,19 @@ class UserController {
       next(ex)
     }
   };
-  public update = async (req: Request & { user: User }, res: Response, next: NextFunction) => {
+  public update = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
       const userId= parseInt(req.params.id)
       const userData: UserDto = req.body;
-      const userResponse = await this.userService.update(userData,userId);
+      const updatedBy= req.user.id
+      const userResponse = await this.userService.update(userData,userId,updatedBy);
       AppResponseHelper.sendSuccess(res, 'Success', userResponse);
     }
     catch (ex) {
       next(ex)
     }
   };
-  public list = async (req: Request & { user: User }, res: Response, next: NextFunction) => {
+  public list = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
        const pageModel = req.body as ListRequestDto<{}>; // Provide the missing type argument
        const user= req.user
