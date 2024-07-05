@@ -202,3 +202,82 @@ INSERT INTO countries (name, isd_code) VALUES ('Vietnam', '+84');
 INSERT INTO countries (name, isd_code) VALUES ('Yemen', '+967');
 INSERT INTO countries (name, isd_code) VALUES ('Zambia', '+260');
 INSERT INTO countries (name, isd_code) VALUES ('Zimbabwe', '+263');
+
+
+-- Create Users Table
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    created_by VARCHAR(100) NOT NULL DEFAULT 'System',
+    updated_by VARCHAR(100),
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    is_deleted BOOLEAN NOT NULL DEFAULT false,    
+    username VARCHAR(100) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    mobile_number VARCHAR(20),
+    tenant_ids INTEGER[],
+    failed_login_attempts INTEGER DEFAULT 0,
+    last_logged_in_at TIMESTAMP,
+    user_type VARCHAR(50),
+    is_locked BOOLEAN DEFAULT false,
+    is_temporary_password BOOLEAN DEFAULT false
+);
+
+-- Example user data
+INSERT INTO users (
+    username, email, password, first_name, last_name, mobile_number,
+    tenant_ids, failed_login_attempts, last_logged_in_at, user_type, is_locked, is_temporary_password
+) VALUES (
+    'Akash', 'akash@codiot', 'Admin@123', 'Akash', 'Akash', '8866104284',
+    ARRAY[]::integer[], 0, NULL, 'Chief Admin', false, false -- Explicit cast to integer[] for tenant_ids
+);
+
+
+-- Create permissions Table
+CREATE TABLE permissions (
+    id SERIAL PRIMARY KEY,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    created_by VARCHAR(100) NOT NULL DEFAULT 'System',
+    updated_by VARCHAR(100),
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    is_deleted BOOLEAN NOT NULL DEFAULT false,
+    name VARCHAR(255) NOT NULL UNIQUE,
+    type VARCHAR(50) NOT NULL CHECK (type IN ('READ', 'WRITE', 'DELETE')), -- Example values, adjust as per your enum
+    parent_id INTEGER,
+    description VARCHAR(255)
+);
+
+-- Example Data Insertion
+INSERT INTO permissions (
+    name, type, parent_id, description
+) VALUES (
+    'Read Permission', 'READ', NULL, 'Allows read access'
+);
+
+
+
+-- Create Role Table
+CREATE TABLE role (
+    id SERIAL PRIMARY KEY,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    created_by VARCHAR(100) NOT NULL DEFAULT 'System',
+    updated_by VARCHAR(100),
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    is_deleted BOOLEAN NOT NULL DEFAULT false,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL CHECK (type IN ('admin', 'user')),
+);
+
+-- Example Data Insertion
+INSERT INTO role (
+    name, description, type
+) VALUES (
+    'Admin Role', 'Admin role description', 'admin'
+);
