@@ -1,3 +1,4 @@
+import CountryModel from '@/models/db/country.model';
 import PermissionModel from '@/models/db/permissions.model';
 import RoleModel from '@/models/db/role.model';
 import TenantModel from '@/models/db/tenant.model';
@@ -32,6 +33,7 @@ const DB = {
   Tenant: TenantModel(sequelizeConnect),
   Permission: PermissionModel(sequelizeConnect),
   Users: UserModel(sequelizeConnect),
+  Country: CountryModel(sequelizeConnect),
   sequelizeConnect, // connection instance (RAW queries)
   Sequelize, // library
 };
