@@ -18,6 +18,7 @@ export interface UserData {
   firstName: string;
   lastName: string;
   tenantIds: number[];
+  countryCode: string;
 }
 
 export class LoginResponseData {

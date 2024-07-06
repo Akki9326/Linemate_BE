@@ -1,4 +1,5 @@
-import { IsString, IsEmail, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
+import { IsString, IsEmail, IsNotEmpty, IsNumber, IsOptional, IsEnum } from 'class-validator';
+import { PermissionType } from '../enums/permissions.enum';
 
 export class PermissionDto {
 
@@ -6,9 +7,9 @@ export class PermissionDto {
   @IsNotEmpty()
   public name: string;
 
-  @IsString()
+  @IsEnum(PermissionType)
   @IsNotEmpty()
-  public type: string;
+  public type: PermissionType;
 
   @IsOptional()
   @IsNumber()

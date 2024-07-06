@@ -1,8 +1,6 @@
 import { PasswordHelper } from '@/utils/helpers/password.helper';
 import { DataTypes, Sequelize } from 'sequelize';
-import { UserType } from '../enums/user-types.enum';
 import { AppDBModel, AppDB_Common_Fields } from './app-db.model';
-import { TenantModel } from './tenant.model';
 
 export class UserPasswordModel extends AppDBModel {
   public id: number;
