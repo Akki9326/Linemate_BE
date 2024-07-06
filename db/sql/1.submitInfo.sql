@@ -207,6 +207,7 @@ INSERT INTO countries (name, isd_code) VALUES ('Zimbabwe', '+263');
 -- Create Users Table
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
+    countryCode VARCHAR(5) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP,
     created_by VARCHAR(100) NOT NULL DEFAULT 'System',
