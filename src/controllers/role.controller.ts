@@ -1,4 +1,5 @@
 import { RoleDto,RoleListRequestDto } from '@/models/dtos/role.dto';
+import { RequestWithUser } from '@/models/interfaces/auth.interface';
 import { User } from '@/models/interfaces/users.interface';
 import { RoleService } from '@/services/role.service';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
@@ -7,10 +8,10 @@ import { NextFunction, Request, Response } from 'express-serve-static-core';
 class RoleController {
   public roleService = new RoleService();
 
-  public add = async (req: Request & { user: User }, res: Response, next: NextFunction) => {
+  public add = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
       const roleDetails: RoleDto = req.body;
-      const user= req.user as User
+      const user= req.user 
       const rolePermission = await this.roleService.add(roleDetails,user);
       AppResponseHelper.sendSuccess(res, 'Success', rolePermission);
     }
@@ -18,11 +19,11 @@ class RoleController {
       next(ex)
     }
   };
-  public update = async (req: Request & { user: User }, res: Response, next: NextFunction) => {
+  public update = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
       const role: RoleDto = req.body;
       const roleId = parseInt(req.params.id)
-      const user= req.user as User
+      const user= req.user 
       const roleResponse = await this.roleService.update(role, roleId,user);
       AppResponseHelper.sendSuccess(res, 'Success', roleResponse);
     }

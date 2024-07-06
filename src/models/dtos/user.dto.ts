@@ -1,33 +1,49 @@
-import { IsString, IsEmail, IsNotEmpty, IsNumber, IsArray, IsMobilePhone, IsOptional } from 'class-validator';
+import { IsArray, IsEmail, IsEnum, IsMobilePhone, IsNumber, IsOptional, IsString } from 'class-validator';
+import { UserType } from '../enums/user-types.enum';
 
 export class UserDto {
 
-  @IsNotEmpty()
-  public username: string;
-
-  @IsNotEmpty()
-  @IsEmail()
-  public email: string;
-
-  @IsNotEmpty()
-  @IsString()
-  public password: string;
-
-  @IsNotEmpty()
-  @IsNumber()
-  public userType: number;
-
-  @IsNotEmpty()
   @IsString()
   public firstName: string;
 
   @IsString()
   public lastName: string;
 
+  @IsEmail()
+  public email: string;
+
+  @IsEnum(UserType)
+  public userType: UserType;
+
   @IsMobilePhone()
   public mobileNumber: string;
+  
 
-  @IsNumber()
+  @IsArray()
   @IsOptional()
-  public tenantId: number;
+  public tenantIds: number[];
+
+  @IsString()
+  public countyCode: string;
 }
+
+export class AdminDto {
+
+  @IsString()
+  public firstName: string;
+
+  @IsString()
+  public lastName: string;
+
+  @IsEmail()
+  public email: string;
+
+    @IsMobilePhone()
+  public mobileNumber: string;  
+
+  @IsString()
+  public password: string;
+
+}
+
+

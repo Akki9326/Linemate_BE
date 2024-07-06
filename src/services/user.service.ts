@@ -1,60 +1,245 @@
+import { FRONTEND_URL, MAX_CHIEF } from '@/config';
 import { BadRequestException } from '@/exceptions/BadRequestException';
+import { ListRequestDto } from '@/models/dtos/list-request.dto';
 import { UserDto } from '@/models/dtos/user.dto';
-
-import { User } from '@/models/interfaces/users.interface';
+import { UserType } from '@/models/enums/user-types.enum';
+import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
+import { AppMessages, RoleMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
+import { findDefaultRole } from '@/utils/helpers/default.role.helper';
 import { PasswordHelper } from '@/utils/helpers/password.helper';
+import { Email } from '@/utils/services/email';
+import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.transaction';
 import DB from '@databases';
-import { isEmpty } from '@utils/util';
 import { Op } from 'sequelize';
+import { TenantService } from './tenant.service';
+import { User } from '@/models/interfaces/users.interface';
 
 
 class UserService {
   private users = DB.Users;
-
+  private role = DB.Roles
+  private tenantService = new TenantService();
 
   constructor() {
   }
-
-  public async findUserByContactInfo(username: string, isActive: boolean) {
-    if (!username) {
-      throw new BadRequestException('Email or Phone Number must be provided');
-    }
-     const user= await this.users.findOne({
+  public async sendAccountActivationEmail(userData, temporaryPassword: string, createdUser: JwtTokenData) {
+    await Promise.all(userData.tenantIds.map(async (tenantId) => {
+      const tenantDetail = await this.tenantService.one(tenantId);
+      const emailSubject = await EmailSubjects.accountActivationSubject(tenantDetail.name);
+      const emailBody = EmailTemplates.accountActivationEmail(tenantDetail.name, userData.firstName, createdUser.firstName, userData.email, temporaryPassword, FRONTEND_URL);
+      await Email.sendEmail(userData.email, emailSubject, emailBody);
+    }));
+  }
+  public async addAdmin(userData: User) {
+    let user = await this.users.findOne({
       where: {
         [Op.and]: [
-          { isActive: isActive },
+          { isDeleted: false },
           {
             [Op.or]: [
-              { email: username },
-              { mobileNumber: username },
+              { email: userData.email },
+              { mobileNumber: userData.mobileNumber },
             ],
           },
         ],
       },
     });
-
-    return user;
-  }
-  public async add(userData: UserDto, createdBy: string = 'System'): Promise<number> {
-    if (isEmpty(userData)) throw new BadRequestException('Invalid Request', userData)
-    const userDetails = await this.users.findOne({
-      where: [
-        {
-          isActive: true,
-          email: userData.email,
-        },
-        {
-          isActive: true,
-          mobileNumber: userData.mobileNumber,
-        },
-      ],
-    });
-    if (userDetails) {
-      throw new BadRequestException(`User with given email or phone number already exists.`);
+    if (user) {
+      throw new BadRequestException(AppMessages.existedUser)
     }
-    userData.password = PasswordHelper.hashPassword(userData.password);
-    const createUserData = await this.users.create({ ...userData, createdBy });
-    return createUserData.id;
+    user = new this.users();
+    user.firstName = userData.firstName
+    user.lastName = userData.lastName
+    user.email = userData.email
+    user.mobileNumber = userData.mobileNumber
+    user.isTemporaryPassword = false
+    user.password = PasswordHelper.hashPassword(userData.password);
+    user.userType = UserType['ChiefAdmin']
+    user.countryCode = userData.countryCode
+    user = await user.save()
+    return user.id;
+  }
+  private async findMultipleTenant(tenantIds: number[]) {
+    let tenantDetails = [];
+    if (tenantIds && tenantIds.length > 0) {
+      tenantDetails = await Promise.all(tenantIds.map(async (tenantId) => {
+        return await this.tenantService.one(tenantId);
+      }));
+    }
+    return tenantDetails
+
+  }
+  private async mapUserTypeToRole(userType: UserType, userId: number) {
+    const defaultRoleIds = await findDefaultRole(userType);
+    await Promise.all(defaultRoleIds.map(async (roleId: number) => {
+      const role = await this.role.findOne({
+        where: { id: roleId, isDeleted: false }
+      });
+
+      if (!role) {
+        throw new BadRequestException(RoleMessage.roleNotFound);
+      }
+      const updatedUserIds = [...role.userIds, userId];
+      role.userIds = updatedUserIds;
+      await role.save();
+    }));
+  }
+  public async add(userData: UserDto, createdUser: JwtTokenData) {
+    let user = await this.users.findOne({
+      where: {
+        [Op.and]: [
+          { isDeleted: false },
+          {
+            [Op.or]: [
+              { email: userData.email },
+              { mobileNumber: userData.mobileNumber },
+            ],
+          },
+        ],
+      },
+    });
+    if (user) {
+      throw new BadRequestException(AppMessages.existedUser)
+    }
+    if (userData.userType === UserType['ChiefAdmin']) {
+      const existingAdmin = await this.users.findAll({
+        where: {
+          userType: UserType['ChiefAdmin']
+        }
+      });
+      if (existingAdmin.length > parseInt(MAX_CHIEF)) {
+        throw new BadRequestException(AppMessages.maxAdmin)
+      }
+    } else {
+      if (!userData.tenantIds || !userData.tenantIds.length) {
+        throw new BadRequestException(TenantMessage.requiredTenant)
+      }
+    }
+    const temporaryPassword = PasswordHelper.generateTemporaryPassword()
+    user = new this.users();
+    user.firstName = userData.firstName
+    user.lastName = userData.lastName
+    user.email = userData.email
+    user.mobileNumber = userData.mobileNumber
+    user.isTemporaryPassword = true
+    user.createdBy = createdUser.id.toString()
+    user.password = PasswordHelper.hashPassword(temporaryPassword)
+    user.tenantIds = userData.userType !== UserType['ChiefAdmin'] ? userData.tenantIds : []
+    user.userType = userData.userType
+    user.countryCode = userData.countyCode
+    //  TODO: Add variable fields
+    //  TODO: Send Email with password
+    user = await user.save()
+    this.mapUserTypeToRole(user.dataValues?.userType, user.id);
+    if(userData.userType !== UserType['ChiefAdmin']){
+      this.sendAccountActivationEmail(user, temporaryPassword, createdUser)
+    }
+    return { id: user.id };
+  }
+  public async one(userId: number) {
+    const user = await this.users.findOne({
+      where: {
+        id: userId,
+        isDeleted: false
+      },
+      attributes: ['id', 'firstName', 'lastName', 'email', 'mobileNumber', 'tenantIds', 'isTemporaryPassword', 'userType', 'countryCode']
+    });
+    const tenantDetails = await this.findMultipleTenant(user.tenantIds);
+    if (!user) {
+      throw new BadRequestException(AppMessages.userNotFound)
+    }
+    return { ...user.dataValues, tenantDetails };
+  }
+  public async update(userData: UserDto, userId: number,updatedBy:number) {
+    const existingUser = await this.users.findOne({
+      where: {
+        id: { [Op.not]: userId },
+        [Op.or]: [
+          { email: userData.email },
+          { mobileNumber: userData.mobileNumber }
+        ],
+        isDeleted: false,
+      },
+    });
+
+    if (existingUser) {
+      throw new BadRequestException(`Email or mobile number already in use`);
+    }
+    const user = await this.users.findOne({
+      where: {
+        id: userId,
+        isDeleted: false
+      },
+    });
+    if (!user) {
+      throw new BadRequestException(AppMessages.userNotFound)
+    }
+    if (!user.tenantIds || !user.tenantIds.length) {
+      throw new BadRequestException(TenantMessage.requiredTenant)
+    }
+    user.firstName = userData.firstName
+    user.lastName = userData.lastName
+    user.email = userData.email
+    user.mobileNumber = userData.mobileNumber
+    user.tenantIds = userData.tenantIds
+    user.countryCode = userData.countyCode
+    user.updatedBy = updatedBy.toString()
+    await user.save()
+    return { id: user.id };
+  }
+  public async delete(userId: number) {
+    const user = await this.users.findOne({
+      where: {
+        id: userId,
+        isDeleted: false,
+      },
+    });
+    if (!user) {
+      throw new BadRequestException(AppMessages.userNotFound);
+    }
+    user.isDeleted = true;
+    await user.save();
+    return { id: user.id };
+  }
+  public async all(pageModel: ListRequestDto<{}>, user: JwtTokenData) {
+    let page = pageModel.page || 1,
+      limit = pageModel.pageSize || 10,
+      orderByField = pageModel.sortField || 'id',
+      sortDirection = pageModel.sortOrder || 'ASC';
+    const offset = (page - 1) * limit;
+    const condition = {}
+    if (user.userType !== UserType['ChiefAdmin']) {
+      condition['createdBy'] = user.id
+    }
+    const userList = await this.users.findAndCountAll({
+      where: { isDeleted: false, ...condition },
+      offset,
+      limit,
+      attributes: [
+        'id',
+        'firstName',
+        'lastName',
+        'email',
+        'userType',
+        'mobileNumber',
+        'createdAt',
+        'tenantIds',
+      ],
+      order: [[orderByField, sortDirection]],
+    });
+    if (userList.count) {
+      const userRows = await Promise.all(
+        userList.rows.map(async (user) => {
+          const tenantDetails = await this.findMultipleTenant(user.tenantIds);
+          return {
+            ...user.dataValues,
+            tenantDetails,
+          };
+        })
+      );
+      userList.rows = userRows;
+    }
+    return userList;
   }
 }
 

@@ -13,6 +13,10 @@ import { Op } from 'sequelize';
 import { RoleService } from './role.service';
 import { TokenTypes } from '@/models/enums/tokenType';
 import { AppMessages } from '@/utils/helpers/app-message.helper';
+import { TenantService } from './tenant.service';
+import { AppPermission } from '@/models/enums/app-access.enum';
+import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.transaction';
+import { Email } from '@/utils/services/email';
 
 
 export default class AuthService {
@@ -20,6 +24,7 @@ export default class AuthService {
   private userToken = DB.UserToken;
   private userPasswordModel = DB.UserPassword;
   private roleService = new RoleService();
+  private tenantService = new TenantService();
 
   constructor() { }
 
@@ -30,7 +35,7 @@ export default class AuthService {
     const user = await this.users.findOne({
       where: {
         [Op.and]: [
-          { isActive: isActive,isLocked: false,isDeleted:false},
+          { isActive: isActive, isLocked: false, isDeleted: false },
           {
             [Op.or]: [
               { email: username },
@@ -78,8 +83,10 @@ export default class AuthService {
 
     return { expiresIn, token: JWT.sign(tokenRawData, secretKey, { expiresIn }) };
   }
-  private async triggerLoginOTPs(userId:number, token: string) {
-    // Implement logic to send OTP via email
+  private async triggerLoginOTPs(user, otp: string) {
+    const emailSubject = await EmailSubjects.resetPasswordEmailSubject;
+    const emailBody = EmailTemplates.resetPasswordEmail(user.firstName, user.email, otp);
+    await Email.sendEmail(user.email, emailSubject, emailBody);
   }
   public async loginUser(loginOTPDto: LoginOTPDto): Promise<LoginResponseData> {
     const user = await this.findUserByContactInfo(loginOTPDto.username, true);
@@ -109,33 +116,38 @@ export default class AuthService {
 
     const userToken = this.createToken({
       email: user.email,
-      username: user.username,
+      firstName: user.firstName,
+      lastName: user.lastName,
       id: user.id,
       userType: user.userType,
     });
+    let tenantDetails = [];
+    if (user.tenantIds && user.tenantIds.length > 0) {
+      tenantDetails = await Promise.all(user.tenantIds.map(async (tenantId) => {
+        return await this.tenantService.one(tenantId);
+      }));
+    }
     const loginResponse: LoginResponseData = {
       userData: {
-        access: await this.roleService.getAccessByRoleIds(user.id),
+        access: await this.roleService.getAccessByRoleIds(user.id) as AppPermission[],
         email: user.email,
         mobileNumber: user.mobileNumber,
         firstName: user.firstName,
         lastName: user.lastName,
-        tenantIds: user?.tenantIds,
+        countryCode: user.countryCode,
+        tenantIds: tenantDetails,
       },
       token: userToken.token,
     };
 
     await this.updateSuccessfulLogin(user);
-
-    // TODO: Add tenant after tenant Apis ready
-
     return loginResponse;
   }
-  private async incrementFailedLoginAttempts(user:any): Promise<void> {
+  private async incrementFailedLoginAttempts(user: any): Promise<void> {
     user.failedLoginAttempts += 1;
     await user.save();
   }
-  private async updateSuccessfulLogin(user:any): Promise<void> {
+  private async updateSuccessfulLogin(user: any): Promise<void> {
     user.lastLoggedInAt = new Date();
     user.failedLoginAttempts = 0;
     await user.save();
@@ -147,7 +159,7 @@ export default class AuthService {
       throw new BadRequestException(AppMessages.invalidUsername);
     }
     await this.saveTokenInDB(user.id, TokenTypes.FORGOT_PASSWORD, otp);
-    await this.triggerLoginOTPs(user.id, otp);
+    await this.triggerLoginOTPs(user, otp);
   }
   public async verifyOtp(otp: string): Promise<{ email: string }> {
     const userToken = await this.userToken.findOne({
@@ -160,7 +172,7 @@ export default class AuthService {
     if (!userToken || userToken.expiresAt < new Date()) {
       throw new BadRequestException(AppMessages.expiredOtp);
     }
-    const userDetails = await this.users.findOne({ where: { id: userToken.userId ,isActive:true,isDeleted:false} });
+    const userDetails = await this.users.findOne({ where: { id: userToken.userId, isActive: true, isDeleted: false } });
     if (!userDetails) {
       throw new BadRequestException(AppMessages.userNotFound);
 
@@ -183,7 +195,7 @@ export default class AuthService {
     }
 
     const user = await this.users.findOne({
-      where: { id: userToken.userId,isActive:true,isDeleted:false }
+      where: { id: userToken.userId, isActive: true, isDeleted: false }
     });
     if (!user) {
       throw new BadRequestException(AppMessages.userNotFound);

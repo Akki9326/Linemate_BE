@@ -40,18 +40,12 @@ export default function (sequelize: Sequelize): typeof RoleModel {
       permissionsIds: {
         type: DataTypes.ARRAY(DataTypes.INTEGER),
         allowNull: false,
-        references: {
-          model: 'permissions',
-          key: 'id',
-        },
+        defaultValue:[]
       },
       userIds: {
         type: DataTypes.ARRAY(DataTypes.INTEGER),
-        allowNull: true,
-        references: {
-          model: 'users',
-          key: 'id',
-        },
+        allowNull: false,
+        defaultValue:[]
       },
       tenantId: {
         type: DataTypes.INTEGER,
