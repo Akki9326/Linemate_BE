@@ -5,185 +5,605 @@ info:
 host: localhost:3000
 schemes:
 - http
+
+securityDefinitions:
+  BearerAuth:
+    type: apiKey
+    name: Authorization
+    in: header
+    description: 'Enter your token with "Bearer " prefix. Example: **Bearer <token>**'
+
 paths:
-  /create_usertype:
-    get:
+  /user-type/v1/add:
+    post:
       summary: Create UserType
+      tags:
+        - UserType
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              type:
+                type: string
+                example: Super Admin
+              role:
+                type: string
+                example: 1
       responses:
         '200':
-          description: Successful response
+          description: Success
+
   /permission/v1/add:
     post:
       summary: Create Permission
+      tags:
+        - Permission
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                example: user.write
+              type:
+                type: string
+                example: platform1
+              description:
+                type: string
+                example: user can add and edit user
       responses:
         '200':
-          description: Successful response
-      parameters:
-      - name: body
-        in: body
-        required: true
-        schema:
-          type: object
-          example:
-            name: can create cohort
-            type: tenant
-            description: user can create cohort
-  /permission/v1/1:
-    put:
-      summary: update Permission
-      responses:
-        '200':
-          description: Successful response
-      parameters:
-      - name: body
-        in: body
-        required: true
-        schema:
-          type: object
-          example:
-            name: can create  login
-            type: tenant
-            description: user can login
+          description: Success
+
+  /permission/v1/{id}:
     get:
-      summary: Permission getBy Id
+      summary: Get Permission by Id
+      tags:
+        - Permission
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
       responses:
         '200':
-          description: Successful response
+          description: Success
+    put:
+      summary: Update Permission
+      tags:
+        - Permission
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                example: user.view
+              type:
+                type: string
+                example: platform
+              description:
+                type: string
+                example: user can view user
+      responses:
+        '200':
+          description: Success
     delete:
-      summary: Permission Delete
+      summary: Delete Permission
+      tags:
+        - Permission
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
       responses:
         '200':
-          description: Successful response
+          description: Success
+
   /permission/v1/list:
     post:
-      summary: Permission List
+      summary: List Permissions
+      tags:
+        - Permission
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              page:
+                type: integer
+                example: 1
+              limit:
+                type: integer
+                example: 10
+              sortField:
+                type: string
+                example: id
+              sortOrder:
+                type: string
+                example: ASC
       responses:
         '200':
-          description: Successful response
-      parameters:
-      - name: body
-        in: body
-        required: true
-        schema:
-          type: object
-          example:
-            page: 1
-            limit: 10
-            sortField: id
-            sortOrder: ASC
+          description: Success
+
   /role/v1/add:
     post:
       summary: Create Role
+      tags:
+        - Role
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                example: Access Portal
+              type:
+                type: string
+                example: custom
+              description:
+                type: string
+                example: have access portal
+              permissionIds:
+                type: array
+                items:
+                  type: integer
+                example: []
+              userIds:
+                type: array
+                items:
+                  type: integer
+                example: []
+              tenantId:
+                type: integer
+                example: 1
       responses:
         '200':
-          description: Successful response
-      parameters:
-      - name: body
-        in: body
-        required: true
-        schema:
-          type: object
-          example:
-            name: compmay Admin
-            type: stander
-            description: have all access
-            permissionId:
-            - 1
-            - 2
-            - 3
-            - 4
-            userId: []
-  /role/v1/1:
-    put:
-      summary: update Roles
-      responses:
-        '200':
-          description: Successful response
-      parameters:
-      - name: body
-        in: body
-        required: true
-        schema:
-          type: object
-          example:
-            name: chief Admin
-            type: stander
-            description: have all access
-            permissionId:
-            - 1
-            - 2
-            - 3
-            - 4
-            - 5
-            userId:
-            - 1
-  /role/v1/2:
+          description: Success
+
+  /role/v1/{id}:
     get:
-      summary: Role getBy  Id
+      summary: Get Role by Id
+      tags:
+        - Role
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
       responses:
         '200':
-          description: Successful response
+          description: Success
+    put:
+      summary: Update Role
+      tags:
+        - Role
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                example: Access Portal
+              type:
+                type: string
+                example: custom
+              description:
+                type: string
+                example: have access portal
+              permissionIds:
+                type: array
+                items:
+                  type: integer
+                example: []
+              userIds:
+                type: array
+                items:
+                  type: integer
+                example: []
+              tenantId:
+                type: integer
+                example: 1
+      responses:
+        '200':
+          description: Success
     delete:
-      summary: Role Delete
+      summary: Delete Role
+      tags:
+        - Role
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
       responses:
         '200':
-          description: Successful response
+          description: Success
+
   /role/v1/list:
     post:
-      summary: Role List
+      summary: List Roles
+      tags:
+        - Role
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              page:
+                type: integer
+                example: 1
+              limit:
+                type: integer
+                example: 10
+              sortField:
+                type: string
+                example: id
+              sortOrder:
+                type: string
+                example: ASC
       responses:
         '200':
-          description: Successful response
-      parameters:
-      - name: body
-        in: body
-        required: true
-        schema:
-          type: object
-          example:
-            page: 1
-            limit: 10
-            sortField: id
-            sortOrder: ASC
-  /auth/v1/register:
-    post:
-      summary: register
-      responses:
-        '200':
-          description: Successful response
-      parameters:
-      - name: body
-        in: body
-        required: true
-        schema:
-          type: object
-          example:
-            username: Jone Doe
-            firstName: Jone
-            lastName: Doe
-            email: jone.doe@gail.com
-            mobileNumber: '9898787878'
-            userType: 1
-            password: '123456'
+          description: Success
   /auth/v1/login:
     post:
       summary: Login User
-      responses:
-        '200':
-          description: Successful response
+      tags:
+        - Auth
       parameters:
-      - name: body
-        in: body
-        required: true
-        schema:
-          type: object
-          example:
-            username: jone.doe@gail.com
-            password: '123456'
-  /create_user:
-    get:
-      summary: Create User
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              username:
+                type: string
+                example: akash@codiot.com
+              password:
+                type: string
+                example: qwe@123
+              countryCode:
+                type: string
+                example: +91
       responses:
         '200':
-          description: Successful response
-definitions: {}
+          description: Success
+
+  /auth/v1/forgot-password:
+    post:
+      summary: Forgot Password
+      tags:
+        - Auth
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              username:
+                type: string
+                example: akash@codiot.com
+      responses:
+        '200':
+          description: Success
+
+  /auth/v1/verify-otp:
+    post:
+      summary: Verify OTP
+      tags:
+        - Auth
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              otp:
+                type: string
+                example: 336119
+      responses:
+        '200':
+          description: Success
+
+  /auth/v1/reset-password:
+    post:
+      summary: Reset Password
+      tags:
+        - Auth
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              otp:
+                type: string
+                example: 336119
+              password:
+                type: string
+                example: qwe@123
+      responses:
+        '200':
+          description: Success
+
+  /user/v1/add:
+    post:
+      summary: Create User
+      tags:
+        - User
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              firstName:
+                type: string
+                example: Nikunj
+              lastName:
+                type: string
+                example: Dhaduk
+              email:
+                type: string
+                example: nikunj.dhaduk33@gmail.com
+              countyCode:
+                type: string
+                example: +91
+              mobileNumber:
+                type: string
+                example: 9912226316
+              userType:
+                type: string
+                example: Company Admin
+              tenantIds:
+                type: array
+                items:
+                  type: integer
+                example: [1]
+      responses:
+        '200':
+          description: Success
+
+  /user/v1/{id}:
+    get:
+      summary: Get User by Id
+      tags:
+        - User
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Success
+    put:
+      summary: Update User
+      tags:
+        - User
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              firstName:
+                type: string
+                example: Nikunj
+              lastName:
+                type: string
+                example: Dhaduk
+              email:
+                type: string
+                example: nikunj.dhaduk1@gmail.com
+              mobileNumber:
+                type: string
+                example: 9912123291
+              userType:
+                type: string
+                example: Company Admin
+              countyCode:
+                type: string
+                example: +91
+              tenantIds:
+                type: array
+                items:
+                  type: integer
+                example: [1]
+      responses:
+        '200':
+          description: Success
+    delete:
+      summary: Delete User
+      tags:
+        - User
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Success
+
+  /user/v1/list:
+    post:
+      summary: List Users
+      tags:
+        - User
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              page:
+                type: integer
+                example: 1
+              limit:
+                type: integer
+                example: 10
+              sortField:
+                type: string
+                example: id
+              sortOrder:
+                type: string
+                example: ASC
+      responses:
+        '200':
+          description: Success
+
+  /tenant/v1/add:
+    post:
+      summary: Create Tenant
+      tags:
+        - Tenant
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                example: Test1
+              companyType:
+                type: string
+                example: partnership
+              trademark:
+                type: string
+                example: admin@gmail.com
+              phoneNumber:
+                type: integer
+                example: 1234567890
+              gstNumber:
+                type: string
+                example: 123456780
+              currencyCode:
+                type: string
+                example: INR
+              isdCode:
+                type: integer
+                example: 91
+              clientType:
+                type: string
+                example: Test
+              authorisedFirstName:
+                type: string
+                example: test
+              authorisedLastName:
+                type: string
+                example: tcd
+              authorisedEmail:
+                type: string
+                example: cdcd
+              authorisedMobileNo:
+                type: integer
+                example: 1234567890
+              companyAddress:
+                type: string
+                example: cdcd
+              companyCountry:
+                type: string
+                example: cdcd
+              companyState:
+                type: string
+                example: cdcad
+              companyCity:
+                type: string
+                example: cdcd
+              companyPinCode:
+                type: integer
+                example: 395006
+              whitelistedIps:
+                type: string
+                example: cdc
+      responses:
+        '200':
+          description: Success
+
+tags:
+  - name: UserType
+    description: Endpoints for creating and managing user types.
+  - name: Permission
+    description: Endpoints for creating and managing permissions.
+  - name: Role
+    description: Endpoints for creating and managing roles.
+  - name: Auth
+    description: Endpoints for user authentication.
+  - name: User
+    description: Endpoints for managing users.
+  - name: Tenant
+    description: Endpoints for creating and managing tenants.
