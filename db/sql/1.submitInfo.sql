@@ -32,16 +32,17 @@ CREATE TABLE users (
     last_logged_in_at TIMESTAMP,
     user_type VARCHAR(50),
     is_locked BOOLEAN DEFAULT false,
-    is_temporary_password BOOLEAN DEFAULT false
+    is_temporary_password BOOLEAN DEFAULT false,
+    countryCode VARCHAR(50)
 );
 
 -- Insert user data with bcrypt hashed password
 INSERT INTO users (
     username, email, password, first_name, last_name, mobile_number,
-    tenant_ids, failed_login_attempts, last_logged_in_at, user_type, is_locked, is_temporary_password
+    tenant_ids, failed_login_attempts, last_logged_in_at, user_type, is_locked, is_temporary_password, countryCode
 ) VALUES (
     'Akash', 'akash@codiot', crypt('Admin@123', gen_salt('bf')), 'Akash', 'Akash', '8866104284',
-    ARRAY[]::integer[], 0, NULL, 'Chief Admin', false, false
+    ARRAY[]::integer[], 0, NULL, 'Chief Admin', false, false, '+91'
 );
 
 

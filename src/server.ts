@@ -22,7 +22,7 @@ import CountryRoute from './routes/country.route';
 
 validateEnv();
 
-const app = new App([new IndexRoute(), new AuthRoute(), new UserTypeRoute(), new PermissionRoute(), new RoleRoute(), new UserRoute(), new TenantRoute(), new CountryRoute()]);
+const app = new App([new IndexRoute(), new AuthRoute(), new PermissionRoute(), new RoleRoute(), new UserRoute(), new TenantRoute(), new CountryRoute()]);
 
 app.init();
 
