@@ -24,22 +24,22 @@ CREATE TABLE users (
     username VARCHAR(100) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    first_name VARCHAR(100),
-    last_name VARCHAR(100),
-    mobile_number VARCHAR(20),
-    tenant_ids INTEGER[],
-    failed_login_attempts INTEGER DEFAULT 0,
-    last_logged_in_at TIMESTAMP,
-    user_type VARCHAR(50),
-    is_locked BOOLEAN DEFAULT false,
-    is_temporary_password BOOLEAN DEFAULT false,
+    "firstName" VARCHAR(100),
+    "lastName" VARCHAR(100),
+    "mobileNumber" VARCHAR(20),
+    "tenantIds" INTEGER[],
+    "failedLoginAttempts" INTEGER DEFAULT 0,
+    "lastLoggedInAt" TIMESTAMP,
+    "userType" VARCHAR(50),
+    "isLocked" BOOLEAN DEFAULT false,
+    "isTemporaryPassword" BOOLEAN DEFAULT false,
     "countryCode" VARCHAR(50)
 );
 
 -- Insert user data with bcrypt hashed password
 INSERT INTO users (
-    username, email, password, first_name, last_name, mobile_number,
-    tenant_ids, failed_login_attempts, last_logged_in_at, user_type, is_locked, is_temporary_password, countryCode
+    username, email, password, "firstName", "lastName", "mobileNumber",
+    "tenantIds", "failedLoginAttempts", "lastLoggedInAt", "userType", "isLocked", "isTemporaryPassword", "countryCode"
 ) VALUES (
     'Akash', 'akash@codiot', crypt('Admin@123', gen_salt('bf')), 'Akash', 'Akash', '8866104284',
     ARRAY[]::integer[], 0, NULL, 'Chief Admin', false, false, '+91'
@@ -58,13 +58,13 @@ CREATE TABLE permissions (
     "isDeleted" BOOLEAN NOT NULL DEFAULT false,
     name VARCHAR(255) NOT NULL UNIQUE,
     type VARCHAR(50) NOT NULL CHECK (type IN ('READ', 'WRITE', 'DELETE')), 
-    parent_id INTEGER,
+    parentId INTEGER,
     description VARCHAR(255)
 );
 
 -- Example Data Insertion
 INSERT INTO permissions (
-    name, type, parent_id, description
+    name, type, parentId, description
 ) VALUES (
     'Read Permission', 'READ', NULL, 'Allows read access'
 );
@@ -82,14 +82,14 @@ CREATE TABLE role (
     name VARCHAR(100) NOT NULL,
     description VARCHAR(255) NOT NULL,
     type VARCHAR(50) NOT NULL CHECK (type IN ('Super Admin', 'Tenant Admin', 'User', 'Chief Admin')), 
-    permissions_ids INTEGER[],
-    user_ids INTEGER[],
-    tenant_id INTEGER
+    "permissionsIds" INTEGER[],
+    "userIds" INTEGER[],
+    "tenantId" INTEGER
 );
 
 -- Example Data Insertion
 INSERT INTO role (
-    name, description, type, permissions_ids, user_ids
+    name, description, type, "permissionsIds", "userIds"
 ) VALUES (
     'Admin Role', 'Admin role description', 'Chief Admin', ARRAY[]::integer[], ARRAY[]::integer[]
 );
