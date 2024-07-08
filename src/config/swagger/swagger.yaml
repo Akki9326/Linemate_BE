@@ -572,6 +572,186 @@ paths:
         '200':
           description: Success
 
+  /tenant/v1/{id}:
+    get:
+      summary: Get Tenant
+      tags:
+        - Tenant
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  companyType:
+                    type: string
+                  trademark:
+                    type: string
+                  phoneNumber:
+                    type: integer
+                  gstNumber:
+                    type: string
+                  currencyCode:
+                    type: string
+                  isdCode:
+                    type: integer
+                  clientType:
+                    type: string
+                  authorisedFirstName:
+                    type: string
+                  authorisedLastName:
+                    type: string
+                  authorisedEmail:
+                    type: string
+                  authorisedMobileNo:
+                    type: integer
+                  companyAddress:
+                    type: string
+                  companyCountry:
+                    type: string
+                  companyState:
+                    type: string
+                  companyCity:
+                    type: string
+                  companyPinCode:
+                    type: integer
+                  whitelistedIps:
+                    type: string
+        '404':
+          description: Tenant not found
+    put:
+      summary: Update Tenant
+      tags:
+        - Tenant
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                example: Test1
+              companyType:
+                type: string
+                example: partnership
+              trademark:
+                type: string
+                example: admin@gmail.com
+              phoneNumber:
+                type: integer
+                example: 1234567890
+              gstNumber:
+                type: string
+                example: 123456780
+              currencyCode:
+                type: string
+                example: INR
+              isdCode:
+                type: integer
+                example: 91
+              clientType:
+                type: string
+                example: Test
+              authorisedFirstName:
+                type: string
+                example: test
+              authorisedLastName:
+                type: string
+                example: tcd
+              authorisedEmail:
+                type: string
+                example: cdcd
+              authorisedMobileNo:
+                type: integer
+                example: 1234567890
+              companyAddress:
+                type: string
+                example: cdcd
+              companyCountry:
+                type: string
+                example: cdcd
+              companyState:
+                type: string
+                example: cdcad
+              companyCity:
+                type: string
+                example: cdcd
+              companyPinCode:
+                type: integer
+                example: 395006
+              whitelistedIps:
+                type: string
+                example: cdc
+      responses:
+        '200':
+          description: Success
+    delete:
+      summary: Delete Tenant
+      tags:
+        - Tenant
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Success
+        '404':
+          description: Tenant Not Found
+
+  /tenant/v1/list:
+    post:
+      summary: List Tenant
+      tags:
+        - Tenant
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              page:
+                type: integer
+                example: 1
+              limit:
+                type: integer
+                example: 10
+              sortField:
+                type: string
+                example: id
+              sortOrder:
+                type: string
+                example: ASC
+      responses:
+        '200':
+          description: Success
+
 tags:
   - name: Permission
     description: Endpoints for creating and managing permissions.
