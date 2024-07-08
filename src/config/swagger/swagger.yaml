@@ -14,28 +14,6 @@ securityDefinitions:
     description: 'Enter your token with "Bearer " prefix. Example: **Bearer <token>**'
 
 paths:
-  /user-type/v1/add:
-    post:
-      summary: Create UserType
-      tags:
-        - UserType
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              type:
-                type: string
-                example: Super Admin
-              role:
-                type: string
-                example: 1
-      responses:
-        '200':
-          description: Success
-
   /permission/v1/add:
     post:
       summary: Create Permission
@@ -595,8 +573,6 @@ paths:
           description: Success
 
 tags:
-  - name: UserType
-    description: Endpoints for creating and managing user types.
   - name: Permission
     description: Endpoints for creating and managing permissions.
   - name: Role
