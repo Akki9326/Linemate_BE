@@ -1,4 +1,5 @@
 import { ListRequestDto } from '@/models/dtos/list-request.dto';
+import { UpdatePasswordDto } from '@/models/dtos/update-password.dto';
 import { UserDto } from '@/models/dtos/user.dto';
 import { RequestWithUser } from '@/models/interfaces/auth.interface';
 import UserService from '@/services/user.service';
@@ -56,6 +57,27 @@ class UserController {
        const pageModel = req.body as ListRequestDto<{}>; // Provide the missing type argument
        const user= req.user
      const userResponse = await this.userService.all(pageModel,user);
+      AppResponseHelper.sendSuccess(res, 'Success', userResponse);
+    }
+    catch (ex) {
+      next(ex)
+    }
+  };
+  public deActiveUser = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId= parseInt(req.params.id)
+      const userResponse = await this.userService.deActive(userId);
+      AppResponseHelper.sendSuccess(res, 'Success', userResponse);
+    }
+    catch (ex) {
+      next(ex)
+    }
+  };
+  public changePassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId= parseInt(req.params.id)
+      const changePassWordDTO = req.body as UpdatePasswordDto
+      const userResponse = await this.userService.changePassword(userId,changePassWordDTO);
       AppResponseHelper.sendSuccess(res, 'Success', userResponse);
     }
     catch (ex) {

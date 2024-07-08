@@ -11,6 +11,7 @@ export const AppMessages = {
     passwordReused: 'New password cannot be the same as the last 5 passwords.',
     existedUser: 'User already exists',
     maxAdmin: 'Max admin allowed for admin users.',
+    wrongOldPassword: 'Old password not valid.',
 
 }
 

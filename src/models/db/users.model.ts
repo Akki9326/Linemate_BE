@@ -18,6 +18,8 @@ export class UserModel extends AppDBModel {
   public isLocked: boolean;
   public isTemporaryPassword: boolean;
   public countryCode: string;
+  public employeeId: string;
+  public profilePhoto: string;
 
 
 
@@ -90,6 +92,14 @@ export default function (sequelize: Sequelize): typeof UserModel {
       countryCode: {
         type: DataTypes.STRING,
         allowNull: false
+      },
+      employeeId:{
+        type: DataTypes.STRING(26),
+        allowNull: true
+      },
+      profilePhoto:{
+        type: DataTypes.STRING(255),
+        allowNull: true
       }
     },
     {

@@ -8,6 +8,8 @@ export interface User {
   lastName: string;
   lastLoggedInAt: Date;
   userType: UserType;
+  profilePhoto?: string;
+  employeeId?: string;
   mobileNumber: string;
   failedLoginAttempts: number;
   countryCode: string;

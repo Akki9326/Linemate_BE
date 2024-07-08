@@ -1,9 +1,11 @@
 import { FRONTEND_URL, MAX_CHIEF } from '@/config';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { ListRequestDto } from '@/models/dtos/list-request.dto';
+import { UpdatePasswordDto } from '@/models/dtos/update-password.dto';
 import { UserDto } from '@/models/dtos/user.dto';
 import { UserType } from '@/models/enums/user-types.enum';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
+import { User } from '@/models/interfaces/users.interface';
 import { AppMessages, RoleMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
 import { findDefaultRole } from '@/utils/helpers/default.role.helper';
 import { PasswordHelper } from '@/utils/helpers/password.helper';
@@ -12,7 +14,6 @@ import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.
 import DB from '@databases';
 import { Op } from 'sequelize';
 import { TenantService } from './tenant.service';
-import { User } from '@/models/interfaces/users.interface';
 
 
 class UserService {
@@ -127,6 +128,8 @@ class UserService {
     user.tenantIds = userData.userType !== UserType['ChiefAdmin'] ? userData.tenantIds : []
     user.userType = userData.userType
     user.countryCode = userData.countyCode
+    user.employeeId = userData?.employeeId 
+    user.profilePhoto = userData?.profilePhoto
     //  TODO: Add variable fields
     //  TODO: Send Email with password
     user = await user.save()
@@ -142,7 +145,7 @@ class UserService {
         id: userId,
         isDeleted: false
       },
-      attributes: ['id', 'firstName', 'lastName', 'email', 'mobileNumber', 'tenantIds', 'isTemporaryPassword', 'userType', 'countryCode']
+      attributes: ['id', 'firstName', 'lastName', 'email', 'mobileNumber', 'tenantIds', 'isTemporaryPassword', 'userType', 'countryCode','employeeId','profilePhoto']
     });
     const tenantDetails = await this.findMultipleTenant(user.tenantIds);
     if (!user) {
@@ -183,6 +186,8 @@ class UserService {
     user.mobileNumber = userData.mobileNumber
     user.tenantIds = userData.tenantIds
     user.countryCode = userData.countyCode
+    user.employeeId = userData.employeeId
+    user.profilePhoto = userData.profilePhoto
     user.updatedBy = updatedBy.toString()
     await user.save()
     return { id: user.id };
@@ -207,12 +212,22 @@ class UserService {
       orderByField = pageModel.sortField || 'id',
       sortDirection = pageModel.sortOrder || 'ASC';
     const offset = (page - 1) * limit;
-    const condition = {}
+    const condition = {
+      isDeleted: false,
+      isActive: true
+    }
     if (user.userType !== UserType['ChiefAdmin']) {
       condition['createdBy'] = user.id
     }
+   if (pageModel.filter) {
+    condition['isActive'] = pageModel.filter.isActive;
+    if (pageModel.filter.tenantId) {
+      condition['tenantIds'] = { [Op.contains]: [pageModel.filter.tenantId] };
+    }
+  }
+    console.log('condition', condition)
     const userList = await this.users.findAndCountAll({
-      where: { isDeleted: false, ...condition },
+      where: condition ,
       offset,
       limit,
       attributes: [
@@ -224,6 +239,9 @@ class UserService {
         'mobileNumber',
         'createdAt',
         'tenantIds',
+        'employeeId',
+        'profilePhoto'
+
       ],
       order: [[orderByField, sortDirection]],
     });
@@ -241,6 +259,40 @@ class UserService {
     }
     return userList;
   }
+  public async deActive(userId: number) {
+    const user = await this.users.findOne({
+      where: {
+        id: userId,
+        isDeleted: false,
+      },
+    });
+    if (!user) {
+      throw new BadRequestException(AppMessages.userNotFound);
+    }
+    user.isActive = false;
+    await user.save();
+    return { id: user.id };
+  }
+  public async changePassword(userId: number,updatePassword:UpdatePasswordDto) {
+    const user = await this.users.findOne({
+      where: {
+        id: userId,
+        isDeleted: false,
+      },
+    });
+    if (!user) {
+      throw new BadRequestException(AppMessages.userNotFound);
+    }
+    if (PasswordHelper.validatePassword(updatePassword.oldPassword,user.password)) {
+      user.password = PasswordHelper.hashPassword(updatePassword.newPassword);
+      await user.save()
+    }else{
+      throw new BadRequestException(AppMessages.wrongOldPassword);
+      }
+    await user.save();
+    return { id: user.id };
+  }
+  
 }
 
 export default UserService;
