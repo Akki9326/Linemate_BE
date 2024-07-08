@@ -9,8 +9,9 @@ const errorMiddleware = (error: HttpException | Error, req: Request, res: Respon
     const commonErrorMessage = 'Something went wrong'
     const status = error.status || HttpStatusCode.SERVER_ERROR;
     let message = error.message || commonErrorMessage
+    let data  = error.data || null
     if (error instanceof HttpException) {
-      logger.error(`[${req.method}] ${req.path} >> StatusCode:: ${status}, Message:: ${message}. Location: ${JSON.stringify(error.stack)}`);
+      logger.error(`[${req.method}] ${req.path} >> StatusCode:: ${status}, Message:: ${message}${data ? `, Data:: ${JSON.stringify(data)}` : ''}${error && error.stack ? `, Location: ${JSON.stringify(error.stack)}` : ''}`);
     } else {
       message = commonErrorMessage
       logger.error(`[${req.method}] ${req.path} >> StatusCode:: ${status}, Message:: ${JSON.stringify(error)}. Location: ${JSON.stringify(error.stack)}`);
