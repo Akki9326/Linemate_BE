@@ -15,12 +15,12 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 -- Create Users Table
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updatedAt TIMESTAMP,
-    createdBy VARCHAR(100) NOT NULL DEFAULT 'System',
-    updatedBy VARCHAR(100),
-    isActive BOOLEAN NOT NULL DEFAULT true,
-    isDeleted BOOLEAN NOT NULL DEFAULT false,    
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP,
+    "createdBy" VARCHAR(100) NOT NULL DEFAULT 'System',
+    "updatedBy" VARCHAR(100),
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "isDeleted" BOOLEAN NOT NULL DEFAULT false,    
     username VARCHAR(100) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
@@ -33,7 +33,7 @@ CREATE TABLE users (
     user_type VARCHAR(50),
     is_locked BOOLEAN DEFAULT false,
     is_temporary_password BOOLEAN DEFAULT false,
-    countryCode VARCHAR(50)
+    "countryCode" VARCHAR(50)
 );
 
 -- Insert user data with bcrypt hashed password
@@ -50,12 +50,12 @@ INSERT INTO users (
 -- Create permissions Table
 CREATE TABLE permissions (
     id SERIAL PRIMARY KEY,
-    createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updatedAt TIMESTAMP,
-    createdBy VARCHAR(100) NOT NULL DEFAULT 'System',
-    updatedBy VARCHAR(100),
-    isActive BOOLEAN NOT NULL DEFAULT true,
-    isDeleted BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP,
+    "createdBy" VARCHAR(100) NOT NULL DEFAULT 'System',
+    "updatedBy" VARCHAR(100),
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
     name VARCHAR(255) NOT NULL UNIQUE,
     type VARCHAR(50) NOT NULL CHECK (type IN ('READ', 'WRITE', 'DELETE')), 
     parent_id INTEGER,
@@ -73,15 +73,15 @@ INSERT INTO permissions (
 -- -- Create Role Table
 CREATE TABLE role (
     id SERIAL PRIMARY KEY,
-    createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updatedAt TIMESTAMP,
-    createdBy VARCHAR(100) NOT NULL DEFAULT 'System',
-    updatedBy VARCHAR(100),
-    isActive BOOLEAN NOT NULL DEFAULT true,
-    isDeleted BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP,
+    "createdBy" VARCHAR(100) NOT NULL DEFAULT 'System',
+    "updatedBy" VARCHAR(100),
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
     name VARCHAR(100) NOT NULL,
     description VARCHAR(255) NOT NULL,
-    type VARCHAR(50) NOT NULL CHECK (type IN ('Super Admin', 'Tenant Admin', 'User', 'ChiefAdmin')), 
+    type VARCHAR(50) NOT NULL CHECK (type IN ('Super Admin', 'Tenant Admin', 'User', 'Chief Admin')), 
     permissions_ids INTEGER[],
     user_ids INTEGER[],
     tenant_id INTEGER
@@ -91,18 +91,18 @@ CREATE TABLE role (
 INSERT INTO role (
     name, description, type, permissions_ids, user_ids
 ) VALUES (
-    'Admin Role', 'Admin role description', 'ChiefAdmin', ARRAY[]::integer[], ARRAY[]::integer[]
+    'Admin Role', 'Admin role description', 'Chief Admin', ARRAY[]::integer[], ARRAY[]::integer[]
 );
 
 
 CREATE TABLE userType (
     id SERIAL PRIMARY KEY,
-    createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updatedAt TIMESTAMP,
-    createdBy VARCHAR(100) NOT NULL DEFAULT 'System',
-    updatedBy VARCHAR(100),
-    isActive BOOLEAN NOT NULL DEFAULT true,
-    isDeleted BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP,
+    "createdBy" VARCHAR(100) NOT NULL DEFAULT 'System',
+    "updatedBy" VARCHAR(100),
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "isDeleted" BOOLEAN NOT NULL DEFAULT false,
     type VARCHAR(100) NOT NULL,
     roleId INTEGER
 );
