@@ -1,11 +1,11 @@
 import { LiquibaseConfig, Liquibase, POSTGRESQL_DEFAULT_CONFIG } from 'liquibase';
-import { DB_DATABASE, DB_HOST, DB_LIQUIBASE_PATH, DB_PASSWORD, DB_PORT, DB_USER, } from '..';
+import { DB_DATABASE, DB_HOST, DB_LIQUIBASE_PATH, DB_PASSWORD, DB_PORT, DB_USER } from '..';
 import { logger } from '@/utils/services/logger';
 
 export class AppLiquibase {
   static myConfig: LiquibaseConfig = {
     ...POSTGRESQL_DEFAULT_CONFIG,
-    liquibase: DB_LIQUIBASE_PATH,
+    liquibase: './db/sql/1.submitInfo.sql',
     url: `jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_DATABASE}`,
     username: DB_USER,
     password: DB_PASSWORD,
@@ -17,7 +17,7 @@ export class AppLiquibase {
   static async initialize() {
     try {
       this.liquibaseInstance = new Liquibase(this.myConfig);
-      this.liquibaseInstance.update({});
+      await this.liquibaseInstance.update({});
     } catch (err: any) {
       logger.error(err.message);
     }

@@ -15,12 +15,12 @@ export const sequelizeConnect = new Sequelize.Sequelize(DB_DATABASE, DB_USER, DB
   port: parseInt(DB_PORT),
   database: DB_DATABASE,
   timezone: '+05:30',
-  // dialectOptions: {
-  //   ssl: {
-  //     require: true,
-  //     rejectUnauthorized: false,
-  //   },
-  // },
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false,
+    },
+  },
   benchmark: false,
 });
 
