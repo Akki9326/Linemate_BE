@@ -4,8 +4,8 @@ import { UserModel } from "@/models/db/users.model";
 
 import { RoleDto, RoleListRequestDto } from "@/models/dtos/role.dto";
 import { UserType } from "@/models/enums/user-types.enum";
-import { User } from "@/models/interfaces/users.interface";
-import { roleMessage } from "@/utils/helpers/app-message.helper";
+import { JwtTokenData } from "@/models/interfaces/jwt.user.interface";
+import { RoleMessage, TenantMessage } from "@/utils/helpers/app-message.helper";
 import { Op } from "sequelize";
 
 export class RoleService {
@@ -14,27 +14,32 @@ export class RoleService {
 
   constructor() { }
 
-  async add(roleDetails: RoleDto, user: User): Promise<number> {
+  async add(roleDetails: RoleDto, user: JwtTokenData): Promise<number> {
+    if(user.userType === UserType["CompanyAdmin"]){
+      if(!roleDetails.tenantId){
+        throw new BadRequestException(TenantMessage.requiredTenant);
+      }
+    }
     const role = new this.role({
       name: roleDetails.name,
       type: roleDetails.type,
       description: roleDetails.description,
       permissionsIds: roleDetails.permissionIds,
       userIds: roleDetails.userIds,
-      tenantId: user.userType === UserType["Tenant Admin"] ? user.id : null,
+      tenantId: roleDetails.tenantId,
       createdBy: user.id.toString()
     });
     await role.save();
     return role.id;
   }
 
-  public async update(roleDetails: RoleDto, roleId: number, user: User): Promise<number> {
+  public async update(roleDetails: RoleDto, roleId: number, user: JwtTokenData): Promise<number> {
     const role = await this.role.findOne({
       where: { isDeleted: false, id: roleId }
     });
 
     if (!role) {
-      throw new BadRequestException(roleMessage.roleNotFound);
+      throw new BadRequestException(RoleMessage.roleNotFound);
     }
     role.set({
       name: roleDetails.name,
@@ -66,13 +71,15 @@ export class RoleService {
     }));
 
     if (!rolesResult) {
-      throw new BadRequestException(roleMessage.roleNotFound);
+      throw new BadRequestException(RoleMessage.roleNotFound);
     }
 
     return {
       name: rolesResult.dataValues.name,
       description: rolesResult.description,
-      permission: rolesWithPermission
+      permission: rolesWithPermission,
+      userIds:rolesResult.userIds,
+      type:rolesResult.type,
     };
   }
 
@@ -110,7 +117,7 @@ export class RoleService {
     });
 
     if (!role) {
-      throw new BadRequestException(roleMessage.roleNotFound);
+      throw new BadRequestException(RoleMessage.roleNotFound);
     }
 
     role.set({

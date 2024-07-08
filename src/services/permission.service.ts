@@ -4,22 +4,24 @@ import { PermissionListRequestDto } from '@/models/dtos/permissions-list.dto';
 
 class PermissionServices {
   private permissionModel = DB.Permission;
-  public async add(permission: PermissionDto): Promise<number> {
+  public async add(permission: PermissionDto,userId:number): Promise<number> {
     const permissionDetails = await this.permissionModel.create({
       name: permission.name,
       type: permission.type,
       parentId: permission.parentId,
       description: permission.description,
+      createdBy:userId
     });
     return permissionDetails.id;
   }
-public async update(permission: PermissionDto, permissionId: number): Promise<number> {
+public async update(permission: PermissionDto, permissionId: number,userId:number): Promise<number> {
   const [numberOfAffectedRows] = await this.permissionModel.update(
     {
       name: permission.name,
       type: permission.type,
       parentId: permission.parentId,
       description: permission.description,
+      updatedBy:userId
     },
     {
       where: { id: permissionId },

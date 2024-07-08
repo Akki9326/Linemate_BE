@@ -4,7 +4,6 @@ import RoleModel from '@/models/db/role.model';
 import TenantModel from '@/models/db/tenant.model';
 import UserPasswordModel from '@/models/db/userPassword.model';
 import UserTokenModel from '@/models/db/userToken.model';
-import UserTypeModel from '@/models/db/userType.model';
 import UserModel from '@/models/db/users.model';
 import { DB_DATABASE, DB_HOST, DB_PASSWORD, DB_PORT, DB_USER } from '@config';
 import Sequelize from 'sequelize';
@@ -28,7 +27,6 @@ sequelizeConnect.authenticate();
 
 const DB = {
 
-  UserType: UserTypeModel(sequelizeConnect),
   UserPassword: UserPasswordModel(sequelizeConnect),
   UserToken: UserTokenModel(sequelizeConnect),
   Roles: RoleModel(sequelizeConnect),

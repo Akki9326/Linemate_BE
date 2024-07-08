@@ -2,7 +2,6 @@ import { PasswordHelper } from '@/utils/helpers/password.helper';
 import { DataTypes, Sequelize } from 'sequelize';
 import { UserType } from '../enums/user-types.enum';
 import { AppDBModel, AppDB_Common_Fields } from './app-db.model';
-import { TenantModel } from './tenant.model';
 
 export class UserModel extends AppDBModel {
   public id: number;
@@ -18,8 +17,9 @@ export class UserModel extends AppDBModel {
   public userType: UserType;
   public isLocked: boolean;
   public isTemporaryPassword: boolean;
+  public countryCode: string;
 
-  
+
 
   hashPassword() {
     this.password = PasswordHelper.hashPassword(this.password)
@@ -67,33 +67,29 @@ export default function (sequelize: Sequelize): typeof UserModel {
         type: DataTypes.DATE
       },
       mobileNumber: {
-        allowNull: true,
+        allowNull: false,
         type: DataTypes.STRING,
-         unique: true
+        unique: true
       },
       userType: {
-         type: DataTypes.INTEGER,
+        type: DataTypes.STRING,
         allowNull: true,
-        references: {
-          model: 'userType',
-          key: 'id'
-        }
       },
-        tenantIds: {
+      tenantIds: {
         type: DataTypes.ARRAY(DataTypes.INTEGER),
-        defaultValue:[],
-        references: {
-          model: 'tenant',
-          key: 'id',
-        },
+        defaultValue: [],
       },
       isLocked: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
-      isTemporaryPassword:{
+      isTemporaryPassword: {
         type: DataTypes.BOOLEAN,
         defaultValue: true
+      },
+      countryCode: {
+        type: DataTypes.STRING,
+        allowNull: false
       }
     },
     {
@@ -101,10 +97,6 @@ export default function (sequelize: Sequelize): typeof UserModel {
       sequelize,
     },
   );
-    UserModel.belongsTo(TenantModel, {
-    foreignKey: 'tenantId',
-    as: 'tenant'
-})
 
 
 
