@@ -17,7 +17,6 @@ function validateEnv() {
       LOG_DIR: str(),
       ORIGIN: str(),
       CREDENTIALS: str(),
-      FORGOT_PASSWORD_LINK_EXP: num(),
       SMTP_FROM: str(),
       SMTP_HOST: str(),
       SMTP_PASS: str(),
