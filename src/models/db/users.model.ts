@@ -5,7 +5,6 @@ import { AppDBModel, AppDB_Common_Fields } from './app-db.model';
 
 export class UserModel extends AppDBModel {
   public id: number;
-  public username: string;
   public email: string;
   public password: string;
   public firstName: string;

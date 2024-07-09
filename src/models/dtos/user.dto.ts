@@ -18,7 +18,6 @@ export class UserDto {
   @IsMobilePhone()
   public mobileNumber: string;
   
-
   @IsArray()
   @IsOptional()
   public tenantIds: number[];
@@ -33,6 +32,10 @@ export class UserDto {
   @IsString()
   @IsOptional()
   public profilePhoto: string;
+
+  @IsArray()
+  @IsOptional()
+  public tenantVariable: TenantVariables[];
 
 }
 

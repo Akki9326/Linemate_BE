@@ -32,8 +32,8 @@ class UserController {
   };
   public delete = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId= parseInt(req.params.id)
-      const userResponse = await this.userService.delete(userId);
+      const userIds= req.body.userIds as number[]
+      const userResponse = await this.userService.delete(userIds);
       AppResponseHelper.sendSuccess(res, 'Success', userResponse);
     }
     catch (ex) {
@@ -65,8 +65,8 @@ class UserController {
   };
   public deActiveUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId= parseInt(req.params.id)
-      const userResponse = await this.userService.deActive(userId);
+      const userIds= req.body.userIds as number[]
+      const userResponse = await this.userService.deActive(userIds);
       AppResponseHelper.sendSuccess(res, 'Success', userResponse);
     }
     catch (ex) {

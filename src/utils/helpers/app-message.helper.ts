@@ -19,5 +19,13 @@ export const RoleMessage = {
     roleNotFound: "Role not found"
 }
 export const TenantMessage={
-    requiredTenant:"tenantIds is required"
+    requiredTenant:"tenantIds is required",
+    requiredTenantFilter:"tenantId is required in filter"
 }
+export const VariableMessage={
+    variableNotFound:"variable not found",
+    possibleOptionRequired:"option is required"
+}
+export const CommonMessage = {
+    filterIsRequired:"filter is required"
+}   
