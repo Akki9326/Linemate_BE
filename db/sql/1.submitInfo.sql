@@ -21,7 +21,6 @@ CREATE TABLE users (
     "updatedBy" VARCHAR(100),
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "isDeleted" BOOLEAN NOT NULL DEFAULT false,    
-    "username" VARCHAR(100) NOT NULL UNIQUE,
     "email" VARCHAR(255) NOT NULL UNIQUE,
     "password" VARCHAR(255) NOT NULL,
     "firstName" VARCHAR(100),
@@ -40,10 +39,10 @@ CREATE TABLE users (
 
 -- Insert user data with bcrypt hashed password
 INSERT INTO users (
-    "username", "email", "password", "firstName", "lastName", "mobileNumber",
+    "email", "password", "firstName", "lastName", "mobileNumber",
     "tenantIds", "failedLoginAttempts", "lastLoggedInAt", "userType", "isLocked", "isTemporaryPassword", "countryCode"
 ) VALUES (
-    'Akash', 'akash@codiot', crypt('Admin@123', gen_salt('bf')), 'Akash', 'Akash', '8866104284',
+    'akash@codiot', crypt('Admin@123', gen_salt('bf')), 'Akash', 'Akash', '8866104284',
     ARRAY[]::integer[], 0, NULL, 'Chief Admin', false, false, '+91'
 );
 
