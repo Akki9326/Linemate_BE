@@ -5,7 +5,7 @@ import { logger } from '@/utils/services/logger';
 export class AppLiquibase {
   static myConfig: LiquibaseConfig = {
     ...POSTGRESQL_DEFAULT_CONFIG,
-    liquibase: './db/sql/',
+    // liquibase: './db/sql/',
     url: `jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_DATABASE}`,
     username: DB_USER,
     password: DB_PASSWORD,

@@ -3,7 +3,7 @@ import { DataTypes, Sequelize, Model } from 'sequelize';
 export class CountryModel extends Model {
     public id: number;
     public name: string;
-    public isd_code: string;
+    public isdCode: string;
 }
 
 export default function (sequelize: Sequelize): typeof CountryModel {
@@ -19,7 +19,7 @@ export default function (sequelize: Sequelize): typeof CountryModel {
                 type: DataTypes.STRING,
                 unique: true,
             },
-            isd_code: {
+            isdCode: {
                 allowNull: false,
                 type: DataTypes.STRING,
             },

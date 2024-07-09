@@ -1,4 +1,5 @@
 import DB from "@/databases";
+import { BadRequestException } from "@/exceptions/BadRequestException";
 import { NotFoundException } from "@/exceptions/NotFoundException";
 import { TenantDto } from "@/models/dtos/tenant.dto";
 import { SortOrder } from "@/models/enums/sort-order.enum";
@@ -9,6 +10,14 @@ export class TenantService {
   constructor() {
   }
   async add(tenantDetails: TenantDto): Promise<number> {
+    const gstNumber = tenantDetails.gstNumber
+
+    const regex = new RegExp("^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$")
+
+    if (regex.test(gstNumber) == false) {
+      throw new BadRequestException("Invalid Gst Number")
+    }
+
     const tenant = await this.tenantModel.create({
       ...tenantDetails
     });

@@ -13,6 +13,8 @@ export const sequelizeConnect = new Sequelize.Sequelize(DB_DATABASE, DB_USER, DB
   host: DB_HOST,
   port: parseInt(DB_PORT),
   database: DB_DATABASE,
+  username: DB_USER,
+  password: DB_PASSWORD,
   timezone: '+05:30',
   dialectOptions: {
     ssl: {
