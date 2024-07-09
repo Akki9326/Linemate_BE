@@ -1,12 +1,12 @@
 CREATE TABLE countries (
     id SERIAL PRIMARY KEY,
     "name" VARCHAR(255) NOT NULL UNIQUE,
-    "isd_code" VARCHAR(50) NOT NULL
+    "isdCode" VARCHAR(50) NOT NULL
 );
 
 
-INSERT INTO countries ("name", "isd_code") VALUES ('India', '+91');
-INSERT INTO countries ("name", "isd_code") VALUES ('Philippines', '+63');
+INSERT INTO countries ("name", "isdCode") VALUES ('India', '+91');
+INSERT INTO countries ("name", "isdCode") VALUES ('Philippines', '+63');
 
 
 -- Enable the pgcrypto extension if not already enabled

@@ -22,7 +22,7 @@ export class CountryService {
                 ...whereClause,
                 [Op.or]: {
                     name: { [Op.iRegexp]: pageModel.searchTerm },
-                    isd_code: { [Op.iRegexp]: pageModel.searchTerm },
+                    isdCode: { [Op.iRegexp]: pageModel.searchTerm },
                 },
             };
         }
