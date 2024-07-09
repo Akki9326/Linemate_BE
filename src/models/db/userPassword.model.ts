@@ -28,7 +28,6 @@ export default function (sequelize: Sequelize): typeof UserPasswordModel {
       userId: {
         allowNull: false,
         type: DataTypes.STRING,
-        unique: true
       },
       password: {
         allowNull: true,

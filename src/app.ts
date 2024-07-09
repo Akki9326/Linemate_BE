@@ -55,9 +55,9 @@ class App {
   }
 
   private async connectToDatabase() {
-    DB.sequelizeConnect.sync({ force: false });
+    // DB.sequelizeConnect.sync({ force: false });
 
-    // await AppLiquibase.initialize();
+    await AppLiquibase.initialize();
   }
 
   private initializeMiddlewares() {

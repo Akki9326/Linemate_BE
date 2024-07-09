@@ -1,7 +1,6 @@
 import { PermissionListRequestDto } from '@/models/dtos/permissions-list.dto';
 import { PermissionDto } from '@/models/dtos/permissions.dto';
 import { RequestWithUser } from '@/models/interfaces/auth.interface';
-import { User } from '@/models/interfaces/users.interface';
 import PermissionServices from '@/services/permission.service';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
 import { NextFunction, Request, Response } from 'express-serve-static-core';
