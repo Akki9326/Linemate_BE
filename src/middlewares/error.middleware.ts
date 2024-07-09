@@ -4,15 +4,21 @@ import { logger } from '@/utils/services/logger';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
 import { HttpStatusCode } from '@/models/enums/http-status-code.enum';
 
-const errorMiddleware = (error: HttpException, req: Request, res: Response, next: NextFunction) => {
+const errorMiddleware = (error: Error, req: Request, res: Response, next: NextFunction) => {
   try {
-    const status: number = error.status || HttpStatusCode.SERVER_ERROR;
-    const message: string = error.message || 'Something went wrong';
-
-    logger.error(`[${req.method}] ${req.path} >> StatusCode:: ${status}, Message:: ${message}`);
-    AppResponseHelper.sendError(res, status, message, error.data);
-  } catch (error) {
-    next(error);
+    const commonErrorMessage = 'Something went wrong'
+    if (error instanceof HttpException) {
+    const status = error.status || HttpStatusCode.SERVER_ERROR;
+    let message = error.message || commonErrorMessage
+    let data  = error.data || null
+      logger.error(`[${req.method}] ${req.path} >> StatusCode:: ${status}, Message:: ${message}${data ? `, Data:: ${JSON.stringify(data)}` : ''}${error && error.stack ? `, Location: ${JSON.stringify(error.stack)}` : ''}`);
+      AppResponseHelper.sendError(res, status, message, error.data);
+    } else {
+      logger.error(`[${req.method}] ${req.path} >> StatusCode:: ${HttpStatusCode.SERVER_ERROR}, Message:: ${JSON.stringify(error)}. Location: ${JSON.stringify(error.stack)}`);
+      AppResponseHelper.sendError(res, HttpStatusCode.SERVER_ERROR, commonErrorMessage, error.message);
+    }
+  } catch (internalError) {
+    next(internalError);
   }
 };
 

@@ -144,10 +144,10 @@ class UserService {
       },
       attributes: ['id', 'firstName', 'lastName', 'email', 'mobileNumber', 'tenantIds', 'isTemporaryPassword', 'userType', 'countryCode']
     });
-    const tenantDetails = await this.findMultipleTenant(user.tenantIds);
     if (!user) {
       throw new BadRequestException(AppMessages.userNotFound)
     }
+    const tenantDetails = await this.findMultipleTenant(user.tenantIds);
     return { ...user.dataValues, tenantDetails };
   }
   public async update(userData: UserDto, userId: number,updatedBy:number) {

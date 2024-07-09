@@ -65,14 +65,15 @@ export class RoleService {
     const rolesResult = await this.role.findOne({
       where: { id: roleId, isDeleted: false }
     });
-    const rolesWithPermission = await Promise.all(rolesResult.dataValues.permissionsIds.map(async (permissionId: number) => {
-      const permissionData = await this.fetchPermissionDetails(permissionId);
-      return permissionData;
-    }));
 
     if (!rolesResult) {
       throw new BadRequestException(RoleMessage.roleNotFound);
     }
+    
+    const rolesWithPermission = await Promise.all(rolesResult.dataValues.permissionsIds.map(async (permissionId: number) => {
+      const permissionData = await this.fetchPermissionDetails(permissionId);
+      return permissionData;
+    }));
 
     return {
       name: rolesResult.dataValues.name,
