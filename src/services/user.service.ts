@@ -6,7 +6,7 @@ import { UserDto } from '@/models/dtos/user.dto';
 import { UserType } from '@/models/enums/user-types.enum';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { User } from '@/models/interfaces/users.interface';
-import { AppMessages, CommonMessage, RoleMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
+import { AppMessages, CommonMessage, RoleMessage, TenantMessage, VariableMessage } from '@/utils/helpers/app-message.helper';
 import { findDefaultRole } from '@/utils/helpers/default.role.helper';
 import { PasswordHelper } from '@/utils/helpers/password.helper';
 import { Email } from '@/utils/services/email';
@@ -14,6 +14,7 @@ import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.
 import DB from '@databases';
 import { Op, Sequelize } from 'sequelize';
 import { TenantService } from './tenant.service';
+import VariableServices from './variable.service';
 
 
 class UserService {
@@ -23,6 +24,7 @@ class UserService {
   private variableMaster = DB.VariableMaster
   private variableMatrix = DB.VariableMatrix
   private tenantService = new TenantService();
+  private variableServices = new VariableServices();
 
   constructor() {
   }
@@ -83,7 +85,13 @@ class UserService {
         },
         attributes: ['name']
       });
+      if (!tenantDetails) {
+        throw new BadRequestException(TenantMessage.tenantVariableNotFound)
+      }
       const variableMaster = await this.variableMaster.findAll({ where: { isDeleted: false, tenantId: variable.tenantId } });
+      if (!variableMaster.length) {
+        throw new BadRequestException(`Tenant "${tenantDetails.name}" does not have any variable`);
+      }
       const userVariablesMap = new Map(variable.variables.map(item => [item.variableId, item.value]));
       const mandatoryVariables = variableMaster.filter(variable => variable.isMandatory);
       const missingMandatoryVariables = mandatoryVariables.filter(mandatoryVariable => {
@@ -97,13 +105,14 @@ class UserService {
     }
   }
   private async addTenantVariables(tenantVariable: TenantVariables[], userId: number) {
-    tenantVariable.forEach(async (tenantVariable) => {
-      const variableListMatrix = new this.variableMatrix()
-      tenantVariable.variables.forEach(async (variable) => {
-        variableListMatrix.tenantId = tenantVariable.tenantId
+    tenantVariable.forEach(async (tenant) => {
+      tenant.variables.forEach(async (variable) => {
+        const variableListMatrix = new this.variableMatrix()
+        variableListMatrix.tenantId = tenant.tenantId
         variableListMatrix.userId = userId,
           variableListMatrix.variableId = variable.variableId
         variableListMatrix.value = variable.value
+        variableListMatrix.createdBy = userId.toString()
         await variableListMatrix.save()
       }
       )
@@ -126,6 +135,7 @@ class UserService {
           variableListMatrix.variableId = variable.variableId;
         }
         variableListMatrix.value = variable.value;
+        variableListMatrix.updatedBy = userId.toString()
         await variableListMatrix.save();
       }
     }
@@ -174,9 +184,19 @@ class UserService {
     } else {
       if (!userData.tenantIds || !userData.tenantIds.length) {
         throw new BadRequestException(TenantMessage.requiredTenant)
+      } else {
+        const tenantDetails = await this.tenant.findAll({
+          where: {
+            id: {
+              [Op.in]: userData.tenantIds
+            },
+            isDeleted: false
+          }
+        });
+        if (tenantDetails.length !== userData.tenantIds.length) {
+          throw new BadRequestException(TenantMessage.tenantNotFound)
+        }
       }
-    }
-    if (userData.userType === UserType['User']) {
       if (userData.tenantVariable.length) {
         await this.validateTenantVariable(userData.tenantVariable)
       }
@@ -199,13 +219,11 @@ class UserService {
     this.mapUserTypeToRole(user.dataValues?.userType, user.id);
     if (userData.userType !== UserType['ChiefAdmin']) {
       this.sendAccountActivationEmail(user, temporaryPassword, createdUser)
-    }
-    if (userData.userType === UserType['User']) {
       this.addTenantVariables(userData.tenantVariable, user.id)
     }
     return { id: user.id };
   }
-  public async one(userId: number) {
+  public async one(userId: number,tenantId:number) {
     const user = await this.users.findOne({
       where: {
         id: userId,
@@ -217,7 +235,11 @@ class UserService {
       throw new BadRequestException(AppMessages.userNotFound)
     }
     const tenantDetails = await this.findMultipleTenant(user.tenantIds);
-    return { ...user.dataValues, tenantDetails };
+    let tenantVariableDetail = []
+    if(tenantId){
+      tenantVariableDetail = await this.findTenantVariableDetails(userId, tenantId);
+    }
+    return { ...user.dataValues, tenantDetails,tenantVariableDetail };
   }
   public async update(userData: UserDto, userId: number, updatedBy: number) {
     const existingUser = await this.users.findOne({
@@ -243,13 +265,22 @@ class UserService {
     if (!user) {
       throw new BadRequestException(AppMessages.userNotFound)
     }
-    if (!user.tenantIds || !user.tenantIds.length) {
+    if (!userData.tenantIds || !userData.tenantIds.length) {
       throw new BadRequestException(TenantMessage.requiredTenant)
     }
-    if (userData.userType === UserType['User']) {
-      if (userData.tenantVariable.length) {
-        await this.validateTenantVariable(userData.tenantVariable)
+    const tenantDetails = await this.tenant.findAll({
+      where: {
+        id: {
+          [Op.in]: userData.tenantIds
+        },
+        isDeleted: false
       }
+    });
+    if (tenantDetails.length !== userData.tenantIds.length) {
+      throw new BadRequestException(TenantMessage.tenantNotFound)
+    }
+    if (userData.tenantVariable.length) {
+      await this.validateTenantVariable(userData.tenantVariable)
     }
     user.firstName = userData.firstName
     user.lastName = userData.lastName
@@ -261,7 +292,7 @@ class UserService {
     user.profilePhoto = userData.profilePhoto
     user.updatedBy = updatedBy.toString()
     await user.save()
-    if (userData.userType === UserType['User']) {
+    if (userData.userType !== UserType['ChiefAdmin']) {
       this.updateTenantVariables(userData.tenantVariable, user.id)
     }
     return { id: user.id };
@@ -275,7 +306,7 @@ class UserService {
         isDeleted: false,
       },
     });
-    if (!usersToDelete) {
+    if (!usersToDelete.length) {
       throw new BadRequestException(AppMessages.userNotFound);
     }
     for (const user of usersToDelete) {
@@ -284,7 +315,29 @@ class UserService {
     }
     return usersToDelete.map(user => ({ id: user.id }));
   }
-  public async all(pageModel: userListDto, user: JwtTokenData) {
+  private async findTenantVariableDetails(userId: number, tenantId: number) {
+    let allVariable = await this.variableMatrix.findAll({
+      where: {
+        userId,
+        tenantId,
+        isDeleted: false
+      },
+      attributes: ['id', 'variableId', 'value']
+    });
+    if (!allVariable.length) {
+      throw new BadRequestException(VariableMessage.variableNotFound)
+    }
+    const attributes = ['name']
+    const responseList = await Promise.all(allVariable.map(async (item) => {
+      const variableLabelDetails = await this.variableServices.findVariable(item.variableId, attributes)
+      return {
+        ...item.dataValues,
+        variableLabelDetails,
+      };
+    }));
+    return responseList
+  }
+  public async all(pageModel: userListDto, tenantId: number) {
     let page = pageModel.page || 1,
       limit = pageModel.pageSize || 10,
       orderByField = pageModel.sortField || 'id',
@@ -294,20 +347,15 @@ class UserService {
       isDeleted: false,
       isActive: true
     }
-    if (user.userType !== UserType['ChiefAdmin']) {
-      if (pageModel.filter) {
-        condition['isActive'] = pageModel.filter.isActive;
-        if (pageModel.filter.tenantId) {
-          condition['tenantIds'] = {
-            [Op.contains]: Sequelize.cast(Sequelize.literal(`ARRAY[${pageModel.filter.tenantId}]`), 'INTEGER[]')
-          };
-        } else {
-          throw new BadRequestException(TenantMessage.requiredTenantFilter)
-        }
-      } else {
-        throw new BadRequestException(CommonMessage.filterIsRequired)
+    if (pageModel.filter) {
+      condition['isActive'] = pageModel.filter.isActive;
+    }
+    if (tenantId) {
+      condition['tenantIds'] = {
+        [Op.contains]: [tenantId]
       }
     }
+
     const userList = await this.users.findAndCountAll({
       where: condition,
       offset,
@@ -327,12 +375,15 @@ class UserService {
       order: [[orderByField, sortDirection]],
     });
     if (userList.count) {
+      const attributes = ['name']
       const userRows = await Promise.all(
         userList.rows.map(async (user) => {
           const tenantDetails = await this.findMultipleTenant(user.tenantIds);
+         const tenantVariableDetails =await  this.findTenantVariableDetails(user.id, tenantId);
           return {
             ...user.dataValues,
             tenantDetails,
+            tenantVariableDetails
           };
         })
       );
@@ -347,13 +398,14 @@ class UserService {
           [Op.in]: userIds,
         },
         isDeleted: false,
+        isActive: true,
       },
     });
-    if (!usersToDelete) {
+    if (!usersToDelete.length) {
       throw new BadRequestException(AppMessages.userNotFound);
     }
     for (const user of usersToDelete) {
-      user.isActive = true;
+      user.isActive = false;
       await user.save();
     }
     return usersToDelete.map(user => ({ id: user.id }));
@@ -376,6 +428,20 @@ class UserService {
     }
     await user.save();
     return { id: user.id };
+  }
+  public async getVariableDetails(userId: number, tenantId: number) {
+    const user = await this.users.findOne({
+      where: {
+        id: userId,
+        isDeleted: false
+      },
+    });
+    if (!user) {
+      throw new BadRequestException(AppMessages.userNotFound)
+    }
+
+    const responseList = this.findTenantVariableDetails(userId, tenantId);
+    return responseList;
   }
 }
 

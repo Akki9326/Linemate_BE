@@ -13,7 +13,8 @@ class VariableController {
     try {
       const variableData: VariableDto = req.body;
       const user = req.user as JwtTokenData
-      const variableResponse = await this.variableServices.add(variableData, user);
+      const tenantId = req.tenantId as number
+      const variableResponse = await this.variableServices.add(variableData, user,tenantId);
       AppResponseHelper.sendSuccess(res, 'Success', variableResponse);
     }
     catch (ex) {
@@ -25,17 +26,6 @@ class VariableController {
       const variableId = parseInt(req.params.id)
       const variableResponse = await this.variableServices.one(variableId);
       AppResponseHelper.sendSuccess(res, 'Success', variableResponse);
-    }
-    catch (ex) {
-      next(ex)
-    }
-  };
-  public getVariable = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const userId = parseInt(req.params.id)
-      const tenantId = req.body.tenantId as number
-      const userResponse = await this.variableServices.getVariableDetails(userId, tenantId);
-      AppResponseHelper.sendSuccess(res, 'Success', userResponse);
     }
     catch (ex) {
       next(ex)
@@ -55,8 +45,9 @@ class VariableController {
     try {
       const variableId = parseInt(req.params.id)
       const validateData: VariableDto = req.body;
-      const updatedBy = req.user
-      const variableResponse = await this.variableServices.update(validateData, variableId, updatedBy);
+      const updatedBy = req.user as JwtTokenData
+      const tenantId = req.tenantId as number
+      const variableResponse = await this.variableServices.update(validateData, variableId, updatedBy,tenantId);
       AppResponseHelper.sendSuccess(res, 'Success', variableResponse);
     }
     catch (ex) {
@@ -66,7 +57,8 @@ class VariableController {
   public list = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
       const pageModel = req.body as variableListDto;
-      const variableResponse = await this.variableServices.all(pageModel);
+      const tenantId = req.tenantId as number
+      const variableResponse = await this.variableServices.all(pageModel,tenantId);
       AppResponseHelper.sendSuccess(res, 'Success', variableResponse);
     }
     catch (ex) {

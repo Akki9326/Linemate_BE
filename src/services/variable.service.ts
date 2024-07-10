@@ -3,27 +3,24 @@ import { VariableDto } from '@/models/dtos/variable.dto';
 import { variableListDto } from '@/models/dtos/varible-list.dto';
 import { VariableType } from '@/models/enums/variable.enum';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
-import { AppMessages, TenantMessage, VariableMessage } from '@/utils/helpers/app-message.helper';
+import { TenantMessage, VariableMessage } from '@/utils/helpers/app-message.helper';
 import DB from '@databases';
 
 
 class VariableServices {
   private variableMaster = DB.VariableMaster;
-  private variableMatrix = DB.VariableMatrix;
-  private users = DB.Users;
   private tenant = DB.Tenant;
-
   constructor() {
   }
-  public async add(variableData: VariableDto, createdUser: JwtTokenData) {
+  public async add(variableData: VariableDto, createdUser: JwtTokenData, tenantId: number) {
     const tenant = await this.tenant.findOne({
       where: {
-        id: variableData.tenantId,
+        id: tenantId,
         isDeleted: false
       },
     });
     if (!tenant) {
-      throw new BadRequestException(TenantMessage.requiredTenant)
+      throw new BadRequestException(TenantMessage.tenantNotFound)
     }
     if (variableData.type === VariableType.multiSelect || variableData.type === VariableType.singleSelect) {
       if (!variableData.options || variableData.options.length === 0) {
@@ -38,12 +35,12 @@ class VariableServices {
     userVariable.category = variableData.category
     userVariable.createdBy = createdUser.id.toString()
     userVariable.options = variableData.options
-    userVariable.tenantId = variableData.tenantId
+    userVariable.tenantId = tenantId
     userVariable.placeHolder = variableData.placeHolder
     userVariable = await userVariable.save()
     return { id: userVariable.id };
   }
-  private async findVariable(variableId: number, attributes: any[]) {
+  public async findVariable(variableId: number, attributes: any[]) {
     return await this.variableMaster.findOne({ where: { id: variableId, isDeleted: false }, attributes: attributes })
   }
   public async one(variableId: number) {
@@ -55,40 +52,16 @@ class VariableServices {
     }
     return variable;
   }
-  public async getVariableDetails(userId: number, tenantId: number) {
-    const user = await this.users.findOne({
+  public async update(variableData: VariableDto, variableId: number, updatedUser: JwtTokenData, tenantId: number) {
+    const tenant = await this.tenant.findOne({
       where: {
-        id: userId,
+        id: tenantId,
         isDeleted: false
       },
     });
-    if (!user) {
-      throw new BadRequestException(AppMessages.userNotFound)
+    if (!tenant) {
+      throw new BadRequestException(TenantMessage.tenantNotFound)
     }
-    let allVariable = await this.variableMatrix.findAll({
-      where: {
-        userId,
-        tenantId,
-        isDeleted: false
-      },
-      attributes: ['id', 'variableId', 'value']
-    });
-    if (!allVariable.length) {
-      throw new BadRequestException(VariableMessage.variableNotFound)
-    }
-    const attributes = ['name']
-    const responseList = await Promise.all(allVariable.map(async (item) => {
-      const variableDetails = await this.findVariable(item.id, attributes)
-      console.log('variableDetails', variableDetails)
-      return {
-        ...item.dataValues,
-        variableDetails,
-      };
-    }));
-    console.log('responseList', responseList)
-    return responseList;
-  }
-  public async update(variableData: VariableDto, variableId: number, updatedUser: JwtTokenData) {
     const variable = await this.variableMaster.findOne({
       where: {
         id: variableId,
@@ -111,7 +84,7 @@ class VariableServices {
     variable.updatedBy = updatedUser.id.toString()
     variable.options = variableData.options
     variable.placeHolder = variableData.placeHolder
-    variable.tenantId = variableData.tenantId
+    variable.tenantId = tenantId
     await variable.save()
     return { id: variable.id };
   }
@@ -129,15 +102,15 @@ class VariableServices {
     await variable.save();
     return { id: variable.id };
   }
-  public async all(pageModel: variableListDto) {
+  public async all(pageModel: variableListDto, tenantId: number) {
     let page = pageModel.page || 1,
       limit = pageModel.pageSize || 10,
       orderByField = pageModel.sortField || 'id',
       sortDirection = pageModel.sortOrder || 'ASC';
     const offset = (page - 1) * limit;
     const condition = {}
-    if (pageModel.filter.tenantId) {
-      condition['tenantId'] = pageModel.filter.tenantId;
+    if (tenantId) {
+      condition['tenantId'] = tenantId;
     }
     const validateList = await this.variableMaster.findAndCountAll({
       where: { isDeleted: false, ...condition },

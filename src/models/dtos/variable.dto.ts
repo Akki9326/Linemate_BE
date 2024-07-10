@@ -22,9 +22,6 @@ export class VariableDto {
   @IsOptional()
   public options: string[];
 
-  @IsNumber()
-  public tenantId: number;
-
   @IsString()
   @IsOptional()
   public placeHolder: string;

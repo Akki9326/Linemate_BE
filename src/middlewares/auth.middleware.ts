@@ -1,4 +1,6 @@
 import { AppPermission } from '@/models/enums/app-access.enum';
+import { HttpStatusCode } from '@/models/enums/http-status-code.enum';
+import { UserType } from '@/models/enums/user-types.enum';
 import { RequestWithUser } from '@/models/interfaces/auth.interface';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { RoleService } from '@/services/role.service';
@@ -17,17 +19,17 @@ const authMiddleware = async (req: RequestWithUser, res: Response, next: NextFun
       const emailId = verificationResponse.email;
 
       if (!emailId) {
-        next(new HttpException(401, 'Invalid authentication token'));
+        next(new HttpException(HttpStatusCode.UNAUTHORIZED, 'Invalid authentication token'));
       } else {
         req.user = verificationResponse;
         req.userAccess  =  await new RoleService().getAccessByRoleIds(req.user.id) as AppPermission[]
         next();
       }
     } else {
-      next(new HttpException(401, 'Unauthorized access'));
+      next(new HttpException(HttpStatusCode.UNAUTHORIZED, 'Unauthorized access'));
     }
   } catch (error) {
-    next(new HttpException(401, 'Wrong authentication token'));
+    next(new HttpException(HttpStatusCode.UNAUTHORIZED, 'Wrong authentication token'));
   }
 };
 

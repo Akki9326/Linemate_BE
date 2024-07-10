@@ -20,7 +20,9 @@ export const RoleMessage = {
 }
 export const TenantMessage={
     requiredTenant:"tenantIds is required",
-    requiredTenantFilter:"tenantId is required in filter"
+    requiredTenantFilter:"tenantId is required in filter",
+    tenantNotFound: "Tenant not found",
+    tenantVariableNotFound: "Tenant variable not found"
 }
 export const VariableMessage={
     variableNotFound:"variable not found",

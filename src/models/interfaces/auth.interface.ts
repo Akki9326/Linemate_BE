@@ -9,6 +9,7 @@ export interface TokenData {
 
 export interface RequestWithUser extends Request {
   user: JwtTokenData;
+  tenantId: number;
   userAccess: AppPermission[]
 }
 export interface UserData {
