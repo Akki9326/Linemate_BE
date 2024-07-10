@@ -90,7 +90,6 @@ export default class AuthService {
   }
   public async loginUser(loginOTPDto: LoginOTPDto): Promise<LoginResponseData> {
     const user = await this.findUserByContactInfo(loginOTPDto.username, true);
-    console.log('user', user)
     if (!user) {
       throw new BadRequestException(AppMessages.invalidUsername);
     }
