@@ -42,7 +42,7 @@ INSERT INTO users (
     "email", "password", "firstName", "lastName", "mobileNumber",
     "tenantIds", "failedLoginAttempts", "lastLoggedInAt", "userType", "isLocked", "isTemporaryPassword", "countryCode"
 ) VALUES (
-    'akash@codiot', crypt('Admin@123', gen_salt('bf')), 'Akash', 'Akash', '8866104284',
+    'akash@codiot.com', crypt('Admin@123', gen_salt('bf')), 'Akash', 'Akash', '8866104284',
     ARRAY[]::integer[], 0, NULL, 'Chief Admin', false, false, '+91'
 );
 
