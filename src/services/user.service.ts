@@ -265,14 +265,27 @@ class UserService {
       },
       raw: true
     });
+    let userData = []
+    if(data.length){
+     userData =  data.map((user) => {
+        return {
+          'First Name': user.firstName,
+          'Last Name': user.lastName,
+          'Email': user.email,
+          'Mobile Number': user.mobileNumber,
+          'User Type': user.userType,
+          'Country Code': user.countryCode,
+          'Created At': user.createdAt
+        }
+      });
+    }
 
     let wb = XLSX.utils.book_new();
 
-    let ws = XLSX.utils.json_to_sheet(data);
+    let ws = XLSX.utils.json_to_sheet(userData);
 
     XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
 
-    // Write Excel file to a buffer
     let buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
 
     let fileName = `data-${Date.now()}.xlsx`;
@@ -283,11 +296,8 @@ class UserService {
 
     const publicFolderPath = path.join('./public');
 
-    // Save file to public folder
     const filePath = path.join(publicFolderPath, fileName);
     fs.writeFileSync(filePath, buffer);
-
-    // Return download link
     const downloadLink = `http://localhost:3000/${fileName}`;
 
     return downloadLink;
