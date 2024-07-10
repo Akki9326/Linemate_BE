@@ -1,5 +1,4 @@
 import { DataTypes, Sequelize } from 'sequelize';
-import { VariableCategories, VariableType } from '../enums/variable.enum';
 import { AppDBModel, AppDB_Common_Fields } from './app-db.model';
 
 export class UserVariableMatrixModel extends AppDBModel {

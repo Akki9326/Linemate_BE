@@ -22,7 +22,7 @@ class VariableServices {
     if (!tenant) {
       throw new BadRequestException(TenantMessage.tenantNotFound)
     }
-    if (variableData.type === VariableType.multiSelect || variableData.type === VariableType.singleSelect) {
+    if (variableData.type === VariableType.MultiSelect || variableData.type === VariableType.SingleSelect) {
       if (!variableData.options || variableData.options.length === 0) {
         throw new BadRequestException(VariableMessage.possibleOptionRequired)
       }
@@ -71,7 +71,7 @@ class VariableServices {
     if (!variable) {
       throw new BadRequestException(VariableMessage.variableNotFound);
     }
-    if (variableData.type === VariableType.multiSelect || variableData.type === VariableType.singleSelect) {
+    if (variableData.type === VariableType.MultiSelect || variableData.type === VariableType.SingleSelect) {
       if (!variableData.options || variableData.options.length === 0) {
         throw new BadRequestException(VariableMessage.possibleOptionRequired)
       }

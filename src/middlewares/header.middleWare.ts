@@ -8,7 +8,7 @@ const headerMiddleware = async (req: RequestWithUser, res: Response, next: NextF
   try {
     const tenantId = req.header('tenantId') ? req.header('tenantId') : null;
       if(!tenantId) {
-        if(req.user.userType !== UserType['ChiefAdmin']){
+        if(req.user.userType !== UserType.ChiefAdmin){
           next(new HttpException(HttpStatusCode.BAD_REQUEST, 'TenantId is required in header'));
         }else{
            next()
