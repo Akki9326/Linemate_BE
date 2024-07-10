@@ -262,7 +262,8 @@ class UserService {
           [Op.contains]: [tenantId]
         },
         isDeleted: false
-      }
+      },
+      raw: true
     });
 
     let wb = XLSX.utils.book_new();
