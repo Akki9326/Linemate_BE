@@ -96,7 +96,7 @@ INSERT INTO role (
 );
 
 
-CREATE TABLE userType (
+CREATE TABLE "userType" (
     id SERIAL PRIMARY KEY,
     "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP,
@@ -109,7 +109,7 @@ CREATE TABLE userType (
 );
 
 -- Example Data Insertion
-INSERT INTO userType (
+INSERT INTO "userType" (
     type, "roleId"
 ) VALUES (
     'ChiefAdmin', 1
@@ -148,7 +148,7 @@ CREATE TABLE tenant (
 
 
 
-CREATE TABLE usersPasswords (
+CREATE TABLE "usersPasswords" (
     id SERIAL PRIMARY KEY,
     "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP,
@@ -161,7 +161,7 @@ CREATE TABLE usersPasswords (
 );
 
 
-CREATE TABLE userToken (
+CREATE TABLE "userToken" (
     id SERIAL PRIMARY KEY,
     "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP,
