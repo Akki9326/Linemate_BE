@@ -23,6 +23,7 @@ class UserRoute implements Routes {
     this.router.post(`${this.path}/v1/list`, authMiddleware, accessMiddleWare([AppPermission.USER_VIEW]), this.userController.list);
     this.router.get(`${this.path}/v1/:id`, authMiddleware, this.userController.one);
     this.router.delete(`${this.path}/v1/:id`, authMiddleware, this.userController.delete);
+    this.router.post(`${this.path}/v1/download-user/:id`, this.userController.downloadUser)
   }
 }
 

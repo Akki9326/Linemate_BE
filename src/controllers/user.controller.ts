@@ -62,6 +62,16 @@ class UserController {
       next(ex)
     }
   };
+  public downloadUser = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+    try {
+      const tenantId: string = req.params.id
+      const userResponse = await this.userService.downloadUser(tenantId);
+      AppResponseHelper.sendSuccess(res, 'Success', userResponse);
+    }
+    catch (ex) {
+      next(ex)
+    }
+  };
 
 }
 

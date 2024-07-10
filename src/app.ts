@@ -12,6 +12,7 @@ import { AppLiquibase } from './config/liquibase/liquibase.config';
 import { Routes } from './models/interfaces/routes.interface';
 import { CacheService } from './services/cache.service';
 import DB from './databases';
+import path from 'path';
 
 class App {
   public app: express.Application;
@@ -67,6 +68,7 @@ class App {
     this.app.use(hpp());
     //To Add HTTP Security Headers
     this.app.use(helmet());
+   this.app.use(express.static(path.resolve('./public')));
     //
     this.app.use(compression());
     this.app.use(express.json());

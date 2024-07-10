@@ -13,11 +13,15 @@ import DB from '@databases';
 import { Op } from 'sequelize';
 import { TenantService } from './tenant.service';
 import { User } from '@/models/interfaces/users.interface';
+import XLSX from 'xlsx'
+import fs from 'fs'
+import path from 'path'
 
 
 class UserService {
   private users = DB.Users;
   private role = DB.Roles
+  private tenant = DB.Tenant
   private tenantService = new TenantService();
 
   constructor() {
@@ -240,6 +244,53 @@ class UserService {
       userList.rows = userRows;
     }
     return userList;
+  }
+  public async downloadUser(tenantId: string) {
+    const tenantExists = await this.tenant.findOne({
+      where: {
+        id: tenantId
+      }
+    })
+
+    if (!tenantExists) {
+      throw new BadRequestException("Tenant Not Found")
+    }
+
+    let data = await this.users.findAll({
+      where: {
+        tenantIds: {
+          [Op.contains]: [tenantId]
+        },
+        isDeleted: false
+      }
+    });
+
+    let wb = XLSX.utils.book_new();
+
+    let ws = XLSX.utils.json_to_sheet(data);
+
+    XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+
+    // Write Excel file to a buffer
+    let buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+    let fileName = `data-${Date.now()}.xlsx`;
+
+    if (!fs.existsSync("./public")) {
+      fs.mkdirSync("./public");
+    }
+
+    const publicFolderPath = path.join('./public');
+
+    // Save file to public folder
+    const filePath = path.join(publicFolderPath, fileName);
+    fs.writeFileSync(filePath, buffer);
+
+    // Return download link
+    const downloadLink = `http://localhost:3000/${fileName}`;
+
+    return downloadLink;
+
   }
 }
 
