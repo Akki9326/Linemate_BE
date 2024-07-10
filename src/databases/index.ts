@@ -25,6 +25,7 @@ export const sequelizeConnect = new Sequelize.Sequelize(DB_DATABASE, DB_USER, DB
     },
   },
   benchmark: false,
+  logging: false
 });
 
 sequelizeConnect.authenticate();
