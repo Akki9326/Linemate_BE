@@ -24,5 +24,6 @@ export const {
   TOKEN_EXPIRY,
   OTP_EXPIRY,
   MAX_CHIEF,
-  FRONTEND_URL
+  FRONTEND_URL,
+  BACKEND_URL
 } = process.env;

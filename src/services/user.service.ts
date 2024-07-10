@@ -1,4 +1,4 @@
-import { FRONTEND_URL, MAX_CHIEF } from '@/config';
+import { BACKEND_URL, FRONTEND_URL, MAX_CHIEF } from '@/config';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { ListRequestDto } from '@/models/dtos/list-request.dto';
 import { UserDto } from '@/models/dtos/user.dto';
@@ -298,7 +298,7 @@ class UserService {
 
     const filePath = path.join(publicFolderPath, fileName);
     fs.writeFileSync(filePath, buffer);
-    const downloadLink = `http://localhost:3000/${fileName}`;
+    const downloadLink = `${BACKEND_URL}/${fileName}`;
 
     return downloadLink;
 
