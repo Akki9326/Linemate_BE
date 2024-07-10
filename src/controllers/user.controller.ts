@@ -72,6 +72,17 @@ class UserController {
       next(ex)
     }
   };
+  public importUser = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+    try {
+      const tenantId: string = req.params.id
+      const filePath: string = req.file.path
+      const userResponse = await this.userService.importUser(tenantId, filePath);
+      AppResponseHelper.sendSuccess(res, 'Success', userResponse);
+    }
+    catch (ex) {
+      next(ex)
+    }
+  };
 
 }
 

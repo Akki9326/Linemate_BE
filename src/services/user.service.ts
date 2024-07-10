@@ -16,6 +16,7 @@ import { User } from '@/models/interfaces/users.interface';
 import XLSX from 'xlsx'
 import fs from 'fs'
 import path from 'path'
+import excel from "exceljs"
 
 
 class UserService {
@@ -272,7 +273,6 @@ class UserService {
 
     XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
 
-    // Write Excel file to a buffer
     let buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
 
     let fileName = `data-${Date.now()}.xlsx`;
@@ -292,6 +292,42 @@ class UserService {
 
     return downloadLink;
 
+  }
+
+  public async importUser(tenantId: string, filePath: string) {
+    const tenantExists = await this.tenant.findOne({
+      where: {
+        id: tenantId
+      }
+    })
+
+    if (!tenantExists) {
+      throw new BadRequestException("Tenant Not Found")
+    }
+
+    const workbook = new excel.Workbook();
+    await workbook.xlsx.readFile(filePath);
+
+    const sheet = workbook.getWorksheet(1);
+    const headers = [];
+    const rows = [];
+
+    sheet.eachRow((row, rowIndex) => {
+      if (rowIndex === 1) {
+        row.eachCell((cell, colIndex) => {
+          headers[colIndex] = cell.value.toString(); // Assuming headers are strings
+        });
+      } else {
+        const rowData = {};
+        row.eachCell((cell, colIndex) => {
+          rowData[headers[colIndex]] = cell.value;
+        });
+        rows.push({ ...rowData, tenantId: [tenantId] });
+      }
+    });
+    await this.users.bulkCreate(rows, { ignoreDuplicates: true });
+
+    await fs.unlinkSync(filePath)
   }
 }
 
