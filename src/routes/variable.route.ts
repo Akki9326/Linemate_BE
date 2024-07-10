@@ -21,8 +21,8 @@ class VariableRoute implements Routes {
   }
 
   private initializeRoutes() {
-    this.router.post(`${this.path}/v1/add`, validationMiddleware(VariableDto, 'body'), authMiddleware,headerMiddleware, this.variableController.add);
-    this.router.put(`${this.path}/v1/:id`, validationMiddleware(VariableDto, 'body'), authMiddleware,headerMiddleware, this.variableController.update);
+    this.router.post(`${this.path}/v1/add`, validationMiddleware(VariableDto, 'body'), authMiddleware, this.variableController.add);
+    this.router.put(`${this.path}/v1/:id`, validationMiddleware(VariableDto, 'body'), authMiddleware, this.variableController.update);
     this.router.post(`${this.path}/v1/list`, authMiddleware,headerMiddleware,  this.variableController.list);
     this.router.get(`${this.path}/v1/:id`, authMiddleware, this.variableController.one);
     this.router.delete(`${this.path}/v1/:id`, authMiddleware, this.variableController.delete);

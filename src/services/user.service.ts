@@ -197,8 +197,11 @@ class UserService {
           throw new BadRequestException(TenantMessage.tenantNotFound)
         }
       }
-      if (userData.tenantVariable.length) {
+      if (userData.tenantVariable && userData.tenantVariable.length) {
         await this.validateTenantVariable(userData.tenantVariable)
+      }else{
+        throw new BadRequestException(VariableMessage.variableNotFound)
+      
       }
     }
     const temporaryPassword = PasswordHelper.generateTemporaryPassword()

@@ -12,10 +12,10 @@ class VariableServices {
   private tenant = DB.Tenant;
   constructor() {
   }
-  public async add(variableData: VariableDto, createdUser: JwtTokenData, tenantId: number) {
+  public async add(variableData: VariableDto, createdUser: JwtTokenData) {
     const tenant = await this.tenant.findOne({
       where: {
-        id: tenantId,
+        id: variableData.tenantId,
         isDeleted: false
       },
     });
@@ -35,7 +35,7 @@ class VariableServices {
     userVariable.category = variableData.category
     userVariable.createdBy = createdUser.id.toString()
     userVariable.options = variableData.options
-    userVariable.tenantId = tenantId
+    userVariable.tenantId = variableData.tenantId
     userVariable.placeHolder = variableData.placeHolder
     userVariable = await userVariable.save()
     return { id: userVariable.id };
@@ -52,10 +52,10 @@ class VariableServices {
     }
     return variable;
   }
-  public async update(variableData: VariableDto, variableId: number, updatedUser: JwtTokenData, tenantId: number) {
+  public async update(variableData: VariableDto, variableId: number, updatedUser: JwtTokenData) {
     const tenant = await this.tenant.findOne({
       where: {
-        id: tenantId,
+        id: variableData.tenantId,
         isDeleted: false
       },
     });
@@ -84,7 +84,7 @@ class VariableServices {
     variable.updatedBy = updatedUser.id.toString()
     variable.options = variableData.options
     variable.placeHolder = variableData.placeHolder
-    variable.tenantId = tenantId
+    variable.tenantId = variableData.tenantId
     await variable.save()
     return { id: variable.id };
   }

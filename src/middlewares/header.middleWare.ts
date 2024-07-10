@@ -10,6 +10,8 @@ const headerMiddleware = async (req: RequestWithUser, res: Response, next: NextF
       if(!tenantId) {
         if(req.user.userType !== UserType['ChiefAdmin']){
           next(new HttpException(HttpStatusCode.BAD_REQUEST, 'TenantId is required in header'));
+        }else{
+           next()
         }
       }else{
          req.tenantId = parseInt(tenantId);

@@ -13,8 +13,7 @@ class VariableController {
     try {
       const variableData: VariableDto = req.body;
       const user = req.user as JwtTokenData
-      const tenantId = req.tenantId as number
-      const variableResponse = await this.variableServices.add(variableData, user,tenantId);
+      const variableResponse = await this.variableServices.add(variableData, user);
       AppResponseHelper.sendSuccess(res, 'Success', variableResponse);
     }
     catch (ex) {
@@ -46,8 +45,7 @@ class VariableController {
       const variableId = parseInt(req.params.id)
       const validateData: VariableDto = req.body;
       const updatedBy = req.user as JwtTokenData
-      const tenantId = req.tenantId as number
-      const variableResponse = await this.variableServices.update(validateData, variableId, updatedBy,tenantId);
+      const variableResponse = await this.variableServices.update(validateData, variableId, updatedBy);
       AppResponseHelper.sendSuccess(res, 'Success', variableResponse);
     }
     catch (ex) {
