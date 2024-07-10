@@ -86,11 +86,14 @@ class UserService {
         attributes: ['name']
       });
       if (!tenantDetails) {
-        throw new BadRequestException(TenantMessage.tenantVariableNotFound)
+        throw new BadRequestException(TenantMessage.tenantNotFound)
       }
       const variableMaster = await this.variableMaster.findAll({ where: { isDeleted: false, tenantId: variable.tenantId } });
       if (!variableMaster.length) {
-        throw new BadRequestException(`Tenant "${tenantDetails.name}" does not have any variable`);
+        // throw new BadRequestException(`Tenant "${tenantDetails.name}" does not have any variable`);
+        // this is valid case, tenant might not have any variable field(s).
+        // TODO: validate this logic and update if required. 
+        return true;
       }
       const userVariablesMap = new Map(variable.variables.map(item => [item.variableId, item.value]));
       const mandatoryVariables = variableMaster.filter(variable => variable.isMandatory);
@@ -328,7 +331,7 @@ class UserService {
       attributes: ['id', 'variableId', 'value']
     });
     if (!allVariable.length) {
-      throw new BadRequestException(VariableMessage.variableNotFound)
+      return [];
     }
     const attributes = ['name']
     const responseList = await Promise.all(allVariable.map(async (item) => {
@@ -382,7 +385,7 @@ class UserService {
       const userRows = await Promise.all(
         userList.rows.map(async (user) => {
           const tenantDetails = await this.findMultipleTenant(user.tenantIds);
-         const tenantVariableDetails =await  this.findTenantVariableDetails(user.id, tenantId);
+          const tenantVariableDetails = await  this.findTenantVariableDetails(user.id, tenantId);
           return {
             ...user.dataValues,
             tenantDetails,
