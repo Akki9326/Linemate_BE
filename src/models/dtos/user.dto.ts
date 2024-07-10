@@ -1,4 +1,4 @@
-import { IsArray, IsEmail, IsEnum, IsMobilePhone, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsEmail, IsEnum, IsMobilePhone, IsNumber, IsOptional, IsString } from 'class-validator';
 import { UserType } from '../enums/user-types.enum';
 
 export class UserDto {
@@ -18,13 +18,25 @@ export class UserDto {
   @IsMobilePhone()
   public mobileNumber: string;
   
-
   @IsArray()
   @IsOptional()
   public tenantIds: number[];
 
   @IsString()
   public countyCode: string;
+
+  @IsString()
+  @IsOptional()
+  public employeeId: string;
+  
+  @IsString()
+  @IsOptional()
+  public profilePhoto: string;
+
+  @IsArray()
+  @IsOptional()
+  public tenantVariable: TenantVariables[];
+
 }
 
 export class AdminDto {
@@ -44,6 +56,14 @@ export class AdminDto {
   @IsString()
   public password: string;
 
+}
+export class deActiveUserDto {
+
+  @IsNumber()
+  public userId: string;
+
+  @IsBoolean()
+  public isActive: boolean;
 }
 
 

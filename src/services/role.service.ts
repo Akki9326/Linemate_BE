@@ -15,7 +15,7 @@ export class RoleService {
   constructor() { }
 
   async add(roleDetails: RoleDto, user: JwtTokenData): Promise<number> {
-    if(user.userType === UserType["CompanyAdmin"]){
+    if(user.userType === UserType.CompanyAdmin){
       if(!roleDetails.tenantId){
         throw new BadRequestException(TenantMessage.requiredTenant);
       }

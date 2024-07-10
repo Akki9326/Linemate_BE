@@ -19,10 +19,9 @@ export class UpdatePasswordDto {
   oldPassword: string;
 
   @IsNotEmpty({ message: "New password is required." })
-  @MaxLength(22, { message: "Password length cannot be greater than 22 characters. " })
-  @MinLength(12, { message: "Password length cannot be less than 12 characters. " })
-  @Matches(/^(?=.*\d)(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z]).{12,}$/, {
-    message: "Password must be at least 12 characters including 1 upper case letter, 1 lower case letter, 1 number and 1 special character.",
+  @MinLength(8, { message: "Password length cannot be less than 8 characters. " })
+  @Matches(/^(?=.*\d)(?=.*[!@#$%^&*])(?=.*[a-z])(?=.*[A-Z]).{8,}$/, {
+    message: "Password must be at least 8 characters including 1 upper case letter, 1 lower case letter, 1 number and 1 special character.",
   })
   newPassword: string;
 

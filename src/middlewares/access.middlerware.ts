@@ -8,7 +8,7 @@ export const accessMiddleWare = (access: AppPermission[]) => {
   const accessValidator = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
       if (req.user) {
-        if (req.user.userType === UserType['ChiefAdmin']) {
+        if (req.user.userType === UserType.ChiefAdmin) {
           next();
         } else {
           if (req.userAccess.some(f => access.some(a => a == f))) {

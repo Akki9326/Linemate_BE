@@ -16,7 +16,7 @@ export class ListRequestDto<T> {
 
     @IsOptional()
     @IsObject()
-    public filter: T;
+    public filter: any;
 
     @IsOptional()
     public sortField: string;

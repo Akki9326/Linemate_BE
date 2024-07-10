@@ -11,6 +11,7 @@ export const AppMessages = {
     passwordReused: 'New password cannot be the same as the last 5 passwords.',
     existedUser: 'User already exists',
     maxAdmin: 'Max admin allowed for admin users.',
+    wrongOldPassword: 'Old password not valid.',
 
 }
 
@@ -18,5 +19,15 @@ export const RoleMessage = {
     roleNotFound: "Role not found"
 }
 export const TenantMessage={
-    requiredTenant:"tenantIds is required"
+    requiredTenant:"tenantIds is required",
+    requiredTenantFilter:"tenantId is required in filter",
+    tenantNotFound: "Tenant not found",
+    tenantVariableNotFound: "Tenant variable not found"
 }
+export const VariableMessage={
+    variableNotFound:"variable not found",
+    possibleOptionRequired:"option is required"
+}
+export const CommonMessage = {
+    filterIsRequired:"filter is required"
+}   
