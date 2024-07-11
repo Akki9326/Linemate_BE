@@ -9,6 +9,10 @@ export interface TokenData {
 
 export interface RequestWithUser extends Request {
   user: JwtTokenData;
+  tenantId: number;
+  file:{
+    path: string
+  }
   userAccess: AppPermission[]
 }
 export interface UserData {

@@ -1,4 +1,6 @@
 import { ListRequestDto } from '@/models/dtos/list-request.dto';
+import { UpdatePasswordDto } from '@/models/dtos/update-password.dto';
+import { userListDto } from '@/models/dtos/user-list.dto';
 import { UserDto } from '@/models/dtos/user.dto';
 import { RequestWithUser } from '@/models/interfaces/auth.interface';
 import UserService from '@/services/user.service';
@@ -11,18 +13,30 @@ class UserController {
   public add = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
       const userData: UserDto = req.body;
-      const user= req.user
-      const userResponse = await this.userService.add(userData,user);
+      const user = req.user
+      const userResponse = await this.userService.add(userData, user);
       AppResponseHelper.sendSuccess(res, 'Success', userResponse);
     }
     catch (ex) {
       next(ex)
     }
   };
-  public one = async (req: Request, res: Response, next: NextFunction) => {
+  public getVariable = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId= parseInt(req.params.id)
-      const userResponse = await this.userService.one(userId);
+      const userId = parseInt(req.params.id)
+      const tenantId = req.body.tenantId as number
+      const userResponse = await this.userService.getVariableDetails(userId, tenantId);
+      AppResponseHelper.sendSuccess(res, 'Success', userResponse);
+    }
+    catch (ex) {
+      next(ex)
+    }
+  };
+  public one = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+    try {
+      const userId = parseInt(req.params.id)
+      const tenantId = req.tenantId as number
+      const userResponse = await this.userService.one(userId,tenantId);
       AppResponseHelper.sendSuccess(res, 'Success', userResponse);
     }
     catch (ex) {
@@ -31,8 +45,8 @@ class UserController {
   };
   public delete = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userId= parseInt(req.params.id)
-      const userResponse = await this.userService.delete(userId);
+      const userIds = req.body.userIds as number[]
+      const userResponse = await this.userService.delete(userIds);
       AppResponseHelper.sendSuccess(res, 'Success', userResponse);
     }
     catch (ex) {
@@ -41,10 +55,10 @@ class UserController {
   };
   public update = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
-      const userId= parseInt(req.params.id)
+      const userId = parseInt(req.params.id)
       const userData: UserDto = req.body;
-      const updatedBy= req.user.id
-      const userResponse = await this.userService.update(userData,userId,updatedBy);
+      const updatedBy = req.user.id
+      const userResponse = await this.userService.update(userData, userId, updatedBy);
       AppResponseHelper.sendSuccess(res, 'Success', userResponse);
     }
     catch (ex) {
@@ -53,16 +67,37 @@ class UserController {
   };
   public list = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
-       const pageModel = req.body as ListRequestDto<{}>; // Provide the missing type argument
-       const user= req.user
-     const userResponse = await this.userService.all(pageModel,user);
+      const pageModel = req.body as userListDto;
+      const tenantId = req.tenantId as number
+      const userResponse = await this.userService.all(pageModel, tenantId);
       AppResponseHelper.sendSuccess(res, 'Success', userResponse);
     }
     catch (ex) {
       next(ex)
     }
   };
-  public downloadUser = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+  public deActiveUser = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userIds = req.body.userIds as number[]
+      const userResponse = await this.userService.deActive(userIds);
+      AppResponseHelper.sendSuccess(res, 'Success', userResponse);
+    }
+    catch (ex) {
+      next(ex)
+    }
+  };
+  public changePassword = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = parseInt(req.params.id)
+      const changePassWordDTO = req.body as UpdatePasswordDto
+      const userResponse = await this.userService.changePassword(userId, changePassWordDTO);
+      AppResponseHelper.sendSuccess(res, 'Success', userResponse);
+    }
+    catch (ex) {
+      next(ex)
+    }
+  };
+   public downloadUser = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
       const tenantId: string = req.params.id
       const userResponse = await this.userService.downloadUser(tenantId);
@@ -85,5 +120,6 @@ class UserController {
   };
 
 }
+
 
 export default UserController;

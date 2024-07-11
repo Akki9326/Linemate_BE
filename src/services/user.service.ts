@@ -1,29 +1,34 @@
 import { BACKEND_URL, FRONTEND_URL, MAX_CHIEF } from '@/config';
 import { BadRequestException } from '@/exceptions/BadRequestException';
-import { ListRequestDto } from '@/models/dtos/list-request.dto';
+import { UpdatePasswordDto } from '@/models/dtos/update-password.dto';
+import { userListDto } from '@/models/dtos/user-list.dto';
 import { UserDto } from '@/models/dtos/user.dto';
 import { UserType } from '@/models/enums/user-types.enum';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
-import { AppMessages, RoleMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
+import { User } from '@/models/interfaces/users.interface';
+import { AppMessages, RoleMessage, TenantMessage, VariableMessage } from '@/utils/helpers/app-message.helper';
 import { findDefaultRole } from '@/utils/helpers/default.role.helper';
 import { PasswordHelper } from '@/utils/helpers/password.helper';
 import { Email } from '@/utils/services/email';
 import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.transaction';
 import DB from '@databases';
+import excel from "exceljs";
+import fs from 'fs';
+import path from 'path';
 import { Op } from 'sequelize';
+import XLSX from 'xlsx';
 import { TenantService } from './tenant.service';
-import { User } from '@/models/interfaces/users.interface';
-import XLSX from 'xlsx'
-import fs from 'fs'
-import path from 'path'
-import excel from "exceljs"
+import VariableServices from './variable.service';
 
 
 class UserService {
   private users = DB.Users;
   private role = DB.Roles
   private tenant = DB.Tenant
+  private variableMaster = DB.VariableMaster
+  private variableMatrix = DB.VariableMatrix
   private tenantService = new TenantService();
+  private variableServices = new VariableServices();
 
   constructor() {
   }
@@ -59,9 +64,10 @@ class UserService {
     user.mobileNumber = userData.mobileNumber
     user.isTemporaryPassword = false
     user.password = PasswordHelper.hashPassword(userData.password);
-    user.userType = UserType['ChiefAdmin']
+    user.userType = UserType.ChiefAdmin
     user.countryCode = userData.countryCode
     user = await user.save()
+
     return user.id;
   }
   private async findMultipleTenant(tenantIds: number[]) {
@@ -73,6 +79,70 @@ class UserService {
     }
     return tenantDetails
 
+  }
+  private async validateTenantVariable(tenantVariable: TenantVariables[]) {
+    for (const variable of tenantVariable) {
+      const tenantDetails = await this.tenant.findOne({
+        where: {
+          id: variable.tenantId,
+          isDeleted: false
+        },
+        attributes: ['name']
+      });
+      if (!tenantDetails) {
+        throw new BadRequestException(TenantMessage.tenantVariableNotFound)
+      }
+      const variableMaster = await this.variableMaster.findAll({ where: { isDeleted: false, tenantId: variable.tenantId } });
+      if (!variableMaster.length) {
+        throw new BadRequestException(`Tenant "${tenantDetails.name}" does not have any variable`);
+      }
+      const userVariablesMap = new Map(variable.variables.map(item => [item.variableId, item.value]));
+      const mandatoryVariables = variableMaster.filter(variable => variable.isMandatory);
+      const missingMandatoryVariables = mandatoryVariables.filter(mandatoryVariable => {
+        const value = userVariablesMap.get(mandatoryVariable.id);
+        return value === undefined || value === null || value.trim() === "";
+      });
+      if (missingMandatoryVariables.length > 0) {
+        const missingFieldsNames = missingMandatoryVariables.map(variable => variable.name).join(', ');
+        throw new BadRequestException(`Tenant "${tenantDetails.name}" Missing mandatory fields: ${missingFieldsNames}`);
+      }
+    }
+  }
+  private async addTenantVariables(tenantVariable: TenantVariables[], userId: number) {
+    tenantVariable.forEach(async (tenant) => {
+      tenant.variables.forEach(async (variable) => {
+        const variableListMatrix = new this.variableMatrix()
+        variableListMatrix.tenantId = tenant.tenantId
+        variableListMatrix.userId = userId,
+          variableListMatrix.variableId = variable.variableId
+        variableListMatrix.value = variable.value
+        variableListMatrix.createdBy = userId.toString()
+        await variableListMatrix.save()
+      }
+      )
+    })
+  }
+  private async updateTenantVariables(tenantVariable: TenantVariables[], userId: number) {
+    for (const tenantVar of tenantVariable) {
+      for (const variable of tenantVar.variables) {
+        let variableListMatrix = await this.variableMatrix.findOne({
+          where: {
+            tenantId: tenantVar.tenantId,
+            userId: userId,
+            variableId: variable.variableId,
+          },
+        });
+        if (!variableListMatrix) {
+          variableListMatrix = new this.variableMatrix();
+          variableListMatrix.tenantId = tenantVar.tenantId;
+          variableListMatrix.userId = userId;
+          variableListMatrix.variableId = variable.variableId;
+        }
+        variableListMatrix.value = variable.value;
+        variableListMatrix.updatedBy = userId.toString()
+        await variableListMatrix.save();
+      }
+    }
   }
   private async mapUserTypeToRole(userType: UserType, userId: number) {
     const defaultRoleIds = await findDefaultRole(userType);
@@ -106,10 +176,10 @@ class UserService {
     if (user) {
       throw new BadRequestException(AppMessages.existedUser)
     }
-    if (userData.userType === UserType['ChiefAdmin']) {
+    if (userData.userType === UserType.ChiefAdmin) {
       const existingAdmin = await this.users.findAll({
         where: {
-          userType: UserType['ChiefAdmin']
+          userType: UserType.ChiefAdmin
         }
       });
       if (existingAdmin.length > parseInt(MAX_CHIEF)) {
@@ -118,6 +188,24 @@ class UserService {
     } else {
       if (!userData.tenantIds || !userData.tenantIds.length) {
         throw new BadRequestException(TenantMessage.requiredTenant)
+      } else {
+        const tenantDetails = await this.tenant.findAll({
+          where: {
+            id: {
+              [Op.in]: userData.tenantIds
+            },
+            isDeleted: false
+          }
+        });
+        if (tenantDetails.length !== userData.tenantIds.length) {
+          throw new BadRequestException(TenantMessage.tenantNotFound)
+        }
+      }
+      if (userData.tenantVariable && userData.tenantVariable.length) {
+        await this.validateTenantVariable(userData.tenantVariable)
+      }else{
+        throw new BadRequestException(VariableMessage.variableNotFound)
+      
       }
     }
     const temporaryPassword = PasswordHelper.generateTemporaryPassword()
@@ -129,33 +217,38 @@ class UserService {
     user.isTemporaryPassword = true
     user.createdBy = createdUser.id.toString()
     user.password = PasswordHelper.hashPassword(temporaryPassword)
-    user.tenantIds = userData.userType !== UserType['ChiefAdmin'] ? userData.tenantIds : []
+    user.tenantIds = userData.userType !== UserType.ChiefAdmin ? userData.tenantIds : []
     user.userType = userData.userType
     user.countryCode = userData.countyCode
-    //  TODO: Add variable fields
-    //  TODO: Send Email with password
+    user.employeeId = userData?.employeeId
+    user.profilePhoto = userData?.profilePhoto
     user = await user.save()
     this.mapUserTypeToRole(user.dataValues?.userType, user.id);
-    if(userData.userType !== UserType['ChiefAdmin']){
+    if (userData.userType !== UserType.ChiefAdmin) {
       this.sendAccountActivationEmail(user, temporaryPassword, createdUser)
+      this.addTenantVariables(userData.tenantVariable, user.id)
     }
     return { id: user.id };
   }
-  public async one(userId: number) {
+  public async one(userId: number,tenantId:number) {
     const user = await this.users.findOne({
       where: {
         id: userId,
         isDeleted: false
       },
-      attributes: ['id', 'firstName', 'lastName', 'email', 'mobileNumber', 'tenantIds', 'isTemporaryPassword', 'userType', 'countryCode']
+      attributes: ['id', 'firstName', 'lastName', 'email', 'mobileNumber', 'tenantIds', 'isTemporaryPassword', 'userType', 'countryCode', 'employeeId', 'profilePhoto']
     });
     if (!user) {
       throw new BadRequestException(AppMessages.userNotFound)
     }
     const tenantDetails = await this.findMultipleTenant(user.tenantIds);
-    return { ...user.dataValues, tenantDetails };
+    let tenantVariableDetail = []
+    if(tenantId){
+      tenantVariableDetail = await this.findTenantVariableDetails(userId, tenantId);
+    }
+    return { ...user.dataValues, tenantDetails,tenantVariableDetail };
   }
-  public async update(userData: UserDto, userId: number,updatedBy:number) {
+  public async update(userData: UserDto, userId: number, updatedBy: number) {
     const existingUser = await this.users.findOne({
       where: {
         id: { [Op.not]: userId },
@@ -168,7 +261,7 @@ class UserService {
     });
 
     if (existingUser) {
-      throw new BadRequestException(`Email or mobile number already in use`);
+      throw new BadRequestException(AppMessages.existedUser);
     }
     const user = await this.users.findOne({
       where: {
@@ -179,8 +272,22 @@ class UserService {
     if (!user) {
       throw new BadRequestException(AppMessages.userNotFound)
     }
-    if (!user.tenantIds || !user.tenantIds.length) {
+    if (!userData.tenantIds || !userData.tenantIds.length) {
       throw new BadRequestException(TenantMessage.requiredTenant)
+    }
+    const tenantDetails = await this.tenant.findAll({
+      where: {
+        id: {
+          [Op.in]: userData.tenantIds
+        },
+        isDeleted: false
+      }
+    });
+    if (tenantDetails.length !== userData.tenantIds.length) {
+      throw new BadRequestException(TenantMessage.tenantNotFound)
+    }
+    if (userData.tenantVariable.length) {
+      await this.validateTenantVariable(userData.tenantVariable)
     }
     user.firstName = userData.firstName
     user.lastName = userData.lastName
@@ -188,36 +295,76 @@ class UserService {
     user.mobileNumber = userData.mobileNumber
     user.tenantIds = userData.tenantIds
     user.countryCode = userData.countyCode
+    user.employeeId = userData.employeeId
+    user.profilePhoto = userData.profilePhoto
     user.updatedBy = updatedBy.toString()
     await user.save()
+    if (userData.userType !== UserType.ChiefAdmin) {
+      this.updateTenantVariables(userData.tenantVariable, user.id)
+    }
     return { id: user.id };
   }
-  public async delete(userId: number) {
-    const user = await this.users.findOne({
+  public async delete(userIds: number[]) {
+    const usersToDelete = await this.users.findAll({
       where: {
-        id: userId,
+        id: {
+          [Op.in]: userIds,
+        },
         isDeleted: false,
       },
     });
-    if (!user) {
+    if (!usersToDelete.length) {
       throw new BadRequestException(AppMessages.userNotFound);
     }
-    user.isDeleted = true;
-    await user.save();
-    return { id: user.id };
+    for (const user of usersToDelete) {
+      user.isDeleted = true;
+      await user.save();
+    }
+    return usersToDelete.map(user => ({ id: user.id }));
   }
-  public async all(pageModel: ListRequestDto<{}>, user: JwtTokenData) {
+  private async findTenantVariableDetails(userId: number, tenantId: number) {
+    let allVariable = await this.variableMatrix.findAll({
+      where: {
+        userId,
+        tenantId,
+        isDeleted: false
+      },
+      attributes: ['id', 'variableId', 'value']
+    });
+    if (!allVariable.length) {
+      throw new BadRequestException(VariableMessage.variableNotFound)
+    }
+    const attributes = ['name']
+    const responseList = await Promise.all(allVariable.map(async (item) => {
+      const variableLabelDetails = await this.variableServices.findVariable(item.variableId, attributes)
+      return {
+        ...item.dataValues,
+        variableLabelDetails,
+      };
+    }));
+    return responseList
+  }
+  public async all(pageModel: userListDto, tenantId: number) {
     let page = pageModel.page || 1,
       limit = pageModel.pageSize || 10,
       orderByField = pageModel.sortField || 'id',
       sortDirection = pageModel.sortOrder || 'ASC';
     const offset = (page - 1) * limit;
-    const condition = {}
-    if (user.userType !== UserType['ChiefAdmin']) {
-      condition['createdBy'] = user.id
+    const condition = {
+      isDeleted: false,
+      isActive: true
     }
+    if (pageModel.filter) {
+      condition['isActive'] = pageModel.filter.isActive;
+    }
+    if (tenantId) {
+      condition['tenantIds'] = {
+        [Op.contains]: [tenantId]
+      }
+    }
+
     const userList = await this.users.findAndCountAll({
-      where: { isDeleted: false, ...condition },
+      where: condition,
       offset,
       limit,
       attributes: [
@@ -229,22 +376,79 @@ class UserService {
         'mobileNumber',
         'createdAt',
         'tenantIds',
+        'employeeId',
+        'profilePhoto'
       ],
       order: [[orderByField, sortDirection]],
     });
     if (userList.count) {
+      const attributes = ['name']
       const userRows = await Promise.all(
         userList.rows.map(async (user) => {
           const tenantDetails = await this.findMultipleTenant(user.tenantIds);
+         const tenantVariableDetails =await  this.findTenantVariableDetails(user.id, tenantId);
           return {
             ...user.dataValues,
             tenantDetails,
+            tenantVariableDetails
           };
         })
       );
       userList.rows = userRows;
     }
     return userList;
+  }
+  public async deActive(userIds: number[]) {
+    const usersToDelete = await this.users.findAll({
+      where: {
+        id: {
+          [Op.in]: userIds,
+        },
+        isDeleted: false,
+        isActive: true,
+      },
+    });
+    if (!usersToDelete.length) {
+      throw new BadRequestException(AppMessages.userNotFound);
+    }
+    for (const user of usersToDelete) {
+      user.isActive = false;
+      await user.save();
+    }
+    return usersToDelete.map(user => ({ id: user.id }));
+  }
+  public async changePassword(userId: number, updatePassword: UpdatePasswordDto) {
+    const user = await this.users.findOne({
+      where: {
+        id: userId,
+        isDeleted: false,
+      },
+    });
+    if (!user) {
+      throw new BadRequestException(AppMessages.userNotFound);
+    }
+    if (PasswordHelper.validatePassword(updatePassword.oldPassword, user.password)) {
+      user.password = PasswordHelper.hashPassword(updatePassword.newPassword);
+      await user.save()
+    } else {
+      throw new BadRequestException(AppMessages.wrongOldPassword);
+    }
+    await user.save();
+    return { id: user.id };
+  }
+  public async getVariableDetails(userId: number, tenantId: number) {
+    const user = await this.users.findOne({
+      where: {
+        id: userId,
+        isDeleted: false
+      },
+    });
+    if (!user) {
+      throw new BadRequestException(AppMessages.userNotFound)
+    }
+
+    const responseList = this.findTenantVariableDetails(userId, tenantId);
+    return responseList;
   }
   public async downloadUser(tenantId: string) {
     const tenantExists = await this.tenant.findOne({

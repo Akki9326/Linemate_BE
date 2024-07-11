@@ -18,13 +18,25 @@ export class UserDto {
   @IsMobilePhone()
   public mobileNumber: string;
   
-
   @IsArray()
   @IsOptional()
   public tenantIds: number[];
 
   @IsString()
   public countyCode: string;
+
+  @IsString()
+  @IsOptional()
+  public employeeId: string;
+  
+  @IsString()
+  @IsOptional()
+  public profilePhoto: string;
+
+  @IsArray()
+  @IsOptional()
+  public tenantVariable: TenantVariables[];
+
 }
 
 export class AdminDto {
