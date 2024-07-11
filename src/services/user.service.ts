@@ -94,9 +94,6 @@ class UserService {
       }
       const variableMaster = await this.variableMaster.findAll({ where: { isDeleted: false, tenantId: variable.tenantId } });
       if (!variableMaster.length) {
-        // throw new BadRequestException(`Tenant "${tenantDetails.name}" does not have any variable`);
-        // this is valid case, tenant might not have any variable field(s).
-        // TODO: validate this logic and update if required. 
         return true;
       }
       const userVariablesMap = new Map(variable.variables.map(item => [item.variableId, item.value]));
