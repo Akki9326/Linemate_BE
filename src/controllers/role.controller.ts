@@ -1,6 +1,5 @@
 import { RoleDto,RoleListRequestDto } from '@/models/dtos/role.dto';
 import { RequestWithUser } from '@/models/interfaces/auth.interface';
-import { User } from '@/models/interfaces/users.interface';
 import { RoleService } from '@/services/role.service';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
 import { NextFunction, Request, Response } from 'express-serve-static-core';

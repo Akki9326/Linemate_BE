@@ -1,6 +1,6 @@
-import { Router } from 'express';
-import IndexController from '@controllers/index.controller';
 import { Routes } from '@/models/interfaces/routes.interface';
+import IndexController from '@controllers/index.controller';
+import { Router } from 'express';
 
 class IndexRoute implements Routes {
   public path = '/';

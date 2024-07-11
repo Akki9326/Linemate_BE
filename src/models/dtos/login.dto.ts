@@ -1,4 +1,4 @@
-import { IsString, IsEmail, IsNotEmpty, IsNumberString, IsNumber, MinLength, Matches } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumberString, MinLength, Matches } from 'class-validator';
 
 export class LoginOTPDto {
 

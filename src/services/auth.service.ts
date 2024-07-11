@@ -136,6 +136,7 @@ export default class AuthService {
         lastName: user.lastName,
         countryCode: user.countryCode,
         tenantIds: tenantDetails,
+        isTemporaryPassword:user.isTemporaryPassword
       },
       token: userToken.token,
     };

@@ -58,4 +58,28 @@ export class AdminDto {
 
 }
 
+export class UserActionDto{
+
+  @IsArray()
+  public userIds:number[]
+}
+
+export class UserVariableDto{
+
+  @IsNumber()
+  public tenantId:number
+}
+
+export class changePasswordDto{
+
+  @IsArray()
+  public userIds:number[]
+
+   @IsNumber()
+  public tenantId:number
+}
+
+
+
+
 

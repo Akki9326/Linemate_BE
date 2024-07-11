@@ -496,6 +496,9 @@ paths:
               sortOrder:
                 type: string
                 example: ASC
+              search:
+                type: string
+                example: "jon"
       responses:
         '200':
           description: Success

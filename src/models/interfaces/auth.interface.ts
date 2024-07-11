@@ -23,6 +23,7 @@ export interface UserData {
   lastName: string;
   tenantIds: number[];
   countryCode: string;
+  isTemporaryPassword: boolean;
 }
 
 export class LoginResponseData {

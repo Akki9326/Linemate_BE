@@ -1,4 +1,4 @@
-import { IsString, IsEmail, IsNotEmpty, IsOptional, IsEnum, IsObject } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsEnum, IsObject } from 'class-validator';
 import { SortOrder } from '../enums/sort-order.enum';
 
 
@@ -12,7 +12,7 @@ export class ListRequestDto<T> {
 
     @IsOptional()
     @IsString()
-    public searchTerm: string;
+    public search: string;
 
     @IsOptional()
     @IsObject()

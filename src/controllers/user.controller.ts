@@ -1,8 +1,7 @@
-import { ListRequestDto } from '@/models/dtos/list-request.dto';
-import { UpdatePasswordDto } from '@/models/dtos/update-password.dto';
 import { userListDto } from '@/models/dtos/user-list.dto';
 import { UserDto } from '@/models/dtos/user.dto';
 import { RequestWithUser } from '@/models/interfaces/auth.interface';
+import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import UserService from '@/services/user.service';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
 import { NextFunction, Request, Response } from 'express-serve-static-core';
@@ -13,7 +12,7 @@ class UserController {
   public add = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
       const userData: UserDto = req.body;
-      const user = req.user
+      const user = req.user as JwtTokenData
       const userResponse = await this.userService.add(userData, user);
       AppResponseHelper.sendSuccess(res, 'Success', userResponse);
     }
@@ -57,7 +56,7 @@ class UserController {
     try {
       const userId = parseInt(req.params.id)
       const userData: UserDto = req.body;
-      const updatedBy = req.user.id
+      const updatedBy = req.user.id as number
       const userResponse = await this.userService.update(userData, userId, updatedBy);
       AppResponseHelper.sendSuccess(res, 'Success', userResponse);
     }
@@ -86,11 +85,12 @@ class UserController {
       next(ex)
     }
   };
-  public changePassword = async (req: Request, res: Response, next: NextFunction) => {
+  public changePassword = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
-      const userId = parseInt(req.params.id)
-      const changePassWordDTO = req.body as UpdatePasswordDto
-      const userResponse = await this.userService.changePassword(userId, changePassWordDTO);
+      const userIds = req.body.userIds as number[]
+     const createdBy = req.user as JwtTokenData
+     const tenantId = req.body.tenantId as number
+      const userResponse = await this.userService.changePassword(userIds,createdBy,tenantId);
       AppResponseHelper.sendSuccess(res, 'Success', userResponse);
     }
     catch (ex) {
@@ -99,7 +99,7 @@ class UserController {
   };
    public downloadUser = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
-      const tenantId: string = req.params.id
+      const tenantId = parseInt(req.params.tenantId) as number
       const userResponse = await this.userService.downloadUser(tenantId);
       AppResponseHelper.sendSuccess(res, 'Success', userResponse);
     }
@@ -109,8 +109,8 @@ class UserController {
   };
   public importUser = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
-      const tenantId: string = req.params.id
-      const filePath: string = req.file.path
+      const tenantId = parseInt(req.params.tenantId) as number
+      const filePath = req.file.path as string
       const userResponse = await this.userService.importUser(tenantId, filePath);
       AppResponseHelper.sendSuccess(res, 'Success', userResponse);
     }

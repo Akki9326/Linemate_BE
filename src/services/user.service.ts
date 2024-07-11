@@ -2,7 +2,7 @@ import { BACKEND_URL, FRONTEND_URL, MAX_CHIEF } from '@/config';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { UpdatePasswordDto } from '@/models/dtos/update-password.dto';
 import { userListDto } from '@/models/dtos/user-list.dto';
-import { UserDto } from '@/models/dtos/user.dto';
+import { UserActionDto, UserDto } from '@/models/dtos/user.dto';
 import { UserType } from '@/models/enums/user-types.enum';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { User } from '@/models/interfaces/users.interface';
@@ -94,7 +94,7 @@ class UserService {
       }
       const variableMaster = await this.variableMaster.findAll({ where: { isDeleted: false, tenantId: variable.tenantId } });
       if (!variableMaster.length) {
-          // throw new BadRequestException(`Tenant "${tenantDetails.name}" does not have any variable`);
+        // throw new BadRequestException(`Tenant "${tenantDetails.name}" does not have any variable`);
         // this is valid case, tenant might not have any variable field(s).
         // TODO: validate this logic and update if required. 
         return true;
@@ -206,9 +206,6 @@ class UserService {
       }
       if (userData.tenantVariable && userData.tenantVariable.length) {
         await this.validateTenantVariable(userData.tenantVariable)
-      }else{
-        throw new BadRequestException(VariableMessage.variableNotFound)
-      
       }
     }
     const temporaryPassword = PasswordHelper.generateTemporaryPassword()
@@ -233,7 +230,7 @@ class UserService {
     }
     return { id: user.id };
   }
-  public async one(userId: number,tenantId:number) {
+  public async one(userId: number, tenantId: number) {
     const user = await this.users.findOne({
       where: {
         id: userId,
@@ -246,10 +243,10 @@ class UserService {
     }
     const tenantDetails = await this.findMultipleTenant(user.tenantIds);
     let tenantVariableDetail = []
-    if(tenantId){
+    if (tenantId) {
       tenantVariableDetail = await this.findTenantVariableDetails(userId, tenantId);
     }
-    return { ...user.dataValues, tenantDetails,tenantVariableDetail };
+    return { ...user.dataValues, tenantDetails, tenantVariableDetail };
   }
   public async update(userData: UserDto, userId: number, updatedBy: number) {
     const existingUser = await this.users.findOne({
@@ -289,7 +286,7 @@ class UserService {
     if (tenantDetails.length !== userData.tenantIds.length) {
       throw new BadRequestException(TenantMessage.tenantNotFound)
     }
-    if (userData.tenantVariable.length) {
+    if (userData.tenantVariable && userData.tenantVariable.length) {
       await this.validateTenantVariable(userData.tenantVariable)
     }
     user.firstName = userData.firstName
@@ -335,7 +332,7 @@ class UserService {
       attributes: ['id', 'variableId', 'value']
     });
     if (!allVariable.length) {
-     return [];
+      return [];
     }
     const attributes = ['name']
     const responseList = await Promise.all(allVariable.map(async (item) => {
@@ -357,8 +354,28 @@ class UserService {
       isDeleted: false,
       isActive: true
     }
+    if (pageModel?.search) {
+      condition[Op.or] = [
+        { firstName: { [Op.like]: `%${pageModel.search}%` } },
+        { lastName: { [Op.like]: `%${pageModel.search}%` } },
+        { email: { [Op.like]: `%${pageModel.search}%` } },
+        { mobileNumber: { [Op.like]: `%${pageModel.search}%` } },
+        { employeeId: { [Op.like]: `%${pageModel.search}%` } }
+      ];
+    }
     if (pageModel.filter) {
+      // TODO: add role and cohort filter after done these feature are done
       condition['isActive'] = pageModel.filter.isActive;
+      if (pageModel.filter.joiningDate) {
+        const { startDate, endDate } = pageModel.filter.joiningDate;
+        if (startDate && endDate) {
+          const formattedStartDate = startDate.split('-').reverse().join('-');
+          const formattedEndDate = endDate.split('-').reverse().join('-');
+          condition['createdAt'] = {
+            [Op.between]: [new Date(formattedStartDate), new Date(formattedEndDate)]
+          };
+        }
+      }
     }
     if (tenantId) {
       condition['tenantIds'] = {
@@ -385,11 +402,10 @@ class UserService {
       order: [[orderByField, sortDirection]],
     });
     if (userList.count) {
-      const attributes = ['name']
       const userRows = await Promise.all(
         userList.rows.map(async (user) => {
           const tenantDetails = await this.findMultipleTenant(user.tenantIds);
-         const tenantVariableDetails =await  this.findTenantVariableDetails(user.id, tenantId);
+          const tenantVariableDetails = tenantId ? await this.findTenantVariableDetails(user.id, tenantId) : [];
           return {
             ...user.dataValues,
             tenantDetails,
@@ -420,24 +436,27 @@ class UserService {
     }
     return usersToDelete.map(user => ({ id: user.id }));
   }
-  public async changePassword(userId: number, updatePassword: UpdatePasswordDto) {
-    const user = await this.users.findOne({
+  public async changePassword(userIds: number[], createdBy: JwtTokenData,tenantId:number) {
+    const usersData = await this.users.findAll({
       where: {
-        id: userId,
+        id: userIds,
         isDeleted: false,
       },
     });
-    if (!user) {
-      throw new BadRequestException(AppMessages.userNotFound);
+    if (usersData.length === 0) {
+      throw new BadRequestException(AppMessages.userNotFound)
     }
-    if (PasswordHelper.validatePassword(updatePassword.oldPassword, user.password)) {
-      user.password = PasswordHelper.hashPassword(updatePassword.newPassword);
-      await user.save()
-    } else {
-      throw new BadRequestException(AppMessages.wrongOldPassword);
+    for (const user of usersData) {
+      const temporaryPassword = PasswordHelper.generateTemporaryPassword()
+      user.isTemporaryPassword=true
+      user.password=PasswordHelper.hashPassword(temporaryPassword)
+      user.save()
+      const tenantDetail = await this.tenantService.one(tenantId);
+      const emailSubject = await EmailSubjects.accountActivationSubject(tenantDetail.name);
+      const emailBody = EmailTemplates.accountActivationEmail(tenantDetail.name, user.firstName, createdBy.firstName, user.email, temporaryPassword, FRONTEND_URL);
+      await Email.sendEmail(user.email, emailSubject, emailBody)
     }
-    await user.save();
-    return { id: user.id };
+    return usersData.map(user => ({ id: user.id }));
   }
   public async getVariableDetails(userId: number, tenantId: number) {
     const user = await this.users.findOne({
@@ -453,7 +472,7 @@ class UserService {
     const responseList = this.findTenantVariableDetails(userId, tenantId);
     return responseList;
   }
-  public async downloadUser(tenantId: string) {
+  public async downloadUser(tenantId: number) {
     const tenantExists = await this.tenant.findOne({
       where: {
         id: tenantId
@@ -461,7 +480,7 @@ class UserService {
     })
 
     if (!tenantExists) {
-      throw new BadRequestException("Tenant Not Found")
+      throw new BadRequestException(TenantMessage.tenantNotFound)
     }
 
     let data = await this.users.findAll({
@@ -474,8 +493,8 @@ class UserService {
       raw: true
     });
     let userData = []
-    if(data.length){
-     userData =  data.map((user) => {
+    if (data.length) {
+      userData = data.map((user) => {
         return {
           'First Name': user.firstName,
           'Last Name': user.lastName,
@@ -497,22 +516,27 @@ class UserService {
     let buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
 
     let fileName = `data-${Date.now()}.xlsx`;
-
+    const publicFolderPath = path.join('./public');
+    const filePath = path.join(publicFolderPath, fileName);
     if (!fs.existsSync("./public")) {
       fs.mkdirSync("./public");
+    } else {
+      fs.readdirSync(publicFolderPath).forEach((file) => {
+        fs.unlinkSync(path.join(publicFolderPath, file));
+      });
     }
 
-    const publicFolderPath = path.join('./public');
-
-    const filePath = path.join(publicFolderPath, fileName);
+    if (fs.existsSync(fileName)) {
+      fs.unlinkSync(fileName);
+    }
     fs.writeFileSync(filePath, buffer);
     const downloadLink = `${BACKEND_URL}/${fileName}`;
 
     return downloadLink;
 
   }
+  public async importUser(tenantId: number, filePath: string) {
 
-  public async importUser(tenantId: string, filePath: string) {
     const tenantExists = await this.tenant.findOne({
       where: {
         id: tenantId
@@ -520,7 +544,7 @@ class UserService {
     })
 
     if (!tenantExists) {
-      throw new BadRequestException("Tenant Not Found")
+      throw new BadRequestException(TenantMessage.tenantNotFound);
     }
 
     const workbook = new excel.Workbook();
@@ -528,24 +552,92 @@ class UserService {
 
     const sheet = workbook.getWorksheet(1);
     const headers = [];
-    const rows = [];
+    let rows = [];
+
+    const requiredFields = ['First Name', 'Last Name', 'Email', 'Mobile Number', 'Country Code'];
 
     sheet.eachRow((row, rowIndex) => {
       if (rowIndex === 1) {
         row.eachCell((cell, colIndex) => {
-          headers[colIndex] = cell.value.toString(); // Assuming headers are strings
+          headers[colIndex - 1] = cell.value.toString();
         });
       } else {
         const rowData = {};
+        let isValid = true;
+        let missingFields = [];
+
         row.eachCell((cell, colIndex) => {
-          rowData[headers[colIndex]] = cell.value;
+          rowData[headers[colIndex - 1]] = cell.value;
         });
-        rows.push({ ...rowData, tenantId: [tenantId] });
+
+        requiredFields.forEach(field => {
+          if (!rowData[field]) {
+            isValid = false;
+            missingFields.push(field);
+          }
+        });
+
+        if (!isValid) {
+          throw new BadRequestException(`Missing required fields in row ${rowIndex}: ${missingFields.join(', ')}`);
+        }
+
+        rows.push(rowData);
       }
     });
-    await this.users.bulkCreate(rows, { ignoreDuplicates: true });
+    console.log('filePath', filePath)
+    await fs.unlinkSync(filePath);
+    if (rows.length) {
+      const emails = rows.map(row => row['Email'].toString());
+      const mobileNumbers = rows.map(row => row['Mobile Number'].toString());
 
-    await fs.unlinkSync(filePath)
+      const existingUsers = await this.users.findAll({
+        where: {
+          [Op.or]: [
+            { email: { [Op.in]: emails } },
+            { mobileNumber: { [Op.in]: mobileNumbers } }
+          ]
+        },
+        raw: true
+      });
+
+      if (existingUsers.length) {
+        const existingEmails = existingUsers.map(user => user.email);
+        const existingMobiles = existingUsers.map(user => user.mobileNumber);
+        const duplicates = rows.filter(row => existingEmails.includes(row['Email'].toString()) || existingMobiles.includes(row['Mobile Number'].toString()));
+        throw new BadRequestException(`Duplicate entries found: ${JSON.stringify(duplicates)}`);
+      }
+
+      // Map rows to user objects
+      rows = rows.map((row) => {
+        const plainPassword = PasswordHelper.generateTemporaryPassword();
+        const hashedPassword = PasswordHelper.hashPassword(plainPassword);
+        return {
+          "firstName": row['First Name'],
+          "lastName": row['Last Name'],
+          "email": row['Email'],
+          "mobileNumber": row['Mobile Number'],
+          "userType": UserType.User,
+          "countryCode": row['Country Code'],
+          'tenantIds': [tenantId],
+          'password': hashedPassword,
+          'plainPassword': plainPassword
+        };
+      });
+
+      const plainPasswords = rows.map(user => ({
+        email: user.email,
+        password: user.plainPassword
+      }));
+      const usersToCreate = rows.map(({ plainPassword, ...user }) => user);
+
+      const createdUsers = await this.users.bulkCreate(usersToCreate, { ignoreDuplicates: true });
+      for (const user of createdUsers) {
+        const plainPassword = plainPasswords.find(p => p.email === user.email).password;
+        const emailSubject = await EmailSubjects.accountActivationSubject(tenantExists.name);
+        const emailBody = EmailTemplates.accountActivationEmail(tenantExists.name, user.firstName, user.firstName, user.email, plainPassword, FRONTEND_URL);
+        await Email.sendEmail(user.email, emailSubject, emailBody);
+      }
+    }
   }
 }
 

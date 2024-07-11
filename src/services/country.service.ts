@@ -1,5 +1,4 @@
 import DB from "@/databases";
-import { SortOrder } from "@/models/enums/sort-order.enum";
 import { Op } from "sequelize";
 
 export class CountryService {
@@ -7,7 +6,6 @@ export class CountryService {
     constructor() {
     }
     public async list(pageModel) {
-        console.log(`---pageModel--`, pageModel);
         let {
             page,
             pageSize,

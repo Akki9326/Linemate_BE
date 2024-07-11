@@ -1,7 +1,6 @@
 import DB from "@/databases";
 import { BadRequestException } from "@/exceptions/BadRequestException";
 import { UserModel } from "@/models/db/users.model";
-
 import { RoleDto, RoleListRequestDto } from "@/models/dtos/role.dto";
 import { UserType } from "@/models/enums/user-types.enum";
 import { JwtTokenData } from "@/models/interfaces/jwt.user.interface";

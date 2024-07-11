@@ -1,11 +1,7 @@
-import UserController from '@/controllers/user.controller';
 import VariableController from '@/controllers/variable.controller';
-import { accessMiddleWare } from '@/middlewares/access.middlerware';
 import authMiddleware from '@/middlewares/auth.middleware';
 import headerMiddleware from '@/middlewares/header.middleWare';
-import { UserDto } from '@/models/dtos/user.dto';
 import { VariableDto } from '@/models/dtos/variable.dto';
-import { AppPermission } from '@/models/enums/app-access.enum';
 import { Routes } from '@/models/interfaces/routes.interface';
 import validationMiddleware from '@middlewares/validation.middleware';
 import { Router } from 'express';
