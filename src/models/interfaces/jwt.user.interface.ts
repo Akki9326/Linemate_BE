@@ -6,4 +6,5 @@ export interface JwtTokenData {
   lastName: string;
   id: number;
   userType: UserType;
+  sessionId: string;
 }

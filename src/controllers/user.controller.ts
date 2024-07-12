@@ -1,5 +1,5 @@
-import { userListDto } from '@/models/dtos/user-list.dto';
-import { UserDto } from '@/models/dtos/user.dto';
+import { UserListDto } from '@/models/dtos/user-list.dto';
+import { changePasswordDto, UserActionDto, UserDto } from '@/models/dtos/user.dto';
 import { RequestWithUser } from '@/models/interfaces/auth.interface';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import UserService from '@/services/user.service';
@@ -20,17 +20,6 @@ class UserController {
       next(ex)
     }
   };
-  public getVariable = async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const userId = parseInt(req.params.id)
-      const tenantId = req.body.tenantId as number
-      const userResponse = await this.userService.getVariableDetails(userId, tenantId);
-      AppResponseHelper.sendSuccess(res, 'Success', userResponse);
-    }
-    catch (ex) {
-      next(ex)
-    }
-  };
   public one = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
       const userId = parseInt(req.params.id)
@@ -44,7 +33,7 @@ class UserController {
   };
   public delete = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userIds = req.body.userIds as number[]
+      const userIds = req.body.userIds as UserListDto
       const userResponse = await this.userService.delete(userIds);
       AppResponseHelper.sendSuccess(res, 'Success', userResponse);
     }
@@ -66,7 +55,7 @@ class UserController {
   };
   public list = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
-      const pageModel = req.body as userListDto;
+      const pageModel = req.body as UserListDto;
       const tenantId = req.tenantId as number
       const userResponse = await this.userService.all(pageModel, tenantId);
       AppResponseHelper.sendSuccess(res, 'Success', userResponse);
@@ -77,7 +66,7 @@ class UserController {
   };
   public deActiveUser = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const userIds = req.body.userIds as number[]
+      const userIds = req.body.userIds as UserActionDto
       const userResponse = await this.userService.deActive(userIds);
       AppResponseHelper.sendSuccess(res, 'Success', userResponse);
     }
@@ -87,10 +76,9 @@ class UserController {
   };
   public changePassword = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
-      const userIds = req.body.userIds as number[]
+      const changePasswordUsers = req.body as changePasswordDto
      const createdBy = req.user as JwtTokenData
-     const tenantId = req.body.tenantId as number
-      const userResponse = await this.userService.changePassword(userIds,createdBy,tenantId);
+      const userResponse = await this.userService.changePassword(changePasswordUsers,createdBy);
       AppResponseHelper.sendSuccess(res, 'Success', userResponse);
     }
     catch (ex) {

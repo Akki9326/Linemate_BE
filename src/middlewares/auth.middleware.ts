@@ -3,6 +3,7 @@ import { HttpStatusCode } from '@/models/enums/http-status-code.enum';
 import { RequestWithUser } from '@/models/interfaces/auth.interface';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { RoleService } from '@/services/role.service';
+import { UserCaching } from '@/utils/helpers/caching-user.helper';
 import { SECRET_KEY } from '@config';
 import { HttpException } from '@exceptions/HttpException';
 import { NextFunction, Response } from 'express';
@@ -16,6 +17,11 @@ const authMiddleware = async (req: RequestWithUser, res: Response, next: NextFun
       const secretKey: string = SECRET_KEY;
       const verificationResponse = verify(Authorization, secretKey) as JwtTokenData;
       const emailId = verificationResponse.email;
+
+      const isValidSession = await UserCaching.isValidSession(verificationResponse.email, verificationResponse.sessionId)
+
+
+      if (!isValidSession) next(new HttpException(401, 'Invalid session.'));
 
       if (!emailId) {
         next(new HttpException(HttpStatusCode.UNAUTHORIZED, 'Invalid authentication token'));

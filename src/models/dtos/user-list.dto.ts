@@ -19,7 +19,7 @@ export class UserFilterDto {
   @Type(() => JoiningDateFilter)
   joiningDate: JoiningDateFilter;
 }
-export class userListDto extends ListRequestDto<UserFilterDto> {
+export class UserListDto extends ListRequestDto<UserFilterDto> {
 
 
 }

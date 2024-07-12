@@ -33,7 +33,7 @@ paths:
                 example: user.write
               type:
                 type: string
-                example: platform1
+                example: platform
               description:
                 type: string
                 example: user can add and edit user
@@ -288,7 +288,7 @@ paths:
                 example: akash@codiot.com
               password:
                 type: string
-                example: qwe@123
+                example: Admin@123
               countryCode:
                 type: string
                 example: +91
@@ -393,6 +393,31 @@ paths:
                 items:
                   type: integer
                 example: [1]
+              employeeId:
+                type: string
+                example: uiui
+              profilePhoto:
+                type: string
+                example: ""
+              tenantVariable:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    tenantId:
+                      type: integer
+                      example: 1
+                    variables:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          variableId:
+                            type: integer
+                            example: 1
+                          value:
+                            type: string
+                            example: managere
       responses:
         '200':
           description: Success
@@ -452,20 +477,31 @@ paths:
                 items:
                   type: integer
                 example: [1]
-      responses:
-        '200':
-          description: Success
-    delete:
-      summary: Delete User
-      tags:
-        - User
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          type: string
+              employeeId:
+                type: string
+                example: ""
+              profilePhoto:
+                type: string
+                example: ""
+              tenantVariable:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    tenantId:
+                      type: integer
+                      example: 1
+                    variables:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          variableId:
+                            type: integer
+                            example: 1
+                          value:
+                            type: string
+                            example: managere
       responses:
         '200':
           description: Success
@@ -478,6 +514,11 @@ paths:
       security:
         - BearerAuth: []
       parameters:
+        - name: tenantId
+          in: header
+          required: false
+          type: integer
+          example: 1
         - in: body
           name: body
           required: true
@@ -498,7 +539,96 @@ paths:
                 example: ASC
               search:
                 type: string
-                example: "jon"
+                example: "91"
+              filter:
+                type: object
+                properties:
+                  isActive:
+                    type: boolean
+                    example: true
+                  joiningDate:
+                    type: object
+                    properties:
+                      startDate:
+                        type: string
+                        format: date
+                        example: "2024-07-10"
+                      endDate:
+                        type: string
+                        format: date
+                        example: "2024-07-13"
+      responses:
+        '200':
+          description: Success
+
+  /user/v1/delete-users:
+    delete:
+      summary: Delete Bulk Users
+      tags:
+        - User
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              userIds:
+                type: array
+                items:
+                  type: integer
+                example: [2, 3]
+      responses:
+        '200':
+          description: Success
+
+  /user/v1/de-active:
+    post:
+      summary: Deactivate Bulk Users
+      tags:
+        - User
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              userIds:
+                type: array
+                items:
+                  type: integer
+                example: [2]
+      responses:
+        '200':
+          description: Success
+
+  /user/v1/change-password:
+    post:
+      summary: Change Password for Bulk Users
+      tags:
+        - User
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              userIds:
+                type: array
+                items:
+                  type: integer
+                example: [2, 3]   
+              tenantId:
+                type: integer
+                example: 3             
       responses:
         '200':
           description: Success
@@ -755,6 +885,181 @@ paths:
         '200':
           description: Success
 
+  /variable/v1/add:
+    post:
+      summary: Add Variable
+      tags:
+        - Variable
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                example: role
+              isMandatory:
+                type: boolean
+                example: true
+              type:
+                type: string
+                example: text
+              description:
+                type: string
+                example: test description
+              placeHolder:
+                type: string
+                example: role
+              category:
+                type: string
+                example: custom
+              tenantId:
+                type: integer
+                example: 1
+      responses:
+        '200':
+          description: Success
+
+  /variable/v1/{id}:
+    get:
+      summary: Get Variable by Id
+      tags:
+        - Variable
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Success
+
+    put:
+      summary: Update Variable
+      tags:
+        - Variable
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                example: role
+              isMandatory:
+                type: boolean
+                example: true
+              type:
+                type: string
+                example: text
+              description:
+                type: string
+                example: test description
+              placeHolder:
+                type: string
+                example: role
+              category:
+                type: string
+                example: custom
+              tenantId:
+                type: integer
+                example: 1
+      responses:
+        '200':
+          description: Success
+
+    delete:
+      summary: Delete Variable
+      tags:
+        - Variable
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Success
+
+  /variable/v1/list:
+    post:
+      summary: List Variables
+      tags:
+        - Variable
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tenantId
+          in: header
+          required: false
+          type: integer
+          example: 2
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              page:
+                type: integer
+                example: 1
+              limit:
+                type: integer
+                example: 10
+              sortField:
+                type: string
+                example: id
+              sortOrder:
+                type: string
+                example: ASC
+              search:
+                type: string
+                example: ""
+      responses:
+        '200':
+          description: Success
+
+  paths:
+  /variable/v1/{userId}:
+    post:
+      summary: Get Variable by userId
+      tags:
+        - Variable
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              tenantId:
+                type: integer
+                example: 3
+      responses:
+        '200':
+          description: Success
 tags:
   - name: Permission
     description: Endpoints for creating and managing permissions.
@@ -766,3 +1071,5 @@ tags:
     description: Endpoints for managing users.
   - name: Tenant
     description: Endpoints for creating and managing tenants.
+  - name: Variable
+    description: Endpoints for creating and managing variables.

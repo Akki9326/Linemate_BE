@@ -1,6 +1,7 @@
 import VariableController from '@/controllers/variable.controller';
 import authMiddleware from '@/middlewares/auth.middleware';
 import headerMiddleware from '@/middlewares/header.middleWare';
+import { UserVariableDto } from '@/models/dtos/user.dto';
 import { VariableDto } from '@/models/dtos/variable.dto';
 import { Routes } from '@/models/interfaces/routes.interface';
 import validationMiddleware from '@middlewares/validation.middleware';
@@ -22,6 +23,7 @@ class VariableRoute implements Routes {
     this.router.post(`${this.path}/v1/list`, authMiddleware,headerMiddleware,  this.variableController.list);
     this.router.get(`${this.path}/v1/:id`, authMiddleware, this.variableController.one);
     this.router.delete(`${this.path}/v1/:id`, authMiddleware, this.variableController.delete);
+    this.router.post(`${this.path}/v1/:userId`, validationMiddleware(UserVariableDto, 'body'), authMiddleware, this.variableController.getUserVariable);
   }
 }
 

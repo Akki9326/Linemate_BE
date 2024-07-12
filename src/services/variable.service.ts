@@ -3,13 +3,15 @@ import { VariableDto } from '@/models/dtos/variable.dto';
 import { variableListDto } from '@/models/dtos/varible-list.dto';
 import { VariableType } from '@/models/enums/variable.enum';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
-import { TenantMessage, VariableMessage } from '@/utils/helpers/app-message.helper';
+import { AppMessages, TenantMessage, VariableMessage } from '@/utils/helpers/app-message.helper';
 import DB from '@databases';
+import { VariableHelper } from '@/utils/helpers/variable.helper';
 
 
 class VariableServices {
   private variableMaster = DB.VariableMaster;
   private tenant = DB.Tenant;
+  private users = DB.Users;
   constructor() {
   }
   public async add(variableData: VariableDto, createdUser: JwtTokenData) {
@@ -40,12 +42,9 @@ class VariableServices {
     userVariable = await userVariable.save()
     return { id: userVariable.id };
   }
-  public async findVariable(variableId: number, attributes: any[]) {
-    return await this.variableMaster.findOne({ where: { id: variableId, isDeleted: false }, attributes: attributes })
-  }
   public async one(variableId: number) {
     const attributes = ['id', 'name', 'isMandatory', 'type', 'options', "placeHolder"]
-    const variable = await this.findVariable(variableId, attributes)
+    const variable = await VariableHelper.findVariable(variableId, attributes)
 
     if (!variable) {
       throw new BadRequestException(VariableMessage.variableNotFound)
@@ -128,6 +127,20 @@ class VariableServices {
       order: [[orderByField, sortDirection]],
     });
     return validateList;
+  }
+  public async getVariableDetails(userId: number, tenantId: number) {
+    const user = await this.users.findOne({
+      where: {
+        id: userId,
+        isDeleted: false
+      },
+    });
+    if (!user) {
+      throw new BadRequestException(AppMessages.userNotFound)
+    }
+
+    const responseList = VariableHelper.findTenantVariableDetails(userId, tenantId);
+    return responseList;
   }
 }
 

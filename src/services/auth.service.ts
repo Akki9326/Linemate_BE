@@ -1,5 +1,5 @@
 
-import { OTP_EXPIRY, SECRET_KEY, TOKEN_EXPIRY } from '@/config';
+import { OTP_EXPIRY, SECRET_KEY, SESSION_EXPIRY_MINS, TOKEN_EXPIRY } from '@/config';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { ForgotPasswordDto, LoginOTPDto, ResetPasswordDto } from '@/models/dtos/login.dto';
 import { LoginResponseData, TokenData } from '@/models/interfaces/auth.interface';
@@ -17,6 +17,9 @@ import { TenantService } from './tenant.service';
 import { AppPermission } from '@/models/enums/app-access.enum';
 import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.transaction';
 import { Email } from '@/utils/services/email';
+import { v4 as uuidv4 } from 'uuid';
+import { UserCaching } from '@/utils/helpers/caching-user.helper';
+import { ExpiryTime } from '@/utils/helpers/expiry-time.helper';
 
 
 export default class AuthService {
@@ -113,12 +116,16 @@ export default class AuthService {
       await user.save();
       throw new BadRequestException(AppMessages.accountLocked);
     }
+    let getActiveSessions = await UserCaching.getActiveSessions(user.email);
+
+    const sessionId: string = uuidv4();
 
     const userToken = this.createToken({
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
       id: user.id,
+      sessionId,
       userType: user.userType,
     });
     let tenantDetails = [];
@@ -142,6 +149,12 @@ export default class AuthService {
     };
 
     await this.updateSuccessfulLogin(user);
+    getActiveSessions.push({
+      sessionId,
+      expiry: ExpiryTime.sessionExpiry(+SESSION_EXPIRY_MINS)
+    })
+
+    UserCaching.pushSession(user.email, getActiveSessions);
     return loginResponse;
   }
   private async incrementFailedLoginAttempts(user: any): Promise<void> {

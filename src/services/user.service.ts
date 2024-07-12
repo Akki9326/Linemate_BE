@@ -1,8 +1,7 @@
 import { BACKEND_URL, FRONTEND_URL, MAX_CHIEF } from '@/config';
 import { BadRequestException } from '@/exceptions/BadRequestException';
-import { UpdatePasswordDto } from '@/models/dtos/update-password.dto';
-import { userListDto } from '@/models/dtos/user-list.dto';
-import { UserActionDto, UserDto } from '@/models/dtos/user.dto';
+import { UserListDto } from '@/models/dtos/user-list.dto';
+import { changePasswordDto, UserActionDto, UserDto } from '@/models/dtos/user.dto';
 import { UserType } from '@/models/enums/user-types.enum';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { User } from '@/models/interfaces/users.interface';
@@ -19,6 +18,9 @@ import { Op } from 'sequelize';
 import XLSX from 'xlsx';
 import { TenantService } from './tenant.service';
 import VariableServices from './variable.service';
+import { UserCaching } from '@/utils/helpers/caching-user.helper';
+import { parse } from 'date-fns';
+import { VariableHelper } from '@/utils/helpers/variable.helper';
 
 
 class UserService {
@@ -241,7 +243,7 @@ class UserService {
     const tenantDetails = await this.findMultipleTenant(user.tenantIds);
     let tenantVariableDetail = []
     if (tenantId) {
-      tenantVariableDetail = await this.findTenantVariableDetails(userId, tenantId);
+      tenantVariableDetail = await VariableHelper.findTenantVariableDetails(userId, tenantId);
     }
     return { ...user.dataValues, tenantDetails, tenantVariableDetail };
   }
@@ -301,7 +303,7 @@ class UserService {
     }
     return { id: user.id };
   }
-  public async delete(userIds: number[]) {
+  public async delete(userIds: UserListDto) {
     const usersToDelete = await this.users.findAll({
       where: {
         id: {
@@ -319,29 +321,7 @@ class UserService {
     }
     return usersToDelete.map(user => ({ id: user.id }));
   }
-  private async findTenantVariableDetails(userId: number, tenantId: number) {
-    let allVariable = await this.variableMatrix.findAll({
-      where: {
-        userId,
-        tenantId,
-        isDeleted: false
-      },
-      attributes: ['id', 'variableId', 'value']
-    });
-    if (!allVariable.length) {
-      return [];
-    }
-    const attributes = ['name']
-    const responseList = await Promise.all(allVariable.map(async (item) => {
-      const variableLabelDetails = await this.variableServices.findVariable(item.variableId, attributes)
-      return {
-        ...item.dataValues,
-        variableLabelDetails,
-      };
-    }));
-    return responseList
-  }
-  public async all(pageModel: userListDto, tenantId: number) {
+  public async all(pageModel: UserListDto, tenantId: number) {
     let page = pageModel.page || 1,
       limit = pageModel.pageSize || 10,
       orderByField = pageModel.sortField || 'id',
@@ -360,20 +340,20 @@ class UserService {
         { employeeId: { [Op.like]: `%${pageModel.search}%` } }
       ];
     }
-    if (pageModel.filter) {
-      // TODO: add role and cohort filter after done these feature are done
-      condition['isActive'] = pageModel.filter.isActive;
-      if (pageModel.filter.joiningDate) {
-        const { startDate, endDate } = pageModel.filter.joiningDate;
-        if (startDate && endDate) {
-          const formattedStartDate = startDate.split('-').reverse().join('-');
-          const formattedEndDate = endDate.split('-').reverse().join('-');
-          condition['createdAt'] = {
-            [Op.between]: [new Date(formattedStartDate), new Date(formattedEndDate)]
-          };
-        }
-      }
+if (pageModel.filter) {
+  // TODO: add role and cohort filter after done these feature are done
+  condition['isActive'] = pageModel.filter.isActive;
+  if (pageModel.filter.joiningDate) {
+    const { startDate, endDate } = pageModel.filter.joiningDate;
+    if (startDate && endDate) {
+      const parsedStartDate = parse(startDate, 'yyyy-MM-dd', new Date());
+      const parsedEndDate = parse(endDate, 'yyyy-MM-dd', new Date());
+      condition['createdAt'] = {
+        [Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)]
+      };
     }
+  }
+}
     if (tenantId) {
       condition['tenantIds'] = {
         [Op.contains]: [tenantId]
@@ -402,7 +382,7 @@ class UserService {
       const userRows = await Promise.all(
         userList.rows.map(async (user) => {
           const tenantDetails = await this.findMultipleTenant(user.tenantIds);
-          const tenantVariableDetails = tenantId ? await this.findTenantVariableDetails(user.id, tenantId) : [];
+          const tenantVariableDetails = tenantId ? await VariableHelper.findTenantVariableDetails(user.id, tenantId) : [];
           return {
             ...user.dataValues,
             tenantDetails,
@@ -414,7 +394,7 @@ class UserService {
     }
     return userList;
   }
-  public async deActive(userIds: number[]) {
+  public async deActive(userIds: UserActionDto) {
     const usersToDelete = await this.users.findAll({
       where: {
         id: {
@@ -433,41 +413,31 @@ class UserService {
     }
     return usersToDelete.map(user => ({ id: user.id }));
   }
-  public async changePassword(userIds: number[], createdBy: JwtTokenData,tenantId:number) {
+  public async changePassword(changePasswordUsers: changePasswordDto, createdBy: JwtTokenData) {
     const usersData = await this.users.findAll({
       where: {
-        id: userIds,
+        id: {
+          [Op.in]: changePasswordUsers.userIds,
+        },
         isDeleted: false,
+        isActive: true,
       },
     });
-    if (usersData.length === 0) {
-      throw new BadRequestException(AppMessages.userNotFound)
+    if (!usersData.length) {
+      throw new BadRequestException(AppMessages.userNotFound);
     }
     for (const user of usersData) {
       const temporaryPassword = PasswordHelper.generateTemporaryPassword()
       user.isTemporaryPassword=true
       user.password=PasswordHelper.hashPassword(temporaryPassword)
       user.save()
-      const tenantDetail = await this.tenantService.one(tenantId);
+      UserCaching.deleteAllSessions(user.email);
+      const tenantDetail = await this.tenantService.one(changePasswordUsers.tenantId);
       const emailSubject = await EmailSubjects.accountActivationSubject(tenantDetail.name);
       const emailBody = EmailTemplates.accountActivationEmail(tenantDetail.name, user.firstName, createdBy.firstName, user.email, temporaryPassword, FRONTEND_URL);
       await Email.sendEmail(user.email, emailSubject, emailBody)
     }
     return usersData.map(user => ({ id: user.id }));
-  }
-  public async getVariableDetails(userId: number, tenantId: number) {
-    const user = await this.users.findOne({
-      where: {
-        id: userId,
-        isDeleted: false
-      },
-    });
-    if (!user) {
-      throw new BadRequestException(AppMessages.userNotFound)
-    }
-
-    const responseList = this.findTenantVariableDetails(userId, tenantId);
-    return responseList;
   }
   public async downloadUser(tenantId: number) {
     const tenantExists = await this.tenant.findOne({
