@@ -1,4 +1,3 @@
-import { ListRequestDto } from '@/models/dtos/list-request.dto';
 import { TenantDto } from '@/models/dtos/tenant.dto';
 import { TenantService } from '@/services/tenant.service';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';

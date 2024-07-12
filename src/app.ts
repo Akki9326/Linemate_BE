@@ -69,7 +69,7 @@ class App {
 		this.app.use(express.urlencoded({ extended: true }));
 	}
 
-	private initializeRoutes(routes: any[]) {
+	private initializeRoutes(routes: Routes[]) {
 		routes.forEach(route => {
 			this.app.use('/', route.router);
 		});

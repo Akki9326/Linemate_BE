@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { CacheService } from '../../services/cache.service';
 
 export const UserCaching = {

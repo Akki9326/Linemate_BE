@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { REDIS_HOST } from '@/config';
 import { createClient } from 'redis';
 

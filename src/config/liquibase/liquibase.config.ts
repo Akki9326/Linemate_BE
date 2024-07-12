@@ -18,6 +18,7 @@ export class AppLiquibase {
 		try {
 			this.liquibaseInstance = new Liquibase(this.myConfig);
 			await this.liquibaseInstance.update({});
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (err: any) {
 			logger.error(err.message);
 		}

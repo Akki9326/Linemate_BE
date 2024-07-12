@@ -1,8 +1,6 @@
 import { DataTypes, Sequelize } from 'sequelize';
 import { RoleType } from '../enums/role.enum';
 import { AppDBModel, AppDB_Common_Fields } from './app-db.model';
-import { PermissionModel } from './permissions.model';
-import { UserModel } from './users.model';
 
 export class RoleModel extends AppDBModel {
 	public id: number;

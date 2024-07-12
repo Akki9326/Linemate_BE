@@ -4,6 +4,7 @@ import { ValidationError, validate } from 'class-validator';
 import { RequestHandler } from 'express';
 
 const validationMiddleware = (
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	type: any,
 	value: string | 'body' | 'query' | 'params' = 'body',
 	skipMissingProperties = false,

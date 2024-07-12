@@ -96,7 +96,8 @@ export default class AuthService {
 		const isValid = user.validatePassword(loginOTPDto.password);
 
 		if (!isValid) {
-			await this.incrementFailedLoginAttempts(user);
+			user.failedLoginAttempts += 1;
+			await user.save();
 			throw new BadRequestException(AppMessages.invalidPassword);
 		}
 
@@ -147,7 +148,9 @@ export default class AuthService {
 			token: userToken.token,
 		};
 
-		await this.updateSuccessfulLogin(user);
+		user.lastLoggedInAt = new Date();
+		user.failedLoginAttempts = 0;
+		await user.save();
 		getActiveSessions.push({
 			sessionId,
 			expiry: ExpiryTime.sessionExpiry(+SESSION_EXPIRY_MINS),
@@ -156,15 +159,7 @@ export default class AuthService {
 		UserCaching.pushSession(user.email, getActiveSessions);
 		return loginResponse;
 	}
-	private async incrementFailedLoginAttempts(user: any): Promise<void> {
-		user.failedLoginAttempts += 1;
-		await user.save();
-	}
-	private async updateSuccessfulLogin(user: any): Promise<void> {
-		user.lastLoggedInAt = new Date();
-		user.failedLoginAttempts = 0;
-		await user.save();
-	}
+
 	public async sendResetPasswordOTP(forgotPasswordDto: ForgotPasswordDto): Promise<void> {
 		const otp = generateOtp().toString();
 		const user = await this.findUserByContactInfo(forgotPasswordDto.username, true);

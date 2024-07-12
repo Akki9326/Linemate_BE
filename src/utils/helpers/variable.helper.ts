@@ -25,7 +25,7 @@ export const VariableHelper = {
 		);
 		return responseList;
 	},
-	findVariable: async (variableId: number, attributes: any[]) => {
+	findVariable: async (variableId: number, attributes: string[]) => {
 		return await DB.VariableMaster.findOne({ where: { id: variableId, isDeleted: false }, attributes: attributes });
 	},
 };

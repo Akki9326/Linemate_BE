@@ -3,10 +3,11 @@ import { AppResponse } from '@/models/interfaces/response.interface';
 import { Response } from 'express';
 
 export class AppResponseHelper {
-	static send(res: Response, responseData: AppResponse<any>) {
+	static send<T>(res: Response, responseData: AppResponse<T>) {
 		return res.status(responseData.code).json(responseData);
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	static sendSuccess(res: Response, message: string, data: any) {
 		const resp = {
 			data: data,
@@ -17,7 +18,7 @@ export class AppResponseHelper {
 
 		this.send(res, resp);
 	}
-
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	static sendError(res: Response, code: HttpStatusCode, message: string, data: any) {
 		const resp = {
 			data: data,
