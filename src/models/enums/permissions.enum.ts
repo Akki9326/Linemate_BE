@@ -1,4 +1,4 @@
 export enum PermissionType {
-  Tenant = "tenant",
-  Platform = "platform",
+	Tenant = 'tenant',
+	Platform = 'platform',
 }

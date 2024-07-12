@@ -2,7 +2,8 @@ import { HttpStatusCode } from '@/models/enums/http-status-code.enum';
 import { HttpException } from './HttpException';
 
 export class BadRequestException extends HttpException {
-  constructor(public message: string, public data?: any) {
-    super(HttpStatusCode.BAD_REQUEST, message, data);
-  }
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	constructor(public message: string, public data?: any) {
+		super(HttpStatusCode.BAD_REQUEST, message, data);
+	}
 }
