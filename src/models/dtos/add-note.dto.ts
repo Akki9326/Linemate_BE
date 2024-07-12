@@ -1,11 +1,10 @@
-import { IsString, IsEmail, IsNotEmpty, IsEnum, IsNumber } from 'class-validator';
+import { IsString } from 'class-validator';
 // import { NoteTypes } from '../enums/note-types.enum';
 
-// export class AddNoteDto {
+export class AddNoteDto {
+	@IsString()
+	public type: string;
 
-//   @IsEnum(NoteTypes)
-//   public type: NoteTypes;
-
-//   @IsString()
-//   public note: string;
-// }
+	@IsString()
+	public note: string;
+}

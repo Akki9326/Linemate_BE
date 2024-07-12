@@ -5,11 +5,10 @@ export class CountryService {
 	private countryModel = DB.Country;
 	constructor() {}
 	public async list(pageModel) {
-		let { page, pageSize, searchTerm, sortField, sortOrder, ...whereClause } = pageModel;
-
+		const { page, pageSize, searchTerm } = pageModel;
+		let whereClause;
 		if (searchTerm) {
 			whereClause = {
-				...whereClause,
 				[Op.or]: {
 					name: { [Op.iRegexp]: pageModel.searchTerm },
 					isdCode: { [Op.iRegexp]: pageModel.searchTerm },

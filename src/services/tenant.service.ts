@@ -60,8 +60,9 @@ export class TenantService {
 	}
 
 	public async list(pageModel) {
-		let { page, pageSize, searchTerm, sortField, sortOrder, ...whereClause } = pageModel;
+		const { page, pageSize, searchTerm } = pageModel;
 
+		let whereClause;
 		if (searchTerm) {
 			whereClause = {
 				...whereClause,
