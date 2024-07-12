@@ -69,7 +69,6 @@ class App {
     this.app.use(hpp());
     //To Add HTTP Security Headers
     this.app.use(helmet());
-    this.app.use(express.static(path.resolve('./public')));
     //
     this.app.use(compression());
     this.app.use(express.json());

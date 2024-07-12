@@ -32,7 +32,7 @@ export default class S3Services {
      * @param name = Name of image file
      * @param mimeType = File mime type
      */
-    public async uploadS3(file, name: string, mimeType: string, filePermission: string = 'public-read'): Promise<any> {
+    public async uploadS3(file, name: string, mimeType: string, filePermission: string = 'private'): Promise<any> {
         try {
             const params = {
                 Bucket: BUCKET,
@@ -56,7 +56,7 @@ export default class S3Services {
         }
     }
 
-    /**
+    /** 
      * Delete file from S3 bucket
      * @param key = File Name
      * @param bucketName = Bucket/Folder path in S3
