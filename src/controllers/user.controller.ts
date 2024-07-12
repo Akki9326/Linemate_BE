@@ -107,18 +107,17 @@ class UserController {
       next(ex)
     }
   };
-  public importUser = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+ public importUser = async (req: RequestWithUser, res: Response, next: NextFunction) => {
     try {
       const tenantId = parseInt(req.params.tenantId) as number
-      const filePath = req.file.path as string
-      const userResponse = await this.userService.importUser(tenantId, filePath);
+      const file = req.files.file
+      const userResponse = await this.userService.importUser(tenantId, file);
       AppResponseHelper.sendSuccess(res, 'Success', userResponse);
     }
     catch (ex) {
       next(ex)
     }
   };
-
 }
 
 

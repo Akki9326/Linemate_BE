@@ -4,12 +4,14 @@ import { NotFoundException } from "@/exceptions/NotFoundException";
 import { TenantDto } from "@/models/dtos/tenant.dto";
 import { SortOrder } from "@/models/enums/sort-order.enum";
 import { Op } from "sequelize";
+import S3Services from "@/utils/services/s3.services";
 
 export class TenantService {
   private tenantModel = DB.Tenant;
+  public s3Service = new S3Services();
   constructor() {
   }
-  async add(tenantDetails: TenantDto): Promise<number> {
+  async add(tenantDetails: TenantDto, file): Promise<number> {
     const gstNumber = tenantDetails.gstNumber
 
     const regex = new RegExp("^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$")
@@ -18,8 +20,11 @@ export class TenantService {
       throw new BadRequestException("Invalid Gst Number")
     }
 
+    const logo = await this.s3Service.uploadS3(file.logo.data, `logo/${file.logo.name}`, file.logo.mimetype)
+
+
     const tenant = await this.tenantModel.create({
-      ...tenantDetails
+      ...tenantDetails, logo: logo.Location
     });
     return tenant.id;
   }

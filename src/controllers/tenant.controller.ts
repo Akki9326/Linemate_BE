@@ -10,7 +10,8 @@ class TenantController {
   public create = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const tenantDetails: TenantDto = req.body;
-      const tenant = await this.tenantService.add(tenantDetails);
+      const file = req.files
+      const tenant = await this.tenantService.add(tenantDetails, file);
       AppResponseHelper.sendSuccess(res, 'Success', tenant);
     }
     catch (ex) {

@@ -14,7 +14,7 @@ export class TenantDto {
     @IsNotEmpty()
     public trademark: string;
 
-    @IsNumber()
+    @IsString()
     @IsNotEmpty()
     public phoneNumber: number
 
@@ -26,7 +26,7 @@ export class TenantDto {
     @IsNotEmpty()
     public currencyCode: string;
 
-    @IsNumber()
+    @IsString()
     @IsNotEmpty()
     public isdCode: string;
 
@@ -43,7 +43,7 @@ export class TenantDto {
     @IsString()
     public authorisedEmail: string;
 
-    @IsNumber()
+    @IsString()
     public authorisedMobileNo: string;
 
     @IsString()
@@ -58,12 +58,9 @@ export class TenantDto {
     @IsString()
     public companyCity: string;
 
-    @IsNumber()
+    @IsString()
     public companyPinCode: string;
 
     @IsString()
     public whitelistedIps: string;
-
-    @IsString()
-    public logo: string
 }

@@ -13,6 +13,7 @@ import { Routes } from './models/interfaces/routes.interface';
 import { CacheService } from './services/cache.service';
 import DB from './databases';
 import path from 'path';
+import fileUpload from "express-fileupload"
 
 class App {
   public app: express.Application;
@@ -68,11 +69,12 @@ class App {
     this.app.use(hpp());
     //To Add HTTP Security Headers
     this.app.use(helmet());
-   this.app.use(express.static(path.resolve('./public')));
+    this.app.use(express.static(path.resolve('./public')));
     //
     this.app.use(compression());
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
+    this.app.use(fileUpload({}))
   }
 
   private initializeRoutes(routes: any[]) {

@@ -19,6 +19,8 @@ import { Op } from 'sequelize';
 import XLSX from 'xlsx';
 import { TenantService } from './tenant.service';
 import VariableServices from './variable.service';
+import S3Services from '@utils/services/s3.services';
+
 
 
 class UserService {
@@ -29,6 +31,7 @@ class UserService {
   private variableMatrix = DB.VariableMatrix
   private tenantService = new TenantService();
   private variableServices = new VariableServices();
+  private s3Service = new S3Services();
 
   constructor() {
   }
@@ -433,7 +436,7 @@ class UserService {
     }
     return usersToDelete.map(user => ({ id: user.id }));
   }
-  public async changePassword(userIds: number[], createdBy: JwtTokenData,tenantId:number) {
+  public async changePassword(userIds: number[], createdBy: JwtTokenData, tenantId: number) {
     const usersData = await this.users.findAll({
       where: {
         id: userIds,
@@ -445,8 +448,8 @@ class UserService {
     }
     for (const user of usersData) {
       const temporaryPassword = PasswordHelper.generateTemporaryPassword()
-      user.isTemporaryPassword=true
-      user.password=PasswordHelper.hashPassword(temporaryPassword)
+      user.isTemporaryPassword = true
+      user.password = PasswordHelper.hashPassword(temporaryPassword)
       user.save()
       const tenantDetail = await this.tenantService.one(tenantId);
       const emailSubject = await EmailSubjects.accountActivationSubject(tenantDetail.name);
@@ -513,26 +516,13 @@ class UserService {
     let buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
 
     let fileName = `data-${Date.now()}.xlsx`;
-    const publicFolderPath = path.join('./public');
-    const filePath = path.join(publicFolderPath, fileName);
-    if (!fs.existsSync("./public")) {
-      fs.mkdirSync("./public");
-    } else {
-      fs.readdirSync(publicFolderPath).forEach((file) => {
-        fs.unlinkSync(path.join(publicFolderPath, file));
-      });
-    }
 
-    if (fs.existsSync(fileName)) {
-      fs.unlinkSync(fileName);
-    }
-    fs.writeFileSync(filePath, buffer);
-    const downloadLink = `${BACKEND_URL}/${fileName}`;
+    const fileLink = await this.s3Service.uploadS3(buffer, `file/${fileName}`, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
-    return downloadLink;
+    return fileLink.Location;
 
   }
-  public async importUser(tenantId: number, filePath: string) {
+  public async importUser(tenantId: number, file) {
 
     const tenantExists = await this.tenant.findOne({
       where: {
@@ -544,45 +534,42 @@ class UserService {
       throw new BadRequestException(TenantMessage.tenantNotFound);
     }
 
-    const workbook = new excel.Workbook();
-    await workbook.xlsx.readFile(filePath);
+    const workbook = XLSX.read(file.data, { type: 'buffer' });
 
-    const sheet = workbook.getWorksheet(1);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]]; // Assuming you want the first sheet
+
     const headers = [];
     let rows = [];
 
-    const requiredFields = ['First Name', 'Last Name', 'Email', 'Mobile Number', 'Country Code'];
-
-    sheet.eachRow((row, rowIndex) => {
-      if (rowIndex === 1) {
-        row.eachCell((cell, colIndex) => {
-          headers[colIndex - 1] = cell.value.toString();
-        });
+    XLSX.utils.sheet_to_json(sheet, { header: 1 }).forEach((row, rowIndex) => {
+      if (rowIndex === 0) {
+        // First row is headers
+        headers.push(...row.map(header => header.toString())); // Convert headers to strings
       } else {
         const rowData = {};
-        let isValid = true;
-        let missingFields = [];
-
-        row.eachCell((cell, colIndex) => {
-          rowData[headers[colIndex - 1]] = cell.value;
+        row.forEach((cell, colIndex) => {
+          rowData[headers[colIndex]] = cell;
         });
-
-        requiredFields.forEach(field => {
-          if (!rowData[field]) {
-            isValid = false;
-            missingFields.push(field);
-          }
-        });
-
-        if (!isValid) {
-          throw new BadRequestException(`Missing required fields in row ${rowIndex}: ${missingFields.join(', ')}`);
-        }
-
-        rows.push(rowData);
+        rows.push({ ...rowData, tenantId: tenantId }); // Assuming tenantId is defined earlier
       }
     });
-    console.log('filePath', filePath)
-    await fs.unlinkSync(filePath);
+    const requiredFields = ['First Name', 'Last Name', 'Email', 'Mobile Number', 'Country Code'];
+
+    rows.forEach((row, rowIndex) => {
+      let isValid = true;
+      let missingFields = [];
+
+      requiredFields.forEach(field => {
+        if (!row[field]) {
+          isValid = false;
+          missingFields.push(field);
+        }
+      });
+
+      if (!isValid) {
+        throw new BadRequestException(`Missing required fields in row ${rowIndex}: ${missingFields.join(', ')}`);
+      }
+    });
     if (rows.length) {
       const emails = rows.map(row => row['Email'].toString());
       const mobileNumbers = rows.map(row => row['Mobile Number'].toString());
