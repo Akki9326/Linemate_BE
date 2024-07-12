@@ -54,30 +54,23 @@ import path from 'path';
 import { RequestHandler } from 'express';
 
 export class ProfileUploadLocal {
-    private multerInstance: Multer;
+	private multerInstance: Multer;
 
-    constructor() {
-        const storage = multer.diskStorage({
-            destination: function (req, file, cb) {
-                cb(null, 'public/'); // Set your destination folder here
-            },
-            filename: function (req, file, cb) {
-                cb(
-                    null,
-                    file.fieldname +
-                    '-' +
-                    moment().unix() +
-                    Math.floor(1000 + Math.random() * 9000) +
-                    path.extname(file.originalname)
-                );
-            },
-        });
+	constructor() {
+		const storage = multer.diskStorage({
+			destination: function (req, file, cb) {
+				cb(null, 'public/'); // Set your destination folder here
+			},
+			filename: function (req, file, cb) {
+				cb(null, file.fieldname + '-' + moment().unix() + Math.floor(1000 + Math.random() * 9000) + path.extname(file.originalname));
+			},
+		});
 
-        this.multerInstance = multer({ storage: storage });
-    }
+		this.multerInstance = multer({ storage: storage });
+	}
 
-    // Method to handle single file upload
-    public single(fieldName: string): RequestHandler {
-        return this.multerInstance.single(fieldName);
-    }
+	// Method to handle single file upload
+	public single(fieldName: string): RequestHandler {
+		return this.multerInstance.single(fieldName);
+	}
 }

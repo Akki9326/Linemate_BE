@@ -1,11 +1,11 @@
 export enum VariableType {
-    Text = 'text',
-    MultiSelect = 'multiSelect',
-    Numeric = 'numeric',
-    SingleSelect = 'singleSelect',
+	Text = 'text',
+	MultiSelect = 'multiSelect',
+	Numeric = 'numeric',
+	SingleSelect = 'singleSelect',
 }
 
 export enum VariableCategories {
-    Custom = 'custom',
-    Started = 'started'
+	Custom = 'custom',
+	Started = 'started',
 }

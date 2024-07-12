@@ -1,4 +1,4 @@
 export enum RoleType {
-    Stander = "stander",
-    Custom = "custom",
+	Stander = 'stander',
+	Custom = 'custom',
 }

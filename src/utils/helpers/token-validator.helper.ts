@@ -1,25 +1,25 @@
-import { BadRequestException } from '@/exceptions/BadRequestException'
+import { BadRequestException } from '@/exceptions/BadRequestException';
 
 export const TokenValidator = {
-    tokenExpiry: (expireTime: number) => {
-        let currentTimeInNumbers = new Date().getTime()
-        if (expireTime && (expireTime < currentTimeInNumbers)) {
-            throw new BadRequestException("The link has been expired.")
-        }
-        return "Token valid";
-    },
+	tokenExpiry: (expireTime: number) => {
+		const currentTimeInNumbers = new Date().getTime();
+		if (expireTime && expireTime < currentTimeInNumbers) {
+			throw new BadRequestException('The link has been expired.');
+		}
+		return 'Token valid';
+	},
 
-    urlChecker: (dbToken: string, reqResetToken: string) => {
-        if (dbToken !== reqResetToken) {
-            throw new BadRequestException("Invalid url.")
-        }
+	urlChecker: (dbToken: string, reqResetToken: string) => {
+		if (dbToken !== reqResetToken) {
+			throw new BadRequestException('Invalid url.');
+		}
 
-        return "Url valid"
-    },
+		return 'Url valid';
+	},
 
-    tokenConsumed: (status: boolean) => {
-        if (!status) throw new BadRequestException("This url is already used.")
+	tokenConsumed: (status: boolean) => {
+		if (!status) throw new BadRequestException('This url is already used.');
 
-        return "Token is active."
-    }
-}
+		return 'Token is active.';
+	},
+};

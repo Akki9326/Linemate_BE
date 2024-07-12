@@ -10,32 +10,30 @@ import { NextFunction, Response } from 'express';
 import { verify } from 'jsonwebtoken';
 
 const authMiddleware = async (req: RequestWithUser, res: Response, next: NextFunction) => {
-  try {
+	try {
+		const Authorization = req.header('Authorization') ? req.header('Authorization').split('Bearer ')[1] : null;
+		if (Authorization) {
+			const secretKey: string = SECRET_KEY;
+			const verificationResponse = verify(Authorization, secretKey) as JwtTokenData;
+			const emailId = verificationResponse.email;
 
-    const Authorization = req.header('Authorization') ? req.header('Authorization').split('Bearer ')[1] : null;
-    if (Authorization) {
-      const secretKey: string = SECRET_KEY;
-      const verificationResponse = verify(Authorization, secretKey) as JwtTokenData;
-      const emailId = verificationResponse.email;
+			const isValidSession = await UserCaching.isValidSession(verificationResponse.email, verificationResponse.sessionId);
 
-      const isValidSession = await UserCaching.isValidSession(verificationResponse.email, verificationResponse.sessionId)
+			if (!isValidSession) next(new HttpException(401, 'Invalid session.'));
 
-
-      if (!isValidSession) next(new HttpException(401, 'Invalid session.'));
-
-      if (!emailId) {
-        next(new HttpException(HttpStatusCode.UNAUTHORIZED, 'Invalid authentication token'));
-      } else {
-        req.user = verificationResponse;
-        req.userAccess  =  await new RoleService().getAccessByRoleIds(req.user.id) as AppPermission[]
-        next();
-      }
-    } else {
-      next(new HttpException(HttpStatusCode.UNAUTHORIZED, 'Unauthorized access'));
-    }
-  } catch (error) {
-    next(new HttpException(HttpStatusCode.UNAUTHORIZED, 'Wrong authentication token'));
-  }
+			if (!emailId) {
+				next(new HttpException(HttpStatusCode.UNAUTHORIZED, 'Invalid authentication token'));
+			} else {
+				req.user = verificationResponse;
+				req.userAccess = (await new RoleService().getAccessByRoleIds(req.user.id)) as AppPermission[];
+				next();
+			}
+		} else {
+			next(new HttpException(HttpStatusCode.UNAUTHORIZED, 'Unauthorized access'));
+		}
+	} catch (error) {
+		next(new HttpException(HttpStatusCode.UNAUTHORIZED, 'Wrong authentication token'));
+	}
 };
 
 export default authMiddleware;

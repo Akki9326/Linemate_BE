@@ -1,69 +1,68 @@
 import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
 
 export class TenantDto {
+	@IsString()
+	@IsNotEmpty()
+	public name: string;
 
-    @IsString()
-    @IsNotEmpty()
-    public name: string;
+	@IsString()
+	@IsNotEmpty()
+	public companyType: string;
 
-    @IsString()
-    @IsNotEmpty()
-    public companyType: string;
+	@IsString()
+	@IsNotEmpty()
+	public trademark: string;
 
-    @IsString()
-    @IsNotEmpty()
-    public trademark: string;
+	@IsNumber()
+	@IsNotEmpty()
+	public phoneNumber: number;
 
-    @IsNumber()
-    @IsNotEmpty()
-    public phoneNumber: number
+	@IsString()
+	@IsNotEmpty()
+	public gstNumber: string;
 
-    @IsString()
-    @IsNotEmpty()
-    public gstNumber: string;
+	@IsString()
+	@IsNotEmpty()
+	public currencyCode: string;
 
-    @IsString()
-    @IsNotEmpty()
-    public currencyCode: string;
+	@IsNumber()
+	@IsNotEmpty()
+	public isdCode: string;
 
-    @IsNumber()
-    @IsNotEmpty()
-    public isdCode: string;
+	@IsString()
+	@IsNotEmpty()
+	public clientType: string;
 
-    @IsString()
-    @IsNotEmpty()
-    public clientType: string;
+	@IsString()
+	public authorisedFirstName: string;
 
-    @IsString()
-    public authorisedFirstName: string;
+	@IsString()
+	public authorisedLastName: string;
 
-    @IsString()
-    public authorisedLastName: string;
+	@IsString()
+	public authorisedEmail: string;
 
-    @IsString()
-    public authorisedEmail: string;
+	@IsNumber()
+	public authorisedMobileNo: string;
 
-    @IsNumber()
-    public authorisedMobileNo: string;
+	@IsString()
+	public companyAddress: string;
 
-    @IsString()
-    public companyAddress: string;
+	@IsString()
+	public companyCountry: string;
 
-    @IsString()
-    public companyCountry: string;
+	@IsString()
+	public companyState: string;
 
-    @IsString()
-    public companyState: string;
+	@IsString()
+	public companyCity: string;
 
-    @IsString()
-    public companyCity: string;
+	@IsNumber()
+	public companyPinCode: string;
 
-    @IsNumber()
-    public companyPinCode: string;
+	@IsString()
+	public whitelistedIps: string;
 
-    @IsString()
-    public whitelistedIps: string;
-
-    @IsString()
-    public logo: string
+	@IsString()
+	public logo: string;
 }

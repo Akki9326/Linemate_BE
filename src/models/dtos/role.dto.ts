@@ -3,31 +3,27 @@ import { ListRequestDto } from './list-request.dto';
 import { RoleType } from '../enums/role.enum';
 
 export class RoleDto {
+	@IsString()
+	@IsNotEmpty()
+	public name: string;
 
-  @IsString()
-  @IsNotEmpty()
-  public name: string;
+	@IsEnum(RoleType)
+	@IsNotEmpty()
+	public type: RoleType;
 
-  @IsEnum(RoleType)
-  @IsNotEmpty()
-  public type: RoleType;
+	@IsString()
+	@IsNotEmpty()
+	public description: string;
 
-  @IsString()
-  @IsNotEmpty()
-  public description: string;
+	@IsArray()
+	public permissionIds: number[];
 
-  @IsArray()
-  public permissionIds:number[]
+	@IsArray()
+	public userIds: number[];
 
-  @IsArray()
-  public userIds:number[]
-  
-  @IsNumber()
-  @IsOptional()
-  public tenantId:number
+	@IsNumber()
+	@IsOptional()
+	public tenantId: number;
 }
-
-export class RoleListRequestDto extends ListRequestDto<{}> {
-
-
-}
+export class RoleListFilterDto {}
+export class RoleListRequestDto extends ListRequestDto<RoleListFilterDto> {}

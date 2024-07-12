@@ -2,7 +2,7 @@ import { HttpStatusCode } from '../models/enums/http-status-code.enum';
 import { HttpException } from './HttpException';
 
 export class ForbiddenException extends HttpException {
-  constructor(public message: string, public data?: any) {
-    super(HttpStatusCode.FORBIDDEN, message, data);
-  }
+	constructor(public message: string, public data?: any) {
+		super(HttpStatusCode.FORBIDDEN, message, data);
+	}
 }
