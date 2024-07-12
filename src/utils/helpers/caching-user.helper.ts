@@ -1,67 +1,59 @@
-import { CacheService } from "../../services/cache.service";
-
-
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { CacheService } from '../../services/cache.service';
 
 export const UserCaching = {
-    async getSessions(email: string): Promise<any[]> {
+	async getSessions(email: string): Promise<any[]> {
+		const sessions: any[] = await CacheService.instance.getJson(email);
+		return sessions;
+	},
 
-        const sessions: any[] = await CacheService.instance.getJson(email)
-        return sessions
-    },
+	async getActiveSessions(email: string): Promise<any[]> {
+		const sessionsPromise: Promise<any[]> = UserCaching.getSessions(email);
+		const sessions: any[] = await sessionsPromise;
 
-    async getActiveSessions(email: string): Promise<any[]> {
+		if (sessions?.length) {
+			const activeSessions = sessions.filter(f => f['expiry'] > new Date());
 
-        const sessionsPromise: Promise<any[]> = UserCaching.getSessions(email)
-        const sessions: any[] = await sessionsPromise;
+			return activeSessions;
+		}
+		return [];
+	},
 
-        if (sessions?.length) {
-            const activeSessions = sessions.filter(f => f["expiry"] > new Date())
+	async pushSession(email: string, sessionArr: any[]) {
+		CacheService.instance.setJson(email, sessionArr);
+	},
 
-            return activeSessions
-        }
-        return []
-    },
+	async isValidSession(email: string, sessionId: string): Promise<boolean> {
+		const sessionsPromise: Promise<any[]> = UserCaching.getSessions(email);
+		const sessions: any[] = await sessionsPromise;
 
-    async pushSession(email: string, sessionArr: any[]) {
+		if (sessions?.length) {
+			const isValidSession = sessions.filter(f => f['sessionId'] == sessionId);
 
-        CacheService.instance.setJson(email, sessionArr)
+			if (isValidSession[0]?.['expiry'] > new Date().getTime()) {
+				return true;
+			}
+		}
 
-    },
+		return false;
+	},
 
-    async isValidSession(email: string, sessionId: string): Promise<boolean> {
-        const sessionsPromise: Promise<any[]> = UserCaching.getSessions(email)
-        const sessions: any[] = await sessionsPromise;
+	async deleteAllSessions(email: string) {
+		CacheService.instance.setJson(email, []);
+	},
 
-        if (sessions?.length) {
+	async deleteParticularSession(email: string, sessionId: string) {
+		const sessionsPromise: Promise<any[]> = UserCaching.getSessions(email);
+		const sessions: any[] = await sessionsPromise;
 
-            const isValidSession = sessions.filter(f => f["sessionId"] == sessionId)
+		if (sessions?.length) {
+			const updatedSessions = sessions.filter(f => f['sessionId'] != sessionId);
 
-            if (isValidSession[0]?.["expiry"] > new Date().getTime()) {
-                return true;
-            }
-        }
+			await CacheService.instance.setJson(email, updatedSessions);
 
-        return false
-    },
+			return true;
+		}
 
-    async deleteAllSessions(email: string) {
-
-        CacheService.instance.setJson(email, [])
-    },
-
-    async deleteParticularSession(email: string, sessionId: string) {
-        const sessionsPromise: Promise<any[]> = UserCaching.getSessions(email)
-        const sessions: any[] = await sessionsPromise;
-
-        if (sessions?.length) {
-            const updatedSessions = sessions.filter(f => f["sessionId"] != sessionId);
-
-            await CacheService.instance.setJson(email, updatedSessions)
-
-            return true
-
-        }
-
-        return false
-    }
-}
+		return false;
+	},
+};

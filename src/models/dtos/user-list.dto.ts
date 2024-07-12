@@ -1,26 +1,21 @@
-import { IsBoolean, IsDateString, IsNumber, ValidateNested } from 'class-validator';
-import { ListRequestDto } from './list-request.dto';
 import { Type } from 'class-transformer';
-
+import { IsBoolean, IsDateString, ValidateNested } from 'class-validator';
+import { ListRequestDto } from './list-request.dto';
 
 class JoiningDateFilter {
-  @IsDateString()
-  startDate: string;
+	@IsDateString()
+	startDate: string;
 
-  @IsDateString()
-  endDate: string;
+	@IsDateString()
+	endDate: string;
 }
 
 export class UserFilterDto {
-  @IsBoolean()
-  isActive: boolean;
+	@IsBoolean()
+	isActive: boolean;
 
-  @ValidateNested()
-  @Type(() => JoiningDateFilter)
-  joiningDate: JoiningDateFilter;
+	@ValidateNested()
+	@Type(() => JoiningDateFilter)
+	joiningDate: JoiningDateFilter;
 }
-export class userListDto extends ListRequestDto<UserFilterDto> {
-
-
-}
-
+export class UserListDto extends ListRequestDto<UserFilterDto> {}
