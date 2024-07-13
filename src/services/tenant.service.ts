@@ -18,12 +18,11 @@ export class TenantService {
 		if (regex.test(gstNumber) == false) {
 			throw new BadRequestException('Invalid Gst Number');
 		}
-
 		const logo = await this.s3Service.uploadS3(file.logo.data, `logo/${file.logo.name}`, file.logo.mimetype);
 
 		const tenant = await this.tenantModel.create({
 			...tenantDetails,
-			logo: logo.Location,
+			logo: logo,
 		});
 		return tenant.id;
 	}

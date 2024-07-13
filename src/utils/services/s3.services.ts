@@ -44,7 +44,7 @@ export default class S3Services {
 						console.log(err);
 						reject(err.message);
 					}
-					resolve(data);
+					resolve(data.Location);
 				});
 			});
 		} catch (error) {
