@@ -1,5 +1,5 @@
 import { UserListDto } from '@/models/dtos/user-list.dto';
-import { changePasswordDto, UserActionDto, UserDto } from '@/models/dtos/user.dto';
+import { changePasswordDto, importDtoType, UserActionDto, UserDto } from '@/models/dtos/user.dto';
 import { RequestWithUser } from '@/models/interfaces/auth.interface';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import UserService from '@/services/user.service';
@@ -90,7 +90,7 @@ class UserController {
 	public importUser = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
 			const tenantId = parseInt(req.params.tenantId) as number;
-			const userData = req.body.data;
+			const userData: importDtoType = req.body.data;
 			const userResponse = await this.userService.importUser(tenantId, userData);
 			AppResponseHelper.sendSuccess(res, 'Success', userResponse);
 		} catch (ex) {

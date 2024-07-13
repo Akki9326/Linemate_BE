@@ -491,8 +491,8 @@ class UserService {
 			throw new BadRequestException(TenantMessage.tenantNotFound);
 		}
 		if (userData.length) {
-			const emails = userData.map(row => row['Email'].toString());
-			const mobileNumbers = userData.map(row => row['Mobile Number'].toString());
+			const emails = userData.map(row => row.email.toString());
+			const mobileNumbers = userData.map(row => row.mobileNumber.toString());
 
 			const existingUsers = await this.users.findAll({
 				where: {
@@ -505,7 +505,7 @@ class UserService {
 				const existingEmails = existingUsers.map(user => user.email);
 				const existingMobiles = existingUsers.map(user => user.mobileNumber);
 				const duplicates = userData.filter(
-					row => existingEmails.includes(row['Email'].toString()) || existingMobiles.includes(row['Mobile Number'].toString()),
+					row => existingEmails.includes(row.email.toString()) || existingMobiles.includes(row.mobileNumber.toString()),
 				);
 				throw new BadRequestException(`Duplicate entries found: ${JSON.stringify(duplicates)}`);
 			}
@@ -515,12 +515,12 @@ class UserService {
 				const plainPassword = PasswordHelper.generateTemporaryPassword();
 				const hashedPassword = PasswordHelper.hashPassword(plainPassword);
 				return {
-					firstName: row['First Name'],
-					lastName: row['Last Name'],
-					email: row['Email'],
-					mobileNumber: row['Mobile Number'],
+					firstName: row.firstName,
+					lastName: row.lastName,
+					email: row.email,
+					mobileNumber: row.mobileNumber,
 					userType: UserType.User,
-					countryCode: row['Country Code'],
+					countryCode: row.countyCode,
 					tenantIds: [tenantId],
 					password: hashedPassword,
 					plainPassword: plainPassword,
