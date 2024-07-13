@@ -74,7 +74,7 @@ export class changePasswordDto {
 	public tenantId: number;
 }
 
-export class importUserDto {
+export class ImportUserDto {
 	@IsString()
 	public firstName: string;
 
@@ -92,11 +92,15 @@ export class importUserDto {
 
 	@IsString()
 	public countyCode: string;
+
+	@IsString()
+	@IsOptional()
+	public password: string;
 }
 
-export class importDtoType {
+export class ImportDtoType {
 	@IsArray()
 	@ValidateNested({ each: true })
-	@Type(() => importUserDto)
-	public data: importUserDto[];
+	@Type(() => ImportUserDto)
+	public data: [];
 }

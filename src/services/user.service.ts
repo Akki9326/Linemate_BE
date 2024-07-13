@@ -1,7 +1,7 @@
 import { FRONTEND_URL, MAX_CHIEF } from '@/config';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { UserListDto } from '@/models/dtos/user-list.dto';
-import { changePasswordDto, UserActionDto, UserDto } from '@/models/dtos/user.dto';
+import { changePasswordDto, ImportDtoType, UserActionDto, UserDto } from '@/models/dtos/user.dto';
 import { UserType } from '@/models/enums/user-types.enum';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { User } from '@/models/interfaces/users.interface';
@@ -480,7 +480,7 @@ class UserService {
 
 		return userData;
 	}
-	public async importUser(tenantId: number, userData) {
+	public async importUser(tenantId: number, userData: ImportDtoType[]) {
 		const tenantExists = await this.tenant.findOne({
 			where: {
 				id: tenantId,
@@ -491,8 +491,8 @@ class UserService {
 			throw new BadRequestException(TenantMessage.tenantNotFound);
 		}
 		if (userData.length) {
-			const emails = userData.map(row => row.email.toString());
-			const mobileNumbers = userData.map(row => row.mobileNumber.toString());
+			const emails = userData.map(row => row['email'].toString());
+			const mobileNumbers = userData.map(row => row['mobileNumber'].toString());
 
 			const existingUsers = await this.users.findAll({
 				where: {
@@ -505,7 +505,7 @@ class UserService {
 				const existingEmails = existingUsers.map(user => user.email);
 				const existingMobiles = existingUsers.map(user => user.mobileNumber);
 				const duplicates = userData.filter(
-					row => existingEmails.includes(row.email.toString()) || existingMobiles.includes(row.mobileNumber.toString()),
+					row => existingEmails.includes(row['email'].toString()) || existingMobiles.includes(row['mobileNumber'].toString()),
 				);
 				throw new BadRequestException(`Duplicate entries found: ${JSON.stringify(duplicates)}`);
 			}
@@ -515,12 +515,12 @@ class UserService {
 				const plainPassword = PasswordHelper.generateTemporaryPassword();
 				const hashedPassword = PasswordHelper.hashPassword(plainPassword);
 				return {
-					firstName: row.firstName,
-					lastName: row.lastName,
-					email: row.email,
-					mobileNumber: row.mobileNumber,
+					firstName: row['firstName'],
+					lastName: row['lastName'],
+					email: row['email'],
+					mobileNumber: row['mobileNumber'],
 					userType: UserType.User,
-					countryCode: row.countyCode,
+					countryCode: row['countyCode'],
 					tenantIds: [tenantId],
 					password: hashedPassword,
 					plainPassword: plainPassword,
@@ -528,8 +528,8 @@ class UserService {
 			});
 
 			const plainPasswords = userData.map(user => ({
-				email: user.email,
-				password: user.plainPassword,
+				email: user['email'],
+				password: user['plainPassword'],
 			}));
 			const usersToCreate = userData.map(({ ...user }) => user);
 
