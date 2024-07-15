@@ -78,7 +78,14 @@ class UserService {
 		if (tenantIds && tenantIds.length > 0) {
 			tenantDetails = await Promise.all(
 				tenantIds.map(async tenantId => {
-					return await this.tenantService.one(tenantId);
+					return await this.tenant.findOne({
+						where: {
+							id: tenantId,
+							isDeleted: false,
+							isActive: true,
+						},
+						attributes: ['id', 'name', 'trademark', 'phoneNumber'],
+					});
 				}),
 			);
 		}
