@@ -84,8 +84,8 @@ class UserService {
 		}
 		return tenantDetails;
 	}
-	private async validateTenantVariable(tenantVariable: TenantVariables[]) {
-		for (const variable of tenantVariable) {
+	private async validateTenantVariable(tenantVariables: TenantVariables[]) {
+		for (const variable of tenantVariables) {
 			const tenantDetails = await this.tenant.findOne({
 				where: {
 					id: variable.tenantId,
@@ -112,8 +112,8 @@ class UserService {
 			}
 		}
 	}
-	private async addTenantVariables(tenantVariable: TenantVariables[], userId: number) {
-		tenantVariable.forEach(async tenant => {
+	private async addTenantVariables(tenantVariables: TenantVariables[], userId: number) {
+		tenantVariables.forEach(async tenant => {
 			tenant.variables.forEach(async variable => {
 				const variableListMatrix = new this.variableMatrix();
 				variableListMatrix.tenantId = tenant.tenantId;
@@ -124,8 +124,8 @@ class UserService {
 			});
 		});
 	}
-	private async updateTenantVariables(tenantVariable: TenantVariables[], userId: number) {
-		for (const tenantVar of tenantVariable) {
+	private async updateTenantVariables(tenantVariables: TenantVariables[], userId: number) {
+		for (const tenantVar of tenantVariables) {
 			for (const variable of tenantVar.variables) {
 				let variableListMatrix = await this.variableMatrix.findOne({
 					where: {
@@ -202,8 +202,8 @@ class UserService {
 					throw new BadRequestException(TenantMessage.tenantNotFound);
 				}
 			}
-			if (userData.tenantVariable && userData.tenantVariable.length) {
-				await this.validateTenantVariable(userData.tenantVariable);
+			if (userData.tenantVariables && userData.tenantVariables.length) {
+				await this.validateTenantVariable(userData.tenantVariables);
 			}
 		}
 		const temporaryPassword = PasswordHelper.generateTemporaryPassword();
@@ -224,7 +224,7 @@ class UserService {
 		this.mapUserTypeToRole(user.dataValues?.userType, user.id);
 		if (userData.userType !== UserType.ChiefAdmin) {
 			this.sendAccountActivationEmail(user, temporaryPassword, createdUser);
-			this.addTenantVariables(userData.tenantVariable, user.id);
+			this.addTenantVariables(userData.tenantVariables, user.id);
 		}
 		return { id: user.id };
 	}
@@ -293,8 +293,8 @@ class UserService {
 		if (tenantDetails.length !== userData.tenantIds.length) {
 			throw new BadRequestException(TenantMessage.tenantNotFound);
 		}
-		if (userData.tenantVariable && userData.tenantVariable.length) {
-			await this.validateTenantVariable(userData.tenantVariable);
+		if (userData.tenantVariables && userData.tenantVariables.length) {
+			await this.validateTenantVariable(userData.tenantVariables);
 		}
 		user.firstName = userData.firstName;
 		user.lastName = userData.lastName;
@@ -307,7 +307,7 @@ class UserService {
 		user.updatedBy = updatedBy.toString();
 		await user.save();
 		if (userData.userType !== UserType.ChiefAdmin) {
-			this.updateTenantVariables(userData.tenantVariable, user.id);
+			this.updateTenantVariables(userData.tenantVariables, user.id);
 		}
 		return { id: user.id };
 	}

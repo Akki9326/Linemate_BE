@@ -1,6 +1,7 @@
 import { Request } from 'express';
 import { JwtTokenData } from './jwt.user.interface';
 import { AppPermission } from '../enums/app-access.enum';
+import { Tenant } from './tenant.interface';
 
 export interface TokenData {
 	token: string;
@@ -21,7 +22,7 @@ export interface UserData {
 	mobileNumber: string;
 	firstName: string;
 	lastName: string;
-	tenantIds: number[];
+	tenantIds: Tenant[];
 	countryCode: string;
 	isTemporaryPassword: boolean;
 }

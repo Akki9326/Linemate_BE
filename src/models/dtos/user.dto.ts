@@ -36,7 +36,7 @@ export class UserDto {
 
 	@IsArray()
 	@IsOptional()
-	public tenantVariable: TenantVariables[];
+	public tenantVariables: TenantVariables[];
 }
 
 export class AdminDto {
@@ -72,6 +72,26 @@ export class changePasswordDto {
 
 	@IsNumber()
 	public tenantId: number;
+}
+
+export class userData {
+	@IsString()
+	public firstName: string;
+
+	@IsString()
+	public lastName: string;
+
+	@IsEmail()
+	public email: string;
+
+	@IsEnum(UserType)
+	public userType: UserType;
+
+	@IsMobilePhone()
+	public mobileNumber: string;
+
+	@IsString()
+	public countyCode: string;
 }
 
 export class ImportUserDto {
