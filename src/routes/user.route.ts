@@ -1,7 +1,7 @@
 import UserController from '@/controllers/user.controller';
 import authMiddleware from '@/middlewares/auth.middleware';
 import headerMiddleware from '@/middlewares/header.middleWare';
-import { changePasswordDto, ImportUserDto, UserActionDto, UserDto } from '@/models/dtos/user.dto';
+import { ChangePasswordDto, ImportUserDto, UserActionDto, UserDto } from '@/models/dtos/user.dto';
 import { Routes } from '@/models/interfaces/routes.interface';
 import validationMiddleware from '@middlewares/validation.middleware';
 import { Router } from 'express';
@@ -24,7 +24,7 @@ class UserRoute implements Routes {
 		this.router.post(`${this.path}/v1/de-active`, validationMiddleware(UserActionDto, 'body'), authMiddleware, this.userController.deActiveUser);
 		this.router.post(
 			`${this.path}/v1/change-password`,
-			validationMiddleware(changePasswordDto, 'body'),
+			validationMiddleware(ChangePasswordDto, 'body'),
 			authMiddleware,
 			this.userController.changePassword,
 		);
