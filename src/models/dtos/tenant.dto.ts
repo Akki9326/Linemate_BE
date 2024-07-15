@@ -62,4 +62,7 @@ export class TenantDto {
 
 	@IsString()
 	public whitelistedIps: string;
+
+	@IsString()
+	public logo: string;
 }

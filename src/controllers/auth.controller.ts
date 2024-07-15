@@ -4,10 +4,13 @@ import UserService from '@/services/user.service';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
 import AuthService from '@services/auth.service';
 import { NextFunction, Request, Response } from 'express-serve-static-core';
+import S3Service from '../utils/services/s3.services';
+import { FileDto } from '@/models/dtos/file.dto';
 
 class AuthController {
 	public authService = new AuthService();
 	public userService = new UserService();
+	public s3Service = new S3Service();
 
 	public register = async (req: Request, res: Response, next: NextFunction) => {
 		try {
@@ -53,6 +56,17 @@ class AuthController {
 			const resetPasswordDto: ResetPasswordDto = req.body;
 			const tokenInfo = await this.authService.resetPassword(resetPasswordDto);
 			AppResponseHelper.sendSuccess(res, 'Success', tokenInfo);
+		} catch (ex) {
+			next(ex);
+		}
+	};
+	public fileUpload = async (req: Request, res: Response, next: NextFunction) => {
+		try {
+			const files: FileDto = req.files.file;
+			const url = req.path;
+			const dir = url.split('/')[1]; // Get the second element after splitting by '/'
+			const imageUrl = await this.s3Service.uploadS3(files.data, `${dir}/${files.name}`, files.mimetype);
+			AppResponseHelper.sendSuccess(res, 'Success', imageUrl);
 		} catch (ex) {
 			next(ex);
 		}

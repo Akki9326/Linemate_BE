@@ -1,4 +1,3 @@
-import { FileDto } from '@/models/dtos/file.dto';
 import { TenantDto } from '@/models/dtos/tenant.dto';
 import { TenantService } from '@/services/tenant.service';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
@@ -10,8 +9,7 @@ class TenantController {
 	public create = async (req: Request, res: Response, next: NextFunction) => {
 		try {
 			const tenantDetails: TenantDto = req.body;
-			const file: FileDto = req.files.logo;
-			const tenant = await this.tenantService.add(tenantDetails, file);
+			const tenant = await this.tenantService.add(tenantDetails);
 			AppResponseHelper.sendSuccess(res, 'Success', tenant);
 		} catch (ex) {
 			next(ex);
