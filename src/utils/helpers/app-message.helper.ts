@@ -25,7 +25,7 @@ export const TenantMessage = {
 };
 export const VariableMessage = {
 	variableNotFound: 'variable not found',
-	possibleOptionRequired: 'option is required',
+	possibleOptionRequired: 'options is required',
 };
 export const CommonMessage = {
 	filterIsRequired: 'filter is required',

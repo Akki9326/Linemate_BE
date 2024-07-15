@@ -15,7 +15,7 @@ class RoleRoute implements Routes {
 	}
 
 	private initializeRoutes() {
-		this.router.post(`${this.path}/v1/add`, validationMiddleware(TenantDto, 'body'), authMiddleware, this.tenantController.create);
+		this.router.post(`${this.path}/v1/add`, validationMiddleware(TenantDto, 'body'), this.tenantController.create);
 		this.router.put(`${this.path}/v1/:id`, validationMiddleware(TenantDto, 'body'), authMiddleware, this.tenantController.updateById);
 		this.router.post(`${this.path}/v1/list`, authMiddleware, this.tenantController.list);
 		this.router.get(`${this.path}/v1/:id`, authMiddleware, this.tenantController.getById);

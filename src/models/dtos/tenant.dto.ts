@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber, IsObject } from 'class-validator';
+import { IsString, IsNotEmpty, IsObject } from 'class-validator';
 import { NotificationsPermission } from '../interfaces/notifications-permission.enum';
 
 export class TenantDto {
@@ -14,7 +14,7 @@ export class TenantDto {
 	@IsNotEmpty()
 	public trademark: string;
 
-	@IsNumber()
+	@IsString()
 	@IsNotEmpty()
 	public phoneNumber: number;
 
@@ -30,7 +30,7 @@ export class TenantDto {
 	@IsNotEmpty()
 	public currencyCode: string;
 
-	@IsNumber()
+	@IsString()
 	@IsNotEmpty()
 	public isdCode: string;
 
@@ -47,7 +47,7 @@ export class TenantDto {
 	@IsString()
 	public authorisedEmail: string;
 
-	@IsNumber()
+	@IsString()
 	public authorisedMobileNo: string;
 
 	@IsString()
@@ -62,7 +62,7 @@ export class TenantDto {
 	@IsString()
 	public companyCity: string;
 
-	@IsNumber()
+	@IsString()
 	public companyPinCode: string;
 
 	@IsString()

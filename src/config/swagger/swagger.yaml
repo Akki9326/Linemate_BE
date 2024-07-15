@@ -399,7 +399,7 @@ paths:
               profilePhoto:
                 type: string
                 example: ""
-              tenantVariable:
+              tenantVariables:
                 type: array
                 items:
                   type: object
@@ -483,7 +483,7 @@ paths:
               profilePhoto:
                 type: string
                 example: ""
-              tenantVariable:
+              tenantVariables:
                 type: array
                 items:
                   type: object
@@ -907,7 +907,7 @@ paths:
                 example: true
               type:
                 type: string
-                example: text
+                example: multiSelect
               description:
                 type: string
                 example: test description
@@ -920,6 +920,11 @@ paths:
               tenantId:
                 type: integer
                 example: 1
+              options:
+                type: array
+                items:
+                  type: string
+                example: ["Role", "Manager"]
       responses:
         '200':
           description: Success
@@ -965,7 +970,7 @@ paths:
                 example: true
               type:
                 type: string
-                example: text
+                example: multiSelect
               description:
                 type: string
                 example: test description
@@ -978,6 +983,11 @@ paths:
               tenantId:
                 type: integer
                 example: 1
+              options:
+                type: array
+                items:
+                  type: string
+                example: ["Role", "Manager"]
       responses:
         '200':
           description: Success
@@ -1035,7 +1045,6 @@ paths:
         '200':
           description: Success
 
-  paths:
   /variable/v1/{userId}:
     post:
       summary: Get Variable by userId

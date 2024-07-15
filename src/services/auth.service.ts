@@ -19,24 +19,26 @@ import { Op } from 'sequelize';
 import { v4 as uuidv4 } from 'uuid';
 import { RoleService } from './role.service';
 import { TenantService } from './tenant.service';
+import { UserType } from '@/models/enums/user-types.enum';
 
 export default class AuthService {
 	private users = DB.Users;
 	private userToken = DB.UserToken;
 	private userPasswordModel = DB.UserPassword;
+	private tenantModel = DB.Tenant;
 	private roleService = new RoleService();
 	private tenantService = new TenantService();
 
 	constructor() {}
 
-	public async findUserByContactInfo(username: string, isActive: boolean) {
+	public async findUserByContactInfo(username: string, condition: object) {
 		if (!username) {
 			throw new BadRequestException(AppMessages.emptyUsername);
 		}
 		const user = await this.users.findOne({
 			where: {
 				[Op.and]: [
-					{ isActive: isActive, isLocked: false, isDeleted: false },
+					{ ...condition },
 					{
 						[Op.or]: [{ email: username }, { mobileNumber: username }],
 					},
@@ -44,6 +46,14 @@ export default class AuthService {
 			},
 		});
 
+		return user;
+	}
+	public async findUserById(userId: number | string) {
+		const userInstance = await this.users.findOne({
+			where: { id: userId },
+			attributes: ['firstName', 'lastName'],
+		});
+		const user = userInstance ? userInstance.get({ plain: true }) : null;
 		return user;
 	}
 	private async saveTokenInDB(userId: number, tokenType: TokenTypes, token: string) {
@@ -89,7 +99,10 @@ export default class AuthService {
 		await Email.sendEmail(user.email, emailSubject, emailBody);
 	}
 	public async loginUser(loginOTPDto: LoginOTPDto): Promise<LoginResponseData> {
-		const user = await this.findUserByContactInfo(loginOTPDto.username, true);
+		const condition = {
+			isDeleted: false,
+		};
+		const user = await this.findUserByContactInfo(loginOTPDto.username, condition);
 		if (!user) {
 			throw new BadRequestException(AppMessages.invalidUsername);
 		}
@@ -127,10 +140,43 @@ export default class AuthService {
 			userType: user.userType,
 		});
 		let tenantDetails = [];
-		if (user.tenantIds && user.tenantIds.length > 0) {
+		if (user.userType !== UserType.ChiefAdmin) {
+			if (user.tenantIds && user.tenantIds.length > 0) {
+				const allTenants = await this.tenantModel.findAll({
+					where: {
+						id: {
+							[Op.in]: user.tenantIds,
+						},
+						isDeleted: false,
+						isActive: true,
+					},
+					attributes: ['id', 'name', 'trademark', 'phoneNumber', 'createdBy'],
+				});
+				tenantDetails = await Promise.all(
+					allTenants.map(async tenant => {
+						const plainTenant = tenant.get({ plain: true });
+						return {
+							...plainTenant,
+							createdBy: await this.findUserById(parseInt(plainTenant.createdBy)),
+						};
+					}),
+				);
+			}
+		} else {
+			const allTenants = await this.tenantModel.findAll({
+				where: {
+					isDeleted: false,
+					isActive: true,
+				},
+				attributes: ['id', 'name', 'trademark', 'phoneNumber', 'createdBy'],
+			});
 			tenantDetails = await Promise.all(
-				user.tenantIds.map(async tenantId => {
-					return await this.tenantService.one(tenantId);
+				allTenants.map(async tenant => {
+					const plainTenant = tenant.get({ plain: true });
+					return {
+						...plainTenant,
+						createdBy: await this.findUserById(parseInt(plainTenant.createdBy)),
+					};
 				}),
 			);
 		}
@@ -162,7 +208,12 @@ export default class AuthService {
 
 	public async sendResetPasswordOTP(forgotPasswordDto: ForgotPasswordDto): Promise<void> {
 		const otp = generateOtp().toString();
-		const user = await this.findUserByContactInfo(forgotPasswordDto.username, true);
+		const condition = {
+			isDeleted: false,
+			isActive: true,
+			isLocked: false,
+		};
+		const user = await this.findUserByContactInfo(forgotPasswordDto.username, condition);
 		if (!user) {
 			throw new BadRequestException(AppMessages.invalidUsername);
 		}

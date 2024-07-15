@@ -21,8 +21,8 @@
         "date-fns": "^2.28.0",
         "dotenv": "^10.0.0",
         "envalid": "^7.1.0",
-        "exceljs": "^4.4.0",
         "express": "^4.17.1",
+        "express-fileupload": "^1.5.0",
         "fs": "^0.0.1-security",
         "helmet": "^4.6.0",
         "hpp": "^0.2.3",
@@ -35,14 +35,14 @@
         "nodemailer": "^6.7.5",
         "pg": "^8.7.3",
         "redis": "^4.6.12",
+        "reflect-metadata": "^0.2.2",
         "sequelize": "^6.6.5",
         "swagger-jsdoc": "^6.0.0",
         "swagger-ui-express": "^4.1.6",
         "ts-node-dev": "^2.0.0",
         "uuid": "^9.0.0",
         "winston": "^3.3.3",
-        "winston-daily-rotate-file": "^4.5.5",
-        "xlsx": "^0.18.5"
+        "winston-daily-rotate-file": "^4.5.5"
     },
     "devDependencies": {
         "@bleed-believer/path-alias": "^0.15.2",

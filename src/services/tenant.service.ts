@@ -4,9 +4,12 @@ import { NotFoundException } from '@/exceptions/NotFoundException';
 import { TenantDto } from '@/models/dtos/tenant.dto';
 import { SortOrder } from '@/models/enums/sort-order.enum';
 import { Op } from 'sequelize';
+import S3Services from '@/utils/services/s3.services';
 
 export class TenantService {
 	private tenantModel = DB.Tenant;
+	public s3Service = new S3Services();
+
 	constructor() {}
 	async add(tenantDetails: TenantDto): Promise<number> {
 		const gstNumber = tenantDetails.gstNumber;
