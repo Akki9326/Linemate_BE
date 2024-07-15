@@ -2,6 +2,7 @@ import { Request } from 'express';
 import { JwtTokenData } from './jwt.user.interface';
 import { AppPermission } from '../enums/app-access.enum';
 import { Tenant } from './tenant.interface';
+import { FileDto } from '../dtos/file.dto';
 
 export interface TokenData {
 	token: string;
@@ -11,9 +12,6 @@ export interface TokenData {
 export interface RequestWithUser extends Request {
 	user: JwtTokenData;
 	tenantId: number;
-	file: {
-		path: string;
-	};
 	userAccess: AppPermission[];
 }
 export interface UserData {
@@ -26,7 +24,11 @@ export interface UserData {
 	countryCode: string;
 	isTemporaryPassword: boolean;
 }
-
+export interface RequestWitFile extends Request {
+	files: {
+		file: FileDto;
+	};
+}
 export class LoginResponseData {
 	token: string;
 	userData: UserData;
