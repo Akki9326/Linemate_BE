@@ -1,8 +1,7 @@
 import UserController from '@/controllers/user.controller';
 import authMiddleware from '@/middlewares/auth.middleware';
 import headerMiddleware from '@/middlewares/header.middleWare';
-import { ProfileUploadLocal } from '@/middlewares/s3FileUpload.middleware';
-import { changePasswordDto, UserActionDto, UserDto } from '@/models/dtos/user.dto';
+import { ChangePasswordDto, ImportUserDto, UserActionDto, UserDto } from '@/models/dtos/user.dto';
 import { Routes } from '@/models/interfaces/routes.interface';
 import validationMiddleware from '@middlewares/validation.middleware';
 import { Router } from 'express';
@@ -11,7 +10,6 @@ class UserRoute implements Routes {
 	public path = '/user';
 	public router = Router();
 	public userController = new UserController();
-	public profileUploadLocal = new ProfileUploadLocal();
 
 	constructor() {
 		this.initializeRoutes();
@@ -26,12 +24,12 @@ class UserRoute implements Routes {
 		this.router.post(`${this.path}/v1/de-active`, validationMiddleware(UserActionDto, 'body'), authMiddleware, this.userController.deActiveUser);
 		this.router.post(
 			`${this.path}/v1/change-password`,
-			validationMiddleware(changePasswordDto, 'body'),
+			validationMiddleware(ChangePasswordDto, 'body'),
 			authMiddleware,
 			this.userController.changePassword,
 		);
-		this.router.post(`${this.path}/v1/download-user/:tenantId`, authMiddleware, this.userController.downloadUser);
-		this.router.post(`${this.path}/v1/import-user/:tenantId`, authMiddleware, this.profileUploadLocal.single('file'), this.userController.importUser);
+		this.router.post(`${this.path}/v1/download-user/:tenantId`, this.userController.downloadUser);
+		this.router.post(`${this.path}/v1/import-user/:tenantId`, validationMiddleware(ImportUserDto, 'body'), this.userController.importUser);
 	}
 }
 

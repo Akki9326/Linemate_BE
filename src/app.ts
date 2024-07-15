@@ -12,6 +12,8 @@ import swaggerUi from 'swagger-ui-express';
 import { AppLiquibase } from './config/liquibase/liquibase.config';
 import { Routes } from './models/interfaces/routes.interface';
 import { CacheService } from './services/cache.service';
+import fileUpload from 'express-fileupload';
+import 'reflect-metadata';
 
 class App {
 	public app: express.Application;
@@ -67,6 +69,7 @@ class App {
 		this.app.use(compression());
 		this.app.use(express.json());
 		this.app.use(express.urlencoded({ extended: true }));
+		this.app.use(fileUpload());
 	}
 
 	private initializeRoutes(routes: Routes[]) {

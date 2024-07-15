@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty } from 'class-validator';
 
 export class TenantDto {
 	@IsString()
@@ -13,7 +13,7 @@ export class TenantDto {
 	@IsNotEmpty()
 	public trademark: string;
 
-	@IsNumber()
+	@IsString()
 	@IsNotEmpty()
 	public phoneNumber: number;
 
@@ -25,7 +25,7 @@ export class TenantDto {
 	@IsNotEmpty()
 	public currencyCode: string;
 
-	@IsNumber()
+	@IsString()
 	@IsNotEmpty()
 	public isdCode: string;
 
@@ -42,7 +42,7 @@ export class TenantDto {
 	@IsString()
 	public authorisedEmail: string;
 
-	@IsNumber()
+	@IsString()
 	public authorisedMobileNo: string;
 
 	@IsString()
@@ -57,7 +57,7 @@ export class TenantDto {
 	@IsString()
 	public companyCity: string;
 
-	@IsNumber()
+	@IsString()
 	public companyPinCode: string;
 
 	@IsString()

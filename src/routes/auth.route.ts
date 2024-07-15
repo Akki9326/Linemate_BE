@@ -18,6 +18,8 @@ class AuthRoute implements Routes {
 		this.router.post(`${this.path}/v1/forgot-password`, validationMiddleware(ForgotPasswordDto, 'body'), this.authController.forgotPassword);
 		this.router.post(`${this.path}/v1/verify-otp`, this.authController.verifyOtp);
 		this.router.post(`${this.path}/v1/reset-password`, validationMiddleware(ResetPasswordDto, 'body'), this.authController.resetPassword);
+
+		this.router.post(`${this.path}/v1/file-upload`, this.authController.fileUpload);
 	}
 }
 

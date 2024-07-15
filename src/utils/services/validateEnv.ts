@@ -21,6 +21,11 @@ function validateEnv() {
 			SMTP_PASS: str(),
 			SMTP_USER: str(),
 			SMTP_PORT: num(),
+			AWS_SECRET_ACCESS_KEY: str(),
+			AWS_ACCESS_KEY_ID: str(),
+			AWS_REGION: str(),
+			BUCKET: str(),
+			SESSION_EXPIRY_MINS: num(),
 		},
 		{
 			reporter: ({ errors }) => {

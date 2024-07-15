@@ -1,7 +1,7 @@
-import { BACKEND_URL, FRONTEND_URL, MAX_CHIEF } from '@/config';
+import { FRONTEND_URL, MAX_CHIEF } from '@/config';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { UserListDto } from '@/models/dtos/user-list.dto';
-import { changePasswordDto, UserActionDto, UserDto } from '@/models/dtos/user.dto';
+import { ChangePasswordDto, ImportUserDto, UserActionDto, UserDto } from '@/models/dtos/user.dto';
 import { UserType } from '@/models/enums/user-types.enum';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { User } from '@/models/interfaces/users.interface';
@@ -15,11 +15,7 @@ import { Email } from '@/utils/services/email';
 import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.transaction';
 import DB from '@databases';
 import { parse } from 'date-fns';
-import excel from 'exceljs';
-import fs from 'fs';
-import path from 'path';
 import { Op } from 'sequelize';
-import XLSX from 'xlsx';
 import { TenantService } from './tenant.service';
 import VariableServices from './variable.service';
 
@@ -88,8 +84,8 @@ class UserService {
 		}
 		return tenantDetails;
 	}
-	private async validateTenantVariable(tenantVariable: TenantVariables[]) {
-		for (const variable of tenantVariable) {
+	private async validateTenantVariable(tenantVariables: TenantVariables[]) {
+		for (const variable of tenantVariables) {
 			const tenantDetails = await this.tenant.findOne({
 				where: {
 					id: variable.tenantId,
@@ -116,8 +112,8 @@ class UserService {
 			}
 		}
 	}
-	private async addTenantVariables(tenantVariable: TenantVariables[], userId: number) {
-		tenantVariable.forEach(async tenant => {
+	private async addTenantVariables(tenantVariables: TenantVariables[], userId: number) {
+		tenantVariables.forEach(async tenant => {
 			tenant.variables.forEach(async variable => {
 				const variableListMatrix = new this.variableMatrix();
 				variableListMatrix.tenantId = tenant.tenantId;
@@ -128,8 +124,8 @@ class UserService {
 			});
 		});
 	}
-	private async updateTenantVariables(tenantVariable: TenantVariables[], userId: number) {
-		for (const tenantVar of tenantVariable) {
+	private async updateTenantVariables(tenantVariables: TenantVariables[], userId: number) {
+		for (const tenantVar of tenantVariables) {
 			for (const variable of tenantVar.variables) {
 				let variableListMatrix = await this.variableMatrix.findOne({
 					where: {
@@ -206,8 +202,8 @@ class UserService {
 					throw new BadRequestException(TenantMessage.tenantNotFound);
 				}
 			}
-			if (userData.tenantVariable && userData.tenantVariable.length) {
-				await this.validateTenantVariable(userData.tenantVariable);
+			if (userData.tenantVariables && userData.tenantVariables.length) {
+				await this.validateTenantVariable(userData.tenantVariables);
 			}
 		}
 		const temporaryPassword = PasswordHelper.generateTemporaryPassword();
@@ -228,7 +224,7 @@ class UserService {
 		this.mapUserTypeToRole(user.dataValues?.userType, user.id);
 		if (userData.userType !== UserType.ChiefAdmin) {
 			this.sendAccountActivationEmail(user, temporaryPassword, createdUser);
-			this.addTenantVariables(userData.tenantVariable, user.id);
+			this.addTenantVariables(userData.tenantVariables, user.id);
 		}
 		return { id: user.id };
 	}
@@ -297,8 +293,8 @@ class UserService {
 		if (tenantDetails.length !== userData.tenantIds.length) {
 			throw new BadRequestException(TenantMessage.tenantNotFound);
 		}
-		if (userData.tenantVariable && userData.tenantVariable.length) {
-			await this.validateTenantVariable(userData.tenantVariable);
+		if (userData.tenantVariables && userData.tenantVariables.length) {
+			await this.validateTenantVariable(userData.tenantVariables);
 		}
 		user.firstName = userData.firstName;
 		user.lastName = userData.lastName;
@@ -311,7 +307,7 @@ class UserService {
 		user.updatedBy = updatedBy.toString();
 		await user.save();
 		if (userData.userType !== UserType.ChiefAdmin) {
-			this.updateTenantVariables(userData.tenantVariable, user.id);
+			this.updateTenantVariables(userData.tenantVariables, user.id);
 		}
 		return { id: user.id };
 	}
@@ -414,7 +410,7 @@ class UserService {
 		}
 		return usersToDelete.map(user => ({ id: user.id }));
 	}
-	public async changePassword(changePasswordUsers: changePasswordDto, createdBy: JwtTokenData) {
+	public async changePassword(changePasswordUsers: ChangePasswordDto, createdBy: JwtTokenData) {
 		const usersData = await this.users.findAll({
 			where: {
 				id: {
@@ -482,34 +478,9 @@ class UserService {
 			});
 		}
 
-		const wb = XLSX.utils.book_new();
-
-		const ws = XLSX.utils.json_to_sheet(userData);
-
-		XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
-
-		const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
-
-		const fileName = `data-${Date.now()}.xlsx`;
-		const publicFolderPath = path.join('./public');
-		const filePath = path.join(publicFolderPath, fileName);
-		if (!fs.existsSync('./public')) {
-			fs.mkdirSync('./public');
-		} else {
-			fs.readdirSync(publicFolderPath).forEach(file => {
-				fs.unlinkSync(path.join(publicFolderPath, file));
-			});
-		}
-
-		if (fs.existsSync(fileName)) {
-			fs.unlinkSync(fileName);
-		}
-		fs.writeFileSync(filePath, buffer);
-		const downloadLink = `${BACKEND_URL}/${fileName}`;
-
-		return downloadLink;
+		return userData;
 	}
-	public async importUser(tenantId: number, filePath: string) {
+	public async importUser(tenantId: number, userData: ImportUserDto[]) {
 		const tenantExists = await this.tenant.findOne({
 			where: {
 				id: tenantId,
@@ -519,49 +490,9 @@ class UserService {
 		if (!tenantExists) {
 			throw new BadRequestException(TenantMessage.tenantNotFound);
 		}
-
-		const workbook = new excel.Workbook();
-		await workbook.xlsx.readFile(filePath);
-
-		const sheet = workbook.getWorksheet(1);
-		const headers = [];
-		let rows = [];
-
-		const requiredFields = ['First Name', 'Last Name', 'Email', 'Mobile Number', 'Country Code'];
-
-		sheet.eachRow((row, rowIndex) => {
-			if (rowIndex === 1) {
-				row.eachCell((cell, colIndex) => {
-					headers[colIndex - 1] = cell.value.toString();
-				});
-			} else {
-				const rowData = {};
-				let isValid = true;
-				const missingFields = [];
-
-				row.eachCell((cell, colIndex) => {
-					rowData[headers[colIndex - 1]] = cell.value;
-				});
-
-				requiredFields.forEach(field => {
-					if (!rowData[field]) {
-						isValid = false;
-						missingFields.push(field);
-					}
-				});
-
-				if (!isValid) {
-					throw new BadRequestException(`Missing required fields in row ${rowIndex}: ${missingFields.join(', ')}`);
-				}
-
-				rows.push(rowData);
-			}
-		});
-		console.log('filePath', filePath);
-		await fs.unlinkSync(filePath);
-		if (rows.length) {
-			const emails = rows.map(row => row['Email'].toString());
-			const mobileNumbers = rows.map(row => row['Mobile Number'].toString());
+		if (userData.length) {
+			const emails = userData.map(row => row['email'].toString());
+			const mobileNumbers = userData.map(row => row['mobileNumber'].toString());
 
 			const existingUsers = await this.users.findAll({
 				where: {
@@ -573,34 +504,34 @@ class UserService {
 			if (existingUsers.length) {
 				const existingEmails = existingUsers.map(user => user.email);
 				const existingMobiles = existingUsers.map(user => user.mobileNumber);
-				const duplicates = rows.filter(
-					row => existingEmails.includes(row['Email'].toString()) || existingMobiles.includes(row['Mobile Number'].toString()),
+				const duplicates = userData.filter(
+					row => existingEmails.includes(row['email'].toString()) || existingMobiles.includes(row['mobileNumber'].toString()),
 				);
 				throw new BadRequestException(`Duplicate entries found: ${JSON.stringify(duplicates)}`);
 			}
 
 			// Map rows to user objects
-			rows = rows.map(row => {
+			const modifyUserData = userData.map(row => {
 				const plainPassword = PasswordHelper.generateTemporaryPassword();
 				const hashedPassword = PasswordHelper.hashPassword(plainPassword);
 				return {
-					firstName: row['First Name'],
-					lastName: row['Last Name'],
-					email: row['Email'],
-					mobileNumber: row['Mobile Number'],
+					firstName: row['firstName'],
+					lastName: row['lastName'],
+					email: row['email'],
+					mobileNumber: row['mobileNumber'],
 					userType: UserType.User,
-					countryCode: row['Country Code'],
+					countryCode: row['countyCode'],
 					tenantIds: [tenantId],
 					password: hashedPassword,
 					plainPassword: plainPassword,
 				};
 			});
 
-			const plainPasswords = rows.map(user => ({
-				email: user.email,
-				password: user.plainPassword,
+			const plainPasswords = modifyUserData.map(user => ({
+				email: user['email'],
+				password: user['plainPassword'],
 			}));
-			const usersToCreate = rows.map(({ ...user }) => user);
+			const usersToCreate = modifyUserData.map(({ ...user }) => user);
 
 			const createdUsers = await this.users.bulkCreate(usersToCreate, { ignoreDuplicates: true });
 			for (const user of createdUsers) {

@@ -1,5 +1,5 @@
 import { UserListDto } from '@/models/dtos/user-list.dto';
-import { changePasswordDto, UserActionDto, UserDto } from '@/models/dtos/user.dto';
+import { ChangePasswordDto, ImportUserDto, UserActionDto, UserDto } from '@/models/dtos/user.dto';
 import { RequestWithUser } from '@/models/interfaces/auth.interface';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import UserService from '@/services/user.service';
@@ -70,7 +70,7 @@ class UserController {
 	};
 	public changePassword = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
-			const changePasswordUsers = req.body as changePasswordDto;
+			const changePasswordUsers = req.body as ChangePasswordDto;
 			const createdBy = req.user as JwtTokenData;
 			const userResponse = await this.userService.changePassword(changePasswordUsers, createdBy);
 			AppResponseHelper.sendSuccess(res, 'Success', userResponse);
@@ -90,8 +90,8 @@ class UserController {
 	public importUser = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
 			const tenantId = parseInt(req.params.tenantId) as number;
-			const filePath = req.file.path as string;
-			const userResponse = await this.userService.importUser(tenantId, filePath);
+			const userData: ImportUserDto[] = req.body.data;
+			const userResponse = await this.userService.importUser(tenantId, userData);
 			AppResponseHelper.sendSuccess(res, 'Success', userResponse);
 		} catch (ex) {
 			next(ex);
