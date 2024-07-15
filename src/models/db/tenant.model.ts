@@ -1,6 +1,7 @@
 import { Sequelize, DataTypes } from 'sequelize';
 import { AppDBModel, AppDB_Common_Fields } from './app-db.model';
 import { ClientTypes } from '../enums/client-type.enum';
+import { NotificationsPermission } from '../interfaces/notifications-permission.enum';
 
 export class TenantModel extends AppDBModel {
 	public id: number;
@@ -23,6 +24,7 @@ export class TenantModel extends AppDBModel {
 	public companyCity: string;
 	public companyPinCode: number;
 	public whitelistedIps: string;
+	public notificationsPermission: NotificationsPermission;
 }
 
 export default function (sequelize: Sequelize): typeof TenantModel {
@@ -109,6 +111,10 @@ export default function (sequelize: Sequelize): typeof TenantModel {
 			whitelistedIps: {
 				type: DataTypes.STRING,
 				allowNull: true,
+			},
+			notificationsPermission: {
+				type: DataTypes.JSONB,
+				allowNull: false,
 			},
 		},
 		{

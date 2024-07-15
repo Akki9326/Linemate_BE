@@ -60,9 +60,9 @@ export class TenantService {
 	}
 
 	public async list(pageModel) {
-		const { page, pageSize, searchTerm } = pageModel;
+		const { page, pageSize, searchTerm, sortField, sortOrder } = pageModel;
 
-		let whereClause;
+		let whereClause = {};
 		if (searchTerm) {
 			whereClause = {
 				...whereClause,
@@ -73,7 +73,6 @@ export class TenantService {
 				},
 			};
 		}
-
 		const { count, rows } = await this.tenantModel.findAndCountAll({
 			where: {
 				...whereClause,
@@ -82,7 +81,7 @@ export class TenantService {
 			},
 			// nest: true,
 			distinct: true,
-			order: [[pageModel.sortField || 'createdAt', pageModel.sortOrder || SortOrder.ASC]],
+			order: [[sortField || 'createdAt', sortOrder || SortOrder.ASC]],
 			limit: pageSize,
 			offset: (page - 1) * pageSize,
 		});

@@ -1,4 +1,5 @@
-import { IsString, IsNotEmpty, IsNumber } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsObject } from 'class-validator';
+import { NotificationsPermission } from '../interfaces/notifications-permission.enum';
 
 export class TenantDto {
 	@IsString()
@@ -20,6 +21,10 @@ export class TenantDto {
 	@IsString()
 	@IsNotEmpty()
 	public gstNumber: string;
+
+	@IsObject()
+	@IsNotEmpty()
+	public notificationsPermission: NotificationsPermission;
 
 	@IsString()
 	@IsNotEmpty()

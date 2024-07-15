@@ -26,7 +26,7 @@ class TenantController {
 	};
 	public list = async (req: Request, res: Response, next: NextFunction) => {
 		try {
-			const pageModel = req.query;
+			const pageModel = req.body;
 			const tenantResponse = await this.tenantService.list(pageModel);
 			AppResponseHelper.sendSuccess(res, 'Success', tenantResponse);
 		} catch (ex) {
