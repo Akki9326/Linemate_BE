@@ -1,7 +1,7 @@
 import { FRONTEND_URL, MAX_CHIEF } from '@/config';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { UserListDto } from '@/models/dtos/user-list.dto';
-import { changePasswordDto, ImportUserDto, UserActionDto, UserDto } from '@/models/dtos/user.dto';
+import { ChangePasswordDto, ImportUserDto, UserActionDto, UserDto } from '@/models/dtos/user.dto';
 import { UserType } from '@/models/enums/user-types.enum';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { User } from '@/models/interfaces/users.interface';
@@ -410,7 +410,7 @@ class UserService {
 		}
 		return usersToDelete.map(user => ({ id: user.id }));
 	}
-	public async changePassword(changePasswordUsers: changePasswordDto, createdBy: JwtTokenData) {
+	public async changePassword(changePasswordUsers: ChangePasswordDto, createdBy: JwtTokenData) {
 		const usersData = await this.users.findAll({
 			where: {
 				id: {
@@ -511,7 +511,7 @@ class UserService {
 			}
 
 			// Map rows to user objects
-			userData = userData.map(row => {
+			const modifyUserData = userData.map(row => {
 				const plainPassword = PasswordHelper.generateTemporaryPassword();
 				const hashedPassword = PasswordHelper.hashPassword(plainPassword);
 				return {
@@ -527,11 +527,11 @@ class UserService {
 				};
 			});
 
-			const plainPasswords = userData.map(user => ({
+			const plainPasswords = modifyUserData.map(user => ({
 				email: user['email'],
 				password: user['plainPassword'],
 			}));
-			const usersToCreate = userData.map(({ ...user }) => user);
+			const usersToCreate = modifyUserData.map(({ ...user }) => user);
 
 			const createdUsers = await this.users.bulkCreate(usersToCreate, { ignoreDuplicates: true });
 			for (const user of createdUsers) {

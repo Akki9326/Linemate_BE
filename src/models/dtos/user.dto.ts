@@ -1,7 +1,6 @@
 import { IsArray, IsEmail, IsEnum, IsMobilePhone, IsNumber, IsOptional, IsString } from 'class-validator';
 import { UserType } from '../enums/user-types.enum';
 import { TenantVariables } from '../interfaces/variable.interface';
-import { importUser } from '../interfaces/importUser.interface';
 
 export class UserDto {
 	@IsString()
@@ -66,7 +65,7 @@ export class UserVariableDto {
 	public tenantId: number;
 }
 
-export class changePasswordDto {
+export class ChangePasswordDto {
 	@IsArray()
 	public userIds: number[];
 
@@ -74,7 +73,7 @@ export class changePasswordDto {
 	public tenantId: number;
 }
 
-export class userData {
+export class UserData {
 	@IsString()
 	public firstName: string;
 
@@ -96,5 +95,5 @@ export class userData {
 
 export class ImportUserDto {
 	@IsArray()
-	public data: importUser[];
+	public data: UserData[];
 }
