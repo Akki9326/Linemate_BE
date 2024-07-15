@@ -1,7 +1,7 @@
 import { FRONTEND_URL, MAX_CHIEF } from '@/config';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { UserListDto } from '@/models/dtos/user-list.dto';
-import { changePasswordDto, ImportDtoType, UserActionDto, UserDto } from '@/models/dtos/user.dto';
+import { changePasswordDto, ImportUserDto, UserActionDto, UserDto } from '@/models/dtos/user.dto';
 import { UserType } from '@/models/enums/user-types.enum';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { User } from '@/models/interfaces/users.interface';
@@ -480,7 +480,7 @@ class UserService {
 
 		return userData;
 	}
-	public async importUser(tenantId: number, userData: ImportDtoType[]) {
+	public async importUser(tenantId: number, userData: ImportUserDto[]) {
 		const tenantExists = await this.tenant.findOne({
 			where: {
 				id: tenantId,
