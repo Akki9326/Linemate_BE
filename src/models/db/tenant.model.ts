@@ -1,7 +1,6 @@
 import { Sequelize, DataTypes } from 'sequelize';
 import { AppDBModel, AppDB_Common_Fields } from './app-db.model';
 import { ClientTypes } from '../enums/client-type.enum';
-import { NotificationsPermission } from '../interfaces/notifications-permission.enum';
 
 export class TenantModel extends AppDBModel {
 	public id: number;
@@ -24,7 +23,9 @@ export class TenantModel extends AppDBModel {
 	public companyCity: string;
 	public companyPinCode: number;
 	public whitelistedIps: string;
-	public notificationsPermission: NotificationsPermission;
+	public whatsapp: boolean;
+	public sms: boolean;
+	public viber: boolean;
 }
 
 export default function (sequelize: Sequelize): typeof TenantModel {
@@ -112,9 +113,17 @@ export default function (sequelize: Sequelize): typeof TenantModel {
 				type: DataTypes.STRING,
 				allowNull: true,
 			},
-			notificationsPermission: {
-				type: DataTypes.JSONB,
-				allowNull: false,
+			whatsapp: {
+				type: DataTypes.BOOLEAN,
+				defaultValue: false,
+			},
+			sms: {
+				type: DataTypes.BOOLEAN,
+				defaultValue: false,
+			},
+			viber: {
+				type: DataTypes.BOOLEAN,
+				defaultValue: false,
 			},
 		},
 		{

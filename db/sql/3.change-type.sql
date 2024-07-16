@@ -39,7 +39,9 @@ ADD COLUMN "type" VARCHAR(50) NOT NULL DEFAULT 'stander' CHECK ("type" IN ('cust
 
 
 ALTER TABLE tenant
-ADD COLUMN "notificationsPermission" JSONB
+ADD COLUMN "whatsapp" BOOLEAN DEFAULT false,
+ADD COLUMN "sms" BOOLEAN DEFAULT false,
+ADD COLUMN "viber" BOOLEAN DEFAULT false
 
 
 

@@ -1,5 +1,4 @@
-import { IsString, IsNotEmpty, IsObject } from 'class-validator';
-import { NotificationsPermission } from '../interfaces/notifications-permission.enum';
+import { IsString, IsNotEmpty, IsBoolean } from 'class-validator';
 
 export class TenantDto {
 	@IsString()
@@ -14,6 +13,15 @@ export class TenantDto {
 	@IsNotEmpty()
 	public trademark: string;
 
+	@IsBoolean()
+	whatsapp: boolean;
+
+	@IsBoolean()
+	sms: boolean;
+
+	@IsBoolean()
+	viber: boolean;
+
 	@IsString()
 	@IsNotEmpty()
 	public phoneNumber: number;
@@ -21,10 +29,6 @@ export class TenantDto {
 	@IsString()
 	@IsNotEmpty()
 	public gstNumber: string;
-
-	@IsObject()
-	@IsNotEmpty()
-	public notificationsPermission: NotificationsPermission;
 
 	@IsString()
 	@IsNotEmpty()
