@@ -129,7 +129,7 @@ CREATE TABLE tenant (
     "companyType" VARCHAR(100) NOT NULL,
     "trademark" VARCHAR(255) NOT NULL UNIQUE,
     "phoneNumber" VARCHAR(20),
-    "logo" VARCHAR(255),
+    "logo" VARCHAR(255) NOT NULL,
     "gstNumber" VARCHAR(255) NOT NULL UNIQUE,
     "currencyCode" VARCHAR(255) NOT NULL,
     "isdCode" VARCHAR(255),
@@ -143,8 +143,7 @@ CREATE TABLE tenant (
     "companyState" VARCHAR(100),
     "companyCity" VARCHAR(100),
     "companyPinCode" VARCHAR(50),
-    "whitelistedIps" VARCHAR(50),
-    "notificationsPermission" JSONB NOT NULL 
+    "whitelistedIps" VARCHAR(50)
 );
 
 
