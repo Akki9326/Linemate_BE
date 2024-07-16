@@ -25,7 +25,7 @@ const authMiddleware = async (req: RequestWithUser, res: Response, next: NextFun
 				next(new HttpException(HttpStatusCode.UNAUTHORIZED, 'Invalid authentication token'));
 			} else {
 				req.user = verificationResponse;
-				req.userAccess = (await new RoleService().getAccessByRoleIds(req.user.id)) as AppPermission[];
+				req.userAccess = (await new RoleService().getAccessByRoleIds(req.user)) as AppPermission[];
 				next();
 			}
 		} else {

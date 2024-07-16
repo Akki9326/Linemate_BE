@@ -182,7 +182,14 @@ export default class AuthService {
 		}
 		const loginResponse: LoginResponseData = {
 			userData: {
-				access: (await this.roleService.getAccessByRoleIds(user.id)) as AppPermission[],
+				access: (await this.roleService.getAccessByRoleIds({
+					email: user.email,
+					firstName: user.firstName,
+					lastName: user.lastName,
+					id: user.id,
+					userType: user.userType,
+					sessionId: sessionId,
+				})) as AppPermission[],
 				email: user.email,
 				mobileNumber: user.mobileNumber,
 				firstName: user.firstName,
