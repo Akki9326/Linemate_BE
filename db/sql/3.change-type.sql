@@ -35,7 +35,7 @@ DROP COLUMN "type";
 
 -- Then, add the new column with a check constraint and default value
 ALTER TABLE "role"
-ADD COLUMN "type" VARCHAR(50) NOT NULL DEFAULT 'stander' CHECK ("type" IN ('custom', 'stander'));
+ADD COLUMN "type" VARCHAR(50) NOT NULL DEFAULT 'stander' CHECK ("type" IN ('custom', 'standard'));
 
 
 ALTER TABLE tenant
