@@ -1,3 +1,4 @@
+import { TenantListRequestDto } from '@/models/dtos/tenant-list.dto';
 import { TenantDto } from '@/models/dtos/tenant.dto';
 import { TenantService } from '@/services/tenant.service';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
@@ -26,7 +27,7 @@ class TenantController {
 	};
 	public list = async (req: Request, res: Response, next: NextFunction) => {
 		try {
-			const pageModel = req.body;
+			const pageModel: TenantListRequestDto = req.body;
 			const tenantResponse = await this.tenantService.list(pageModel);
 			AppResponseHelper.sendSuccess(res, 'Success', tenantResponse);
 		} catch (ex) {

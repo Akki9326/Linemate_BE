@@ -5,6 +5,7 @@ import { TenantDto } from '@/models/dtos/tenant.dto';
 import { SortOrder } from '@/models/enums/sort-order.enum';
 import { Op } from 'sequelize';
 import S3Services from '@/utils/services/s3.services';
+import { TenantListRequestDto } from '@/models/dtos/tenant-list.dto';
 
 export class TenantService {
 	private tenantModel = DB.Tenant;
@@ -62,17 +63,17 @@ export class TenantService {
 		return tenantResponse;
 	}
 
-	public async list(pageModel) {
-		const { page, pageSize, searchTerm, sortField, sortOrder } = pageModel;
+	public async list(pageModel: TenantListRequestDto) {
+		const { page, pageSize, search, sortField, sortOrder } = pageModel;
 
 		let whereClause = {};
-		if (searchTerm) {
+		if (search) {
 			whereClause = {
 				...whereClause,
 				[Op.or]: {
-					name: { [Op.iRegexp]: pageModel.searchTerm },
-					trademark: { [Op.iRegexp]: pageModel.searchTerm },
-					authorisedEmail: { [Op.iRegexp]: pageModel.searchTerm },
+					name: { [Op.iRegexp]: search },
+					trademark: { [Op.iRegexp]: search },
+					authorisedEmail: { [Op.iRegexp]: search },
 				},
 			};
 		}
