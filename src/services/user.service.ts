@@ -146,12 +146,12 @@ class UserService {
 			}
 		}
 	}
-	private async mapUserTypeToRole(userType: UserType, userId: number) {
+	private async mapUserTypeToRole(userType: UserType, userId: number, tenantIds: number[]) {
 		const defaultRoleIds = await findDefaultRole(userType);
 		await Promise.all(
-			defaultRoleIds.map(async (roleId: number) => {
+			tenantIds.map(async (tenantId: number) => {
 				const role = await this.role.findOne({
-					where: { id: roleId, isDeleted: false },
+					where: { tenantId: tenantId, name: defaultRoleIds, isDeleted: false },
 				});
 
 				if (!role) {
@@ -221,7 +221,7 @@ class UserService {
 		user.employeeId = userData?.employeeId;
 		user.profilePhoto = userData?.profilePhoto;
 		user = await user.save();
-		this.mapUserTypeToRole(user.dataValues?.userType, user.id);
+		this.mapUserTypeToRole(user.dataValues?.userType, user.id, userData.tenantIds);
 		if (userData.userType !== UserType.ChiefAdmin) {
 			this.sendAccountActivationEmail(user, temporaryPassword, createdUser);
 			this.addTenantVariables(userData.tenantVariables, user.id);

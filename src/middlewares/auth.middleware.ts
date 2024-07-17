@@ -1,8 +1,6 @@
-import { AppPermission } from '@/models/enums/app-access.enum';
 import { HttpStatusCode } from '@/models/enums/http-status-code.enum';
 import { RequestWithUser } from '@/models/interfaces/auth.interface';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
-import { RoleService } from '@/services/role.service';
 import { UserCaching } from '@/utils/helpers/caching-user.helper';
 import { SECRET_KEY } from '@config';
 import { HttpException } from '@exceptions/HttpException';
@@ -25,7 +23,6 @@ const authMiddleware = async (req: RequestWithUser, res: Response, next: NextFun
 				next(new HttpException(HttpStatusCode.UNAUTHORIZED, 'Invalid authentication token'));
 			} else {
 				req.user = verificationResponse;
-				req.userAccess = (await new RoleService().getAccessByRoleIds(req.user)) as AppPermission[];
 				next();
 			}
 		} else {

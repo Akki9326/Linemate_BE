@@ -153,23 +153,28 @@ export class RoleService {
 		await role.save();
 		return role.id;
 	}
-
-	public async getAccessByRoleIds(user: JwtTokenData): Promise<string[]> {
-		const roleResponse = await this.role.findOne({
+	public async getAccessByRoleIds(user: JwtTokenData, tenantIds: number[]) {
+		const roleResponse = await this.role.findAll({
 			where: {
 				userIds: { [Op.contains]: [user.id] },
+				tenantId: tenantIds,
 			},
+			attributes: ['permissionsIds'],
 		});
 
-		const permissionsIds = roleResponse?.dataValues?.permissionsIds || [];
+		// Extract permissionIds from each role and flatten the array
+		const permissionsIds = roleResponse.flatMap(role => role.permissionsIds || []);
+
 		const condition: { id?: number[] } = {};
 		if (user.userType !== UserType.ChiefAdmin) {
-			condition.id = permissionsIds as number[];
+			condition.id = permissionsIds;
 		}
+
 		const permissions = await this.permissionModel.findAll({
 			where: condition,
 			attributes: ['name'],
 		});
+
 		const permissionNames = permissions.map(permission => permission.name);
 		return permissionNames;
 	}

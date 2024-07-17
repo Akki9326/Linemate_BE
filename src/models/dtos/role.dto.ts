@@ -1,6 +1,6 @@
-import { IsString, IsNotEmpty, IsNumber, IsOptional, IsArray, IsEnum } from 'class-validator';
-import { ListRequestDto } from './list-request.dto';
+import { IsArray, IsEnum, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { RoleType } from '../enums/role.enum';
+import { ListRequestDto } from './list-request.dto';
 
 export class RoleDto {
 	@IsString()
@@ -22,7 +22,6 @@ export class RoleDto {
 	public userIds: number[];
 
 	@IsNumber()
-	@IsOptional()
 	public tenantId: number;
 }
 export class RoleListFilterDto {}
