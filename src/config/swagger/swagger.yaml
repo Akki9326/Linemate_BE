@@ -570,7 +570,7 @@ paths:
           description: Success
 
   /user/v1/delete-users:
-    delete:
+    post:
       summary: Delete Bulk Users
       tags:
         - User
@@ -1000,7 +1000,7 @@ paths:
         '200':
           description: Success
 
-    delete:
+    post:
       summary: Delete Variable
       tags:
         - Variable
