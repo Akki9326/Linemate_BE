@@ -5,7 +5,7 @@ import { DB_DATABASE, DB_HOST, DB_PASSWORD, DB_PORT, DB_USER } from '..';
 export class AppLiquibase {
 	static myConfig: LiquibaseConfig = {
 		...POSTGRESQL_DEFAULT_CONFIG,
-		liquibase: process.env.DB_LIQUIBASE_PATH,
+		// liquibase: './db/sql/',
 		url: `jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_DATABASE}`,
 		username: DB_USER,
 		password: DB_PASSWORD,
