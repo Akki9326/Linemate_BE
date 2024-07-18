@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, IsBoolean } from 'class-validator';
 
 export class TenantDto {
 	@IsString()
@@ -12,6 +12,15 @@ export class TenantDto {
 	@IsString()
 	@IsNotEmpty()
 	public trademark: string;
+
+	@IsBoolean()
+	whatsapp: boolean;
+
+	@IsBoolean()
+	sms: boolean;
+
+	@IsBoolean()
+	viber: boolean;
 
 	@IsString()
 	@IsNotEmpty()
