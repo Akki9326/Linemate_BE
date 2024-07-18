@@ -5,7 +5,7 @@ import { RoleDto, RoleListRequestDto } from '@/models/dtos/role.dto';
 import { UserType } from '@/models/enums/user-types.enum';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { RoleMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
-import { Op } from 'sequelize';
+import { Op, WhereOptions } from 'sequelize';
 
 export class RoleService {
 	private role = DB.Roles;
@@ -91,20 +91,43 @@ export class RoleService {
 		return user;
 	}
 
-	public async all(pageModel: RoleListRequestDto) {
+	public async all(pageModel: RoleListRequestDto, tenantId: number) {
 		const { page = 1, pageSize = 10, sortField = 'id', sortOrder = 'ASC' } = pageModel;
 		const offset = (page - 1) * pageSize;
+		let condition: WhereOptions = { isDeleted: false };
+		if (tenantId) {
+			condition = { ...condition, tenantId };
+		} else {
+			condition = { ...condition, tenantId: null };
+		}
+		if (pageModel?.search) {
+			condition = {
+				...condition,
+				name: { [Op.like]: `%${pageModel.search}%` }, // Correctly use Op.like
+			};
+		}
 		const rolesResult = await this.role.findAndCountAll({
-			where: { isDeleted: false },
+			where: condition,
 			offset,
 			limit: pageSize,
 			order: [[sortField, sortOrder]],
-			attributes: ['id', 'name', 'description', 'createdAt', 'createdBy'],
+			attributes: ['id', 'name', 'createdAt', 'tenantId', 'createdBy', 'updatedBy'],
 		});
+
 		const rolesWithCreator = await Promise.all(
 			rolesResult.rows.map(async role => {
-				const creator = await this.fetchUserDetails(parseInt(role.createdBy));
-				return { ...role.toJSON(), creator };
+				let createdBy = null;
+				let updatedBy = null;
+
+				if (role.createdBy && !isNaN(parseInt(role.createdBy))) {
+					createdBy = await this.fetchUserDetails(parseInt(role.createdBy));
+				}
+
+				if (role.updatedBy && !isNaN(parseInt(role.updatedBy))) {
+					updatedBy = await this.fetchUserDetails(parseInt(role.updatedBy));
+				}
+
+				return { ...role.toJSON(), createdBy, updatedBy };
 			}),
 		);
 
@@ -130,23 +153,29 @@ export class RoleService {
 		await role.save();
 		return role.id;
 	}
-
-	public async getAccessByRoleIds(userId: number): Promise<string[]> {
-		const roleResponse = await this.role.findOne({
+	public async getAccessByRoleIds(user: JwtTokenData, tenantIds: number[]) {
+		const roleResponse = await this.role.findAll({
 			where: {
-				userIds: { [Op.contains]: [userId] },
+				userIds: { [Op.contains]: [user.id] },
+				tenantId: tenantIds,
 			},
+			attributes: ['permissionsIds'],
 		});
 
-		const permissionsIds = roleResponse?.dataValues?.permissionsIds || [];
-		if (permissionsIds.length > 0) {
-			const permissions = await this.permissionModel.findAll({
-				where: { id: { [Op.in]: permissionsIds } },
-				attributes: ['name'],
-			});
-			const permissionNames = permissions.map(permission => permission.name);
-			return permissionNames;
+		// Extract permissionIds from each role and flatten the array
+		const permissionsIds = roleResponse.flatMap(role => role.permissionsIds || []);
+
+		const condition: { id?: number[] } = {};
+		if (user.userType !== UserType.ChiefAdmin) {
+			condition.id = permissionsIds;
 		}
-		return [];
+
+		const permissions = await this.permissionModel.findAll({
+			where: condition,
+			attributes: ['name'],
+		});
+
+		const permissionNames = permissions.map(permission => permission.name);
+		return permissionNames;
 	}
 }

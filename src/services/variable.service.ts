@@ -6,6 +6,7 @@ import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { AppMessages, TenantMessage, VariableMessage } from '@/utils/helpers/app-message.helper';
 import DB from '@databases';
 import { VariableHelper } from '@/utils/helpers/variable.helper';
+import { Op } from 'sequelize';
 
 class VariableServices {
 	private variableMaster = DB.VariableMaster;
@@ -105,15 +106,21 @@ class VariableServices {
 			orderByField = pageModel.sortField || 'id',
 			sortDirection = pageModel.sortOrder || 'ASC';
 		const offset = (page - 1) * limit;
-		const condition = {};
+		let condition = {};
 		if (tenantId) {
 			condition['tenantId'] = tenantId;
+		}
+		if (pageModel?.search) {
+			condition = {
+				...condition,
+				name: { [Op.like]: `%${pageModel.search}%` }, // Correctly use Op.like
+			};
 		}
 		const validateList = await this.variableMaster.findAndCountAll({
 			where: { isDeleted: false, ...condition },
 			offset,
 			limit,
-			attributes: ['id', 'name', 'isMandatory', 'type', 'description', 'category', 'options'],
+			attributes: ['id', 'name', 'isMandatory', 'type', 'description', 'category', 'options', 'tenantId'],
 			order: [[orderByField, sortDirection]],
 		});
 		return validateList;

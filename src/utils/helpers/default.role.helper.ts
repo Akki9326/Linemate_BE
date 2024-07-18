@@ -1,11 +1,22 @@
-import { UserType } from '@/models/enums/user-types.enum';
-
-const userTypeDefaultRoles = {
-	CompanyAdmin: [1],
-	SupportUser: [2],
-	User: [3],
-};
+import DB from '@/databases';
+import { RoleType } from '@/models/enums/role.enum';
+import { getPermissionGroup, UserType } from '@/models/enums/user-types.enum';
 
 export const findDefaultRole = (userType: UserType) => {
-	return userTypeDefaultRoles[UserType[userType]];
+	return getPermissionGroup(userType);
+};
+export const insertDefaultRoles = async (tenantId: number, createdBy: number) => {
+	const rolesToInsert = Object.values(UserType)
+		.map(roleName => ({
+			name: getPermissionGroup(roleName),
+			description: '',
+			type: RoleType.Standard,
+			permissionsIds: [],
+			userIds: [],
+			tenantId,
+			createdBy,
+		}))
+		.filter(role => role.name);
+	const response = await DB.Roles.bulkCreate(rolesToInsert);
+	return response;
 };

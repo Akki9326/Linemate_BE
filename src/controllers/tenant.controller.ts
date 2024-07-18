@@ -1,4 +1,5 @@
 import { TenantDto } from '@/models/dtos/tenant.dto';
+import { RequestWithUser } from '@/models/interfaces/auth.interface';
 import { TenantService } from '@/services/tenant.service';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
 import { NextFunction, Request, Response } from 'express-serve-static-core';
@@ -6,10 +7,11 @@ import { NextFunction, Request, Response } from 'express-serve-static-core';
 class TenantController {
 	public tenantService = new TenantService();
 
-	public create = async (req: Request, res: Response, next: NextFunction) => {
+	public create = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
 			const tenantDetails: TenantDto = req.body;
-			const tenant = await this.tenantService.add(tenantDetails);
+			const userId = req.user.id as number;
+			const tenant = await this.tenantService.add(tenantDetails, userId);
 			AppResponseHelper.sendSuccess(res, 'Success', tenant);
 		} catch (ex) {
 			next(ex);

@@ -48,12 +48,12 @@ export default class AuthService {
 
 		return user;
 	}
-	public async findUserById(userId: number | string) {
+	public async findUserById(userId: number) {
 		const userInstance = await this.users.findOne({
 			where: { id: userId },
 			attributes: ['firstName', 'lastName'],
 		});
-		const user = userInstance ? userInstance.get({ plain: true }) : null;
+		const user = userInstance ? userInstance.get({ plain: true }) : [];
 		return user;
 	}
 	private async saveTokenInDB(userId: number, tokenType: TokenTypes, token: string) {
@@ -157,7 +157,7 @@ export default class AuthService {
 						const plainTenant = tenant.get({ plain: true });
 						return {
 							...plainTenant,
-							createdBy: await this.findUserById(parseInt(plainTenant.createdBy)),
+							createdBy: plainTenant.createdBy !== 'System' && (await this.findUserById(parseInt(plainTenant.createdBy))),
 						};
 					}),
 				);
@@ -175,14 +175,24 @@ export default class AuthService {
 					const plainTenant = tenant.get({ plain: true });
 					return {
 						...plainTenant,
-						createdBy: await this.findUserById(parseInt(plainTenant.createdBy)),
+						createdBy: plainTenant.createdBy !== 'System' && (await this.findUserById(parseInt(plainTenant.createdBy))),
 					};
 				}),
 			);
 		}
 		const loginResponse: LoginResponseData = {
 			userData: {
-				access: (await this.roleService.getAccessByRoleIds(user.id)) as AppPermission[],
+				access: (await this.roleService.getAccessByRoleIds(
+					{
+						email: user.email,
+						firstName: user.firstName,
+						lastName: user.lastName,
+						id: user.id,
+						userType: user.userType,
+						sessionId: sessionId,
+					},
+					user.tenantIds,
+				)) as AppPermission[],
 				email: user.email,
 				mobileNumber: user.mobileNumber,
 				firstName: user.firstName,

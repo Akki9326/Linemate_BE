@@ -5,13 +5,14 @@ import { TenantDto } from '@/models/dtos/tenant.dto';
 import { SortOrder } from '@/models/enums/sort-order.enum';
 import { Op } from 'sequelize';
 import S3Services from '@/utils/services/s3.services';
+import { insertDefaultRoles } from '@/utils/helpers/default.role.helper';
 
 export class TenantService {
 	private tenantModel = DB.Tenant;
 	public s3Service = new S3Services();
 
 	constructor() {}
-	async add(tenantDetails: TenantDto): Promise<number> {
+	async add(tenantDetails: TenantDto, userId: number): Promise<number> {
 		const gstNumber = tenantDetails.gstNumber;
 
 		const regex = new RegExp('^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$');
@@ -23,6 +24,7 @@ export class TenantService {
 		const tenant = await this.tenantModel.create({
 			...tenantDetails,
 		});
+		await insertDefaultRoles(tenant.id, userId);
 		return tenant.id;
 	}
 
