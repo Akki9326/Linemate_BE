@@ -155,9 +155,10 @@ export default class AuthService {
 				tenantDetails = await Promise.all(
 					allTenants.map(async tenant => {
 						const plainTenant = tenant.get({ plain: true });
+						const createdBy = parseInt(plainTenant.createdBy);
 						return {
 							...plainTenant,
-							createdBy: plainTenant.createdBy !== 'System' && (await this.findUserById(parseInt(plainTenant.createdBy))),
+							createdBy: Number.isInteger(createdBy) && (await this.findUserById(parseInt(plainTenant.createdBy))),
 						};
 					}),
 				);
@@ -173,9 +174,10 @@ export default class AuthService {
 			tenantDetails = await Promise.all(
 				allTenants.map(async tenant => {
 					const plainTenant = tenant.get({ plain: true });
+					const createdBy = parseInt(plainTenant.createdBy);
 					return {
 						...plainTenant,
-						createdBy: plainTenant.createdBy !== 'System' && (await this.findUserById(parseInt(plainTenant.createdBy))),
+						createdBy: Number.isInteger(createdBy) && (await this.findUserById(parseInt(plainTenant.createdBy))),
 					};
 				}),
 			);
