@@ -1,6 +1,8 @@
 -- -- First, drop the existing column
-ALTER TABLE permissions
-DROP COLUMN "type";
+ALTER TABLE "role"
+ALTER COLUMN "type" SET DATA TYPE VARCHAR(50),
+ALTER COLUMN "type" SET DEFAULT 'standard',
+ADD CHECK ("type" IN ('custom', 'standard'));
 
 -- -- Then, add the new column with a check constraint and default value
 ALTER TABLE permissions
