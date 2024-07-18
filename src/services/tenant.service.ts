@@ -73,9 +73,10 @@ export class TenantService {
 			whereClause = {
 				...whereClause,
 				[Op.or]: {
-					name: { [Op.iRegexp]: search },
-					trademark: { [Op.iRegexp]: search },
-					authorisedEmail: { [Op.iRegexp]: search },
+					name: { [Op.iLike]: pageModel.searchTerm },
+					trademark: { [Op.iLike]: pageModel.searchTerm },
+					authorisedEmail: { [Op.iLike]: pageModel.searchTerm },
+
 				},
 			};
 		}

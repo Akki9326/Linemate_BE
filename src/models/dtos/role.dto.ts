@@ -1,4 +1,4 @@
-import { IsArray, IsEnum, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { RoleType } from '../enums/role.enum';
 import { ListRequestDto } from './list-request.dto';
 
@@ -12,7 +12,7 @@ export class RoleDto {
 	public type: RoleType;
 
 	@IsString()
-	@IsNotEmpty()
+	@IsOptional()
 	public description: string;
 
 	@IsArray()

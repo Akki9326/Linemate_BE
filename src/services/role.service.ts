@@ -103,7 +103,7 @@ export class RoleService {
 		if (pageModel?.search) {
 			condition = {
 				...condition,
-				name: { [Op.like]: `%${pageModel.search}%` }, // Correctly use Op.like
+				name: { [Op.iLike]: pageModel.search },
 			};
 		}
 		const rolesResult = await this.role.findAndCountAll({
@@ -144,6 +144,11 @@ export class RoleService {
 
 		if (!role) {
 			throw new BadRequestException(RoleMessage.roleNotFound);
+		}
+		if (role && role.userIds.length) {
+			throw new BadRequestException(
+				`Only a permission group that has no users mapped to it can be deleted. Currently, this permission group has ${role.userIds.length} user(s) mapped to it.`,
+			);
 		}
 
 		role.set({

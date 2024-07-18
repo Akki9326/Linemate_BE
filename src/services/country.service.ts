@@ -10,8 +10,8 @@ export class CountryService {
 		if (searchTerm) {
 			whereClause = {
 				[Op.or]: {
-					name: { [Op.iRegexp]: pageModel.searchTerm },
-					isdCode: { [Op.iRegexp]: pageModel.searchTerm },
+					name: { [Op.iLike]: pageModel.searchTerm },
+					isdCode: { [Op.iLike]: pageModel.searchTerm },
 				},
 			};
 		}
