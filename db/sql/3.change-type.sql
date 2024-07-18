@@ -1,6 +1,6 @@
 -- -- First, drop the existing column
 
-Delete from "permissions"
+Delete from "permissions";
 ALTER TABLE "permissions" DROP CONSTRAINT IF EXISTS permissions_type_check;
 
 ALTER TABLE "permissions"
@@ -32,7 +32,7 @@ INSERT INTO permissions (
 
 
 
-Delete from "role"
+Delete from "role";
 -- Drop the existing check constraint (if exists)
 ALTER TABLE "role" DROP CONSTRAINT IF EXISTS role_type_check;
 
