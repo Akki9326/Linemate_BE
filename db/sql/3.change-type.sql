@@ -1,8 +1,8 @@
 -- -- First, drop the existing column
-ALTER TABLE "role"
+ALTER TABLE "permissions"
 ALTER COLUMN "type" SET DATA TYPE VARCHAR(50),
-ALTER COLUMN "type" SET DEFAULT 'standard',
-ADD CHECK ("type" IN ('custom', 'standard'));
+ALTER COLUMN "type" SET DEFAULT 'platform',
+ADD CHECK ("type" IN ('tenant', 'platform'));
 
 -- -- Then, add the new column with a check constraint and default value
 ALTER TABLE permissions
@@ -33,7 +33,9 @@ INSERT INTO permissions (
 
 -- First, drop the existing column
 ALTER TABLE "role"
-DROP COLUMN "type";
+ALTER COLUMN "type" SET DATA TYPE VARCHAR(50),
+ALTER COLUMN "type" SET DEFAULT 'standard',
+ADD CHECK ("type" IN ('custom', 'standard'));
 
 -- Then, add the new column with a check constraint and default value
 ALTER TABLE "role"
