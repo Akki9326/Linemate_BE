@@ -2,7 +2,7 @@ import { FRONTEND_URL, MAX_CHIEF } from '@/config';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { UserListDto } from '@/models/dtos/user-list.dto';
 import { ChangePasswordDto, ImportUserDto, UserActionDto, UserDto } from '@/models/dtos/user.dto';
-import { UserType } from '@/models/enums/user-types.enum';
+import { UserType, getPermissionGroup } from '@/models/enums/user-types.enum';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { User } from '@/models/interfaces/users.interface';
 import { TenantVariables } from '@/models/interfaces/variable.interface';
@@ -72,6 +72,40 @@ class UserService {
 		user = await user.save();
 
 		return user.id;
+	}
+	private async updateUserRole(userOldType: UserType, userData: UserDto, userId: number) {
+		if (userOldType !== userData.userType) {
+			for (const tenantId of userData.tenantIds) {
+				const roles = await this.role.findAll({
+					where: { tenantId: tenantId },
+				});
+				console.log('roles', roles);
+
+				await Promise.all(
+					roles.map(async role => {
+						const index = role.userIds.indexOf(userId);
+						if (index > -1) {
+							const remainingUserIds = role.userIds.filter((_, i) => i !== index);
+
+							role.userIds = remainingUserIds;
+							await role.save();
+						}
+					}),
+				);
+
+				const targetRoleName = getPermissionGroup(userData.userType);
+				if (targetRoleName) {
+					const targetRole = await this.role.findOne({
+						where: { name: targetRoleName, tenantId: tenantId },
+					});
+
+					if (targetRole && !targetRole.userIds.includes(userId)) {
+						targetRole.userIds = [...targetRole.userIds, userId];
+						await targetRole.save();
+					}
+				}
+			}
+		}
 	}
 	private async findMultipleTenant(tenantIds: number[]) {
 		let tenantDetails = [];
@@ -303,16 +337,19 @@ class UserService {
 		if (userData.tenantVariables && userData.tenantVariables.length) {
 			await this.validateTenantVariable(userData.tenantVariables);
 		}
+		const userOldType = user.userType;
 		user.firstName = userData.firstName;
 		user.lastName = userData.lastName;
 		user.email = userData.email;
 		user.mobileNumber = userData.mobileNumber;
-		user.tenantIds = userData.tenantIds;
+		user.tenantIds = userData.userType !== UserType.ChiefAdmin ? userData.tenantIds : [];
+		user.userType = userData.userType;
 		user.countryCode = userData.countyCode;
 		user.employeeId = userData.employeeId;
 		user.profilePhoto = userData.profilePhoto;
 		user.updatedBy = updatedBy.toString();
 		await user.save();
+		this.updateUserRole(userOldType, userData, user.id);
 		if (userData.userType !== UserType.ChiefAdmin) {
 			this.updateTenantVariables(userData.tenantVariables, user.id);
 		}
@@ -348,11 +385,11 @@ class UserService {
 		};
 		if (pageModel?.search) {
 			condition[Op.or] = [
-				{ firstName: { [Op.like]: `%${pageModel.search}%` } },
-				{ lastName: { [Op.like]: `%${pageModel.search}%` } },
-				{ email: { [Op.like]: `%${pageModel.search}%` } },
-				{ mobileNumber: { [Op.like]: `%${pageModel.search}%` } },
-				{ employeeId: { [Op.like]: `%${pageModel.search}%` } },
+				{ firstName: { [Op.iRegexp]: pageModel.search } },
+				{ lastName: { [Op.iRegexp]: pageModel.search } },
+				{ email: { [Op.iRegexp]: pageModel.search } },
+				{ mobileNumber: { [Op.iRegexp]: pageModel.search } },
+				{ employeeId: { [Op.iRegexp]: pageModel.search } },
 			];
 		}
 		if (pageModel.filter) {
