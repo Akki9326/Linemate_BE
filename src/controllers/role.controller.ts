@@ -37,10 +37,11 @@ class RoleController {
 			next(ex);
 		}
 	};
-	public list = async (req: Request, res: Response, next: NextFunction) => {
+	public list = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
 			const pageModel = req.body as RoleListRequestDto; // Provide the missing type argument
-			const roleResponse = await this.roleService.all(pageModel);
+			const tenantId = req.tenantId as number;
+			const roleResponse = await this.roleService.all(pageModel, tenantId);
 			AppResponseHelper.sendSuccess(res, 'Success', roleResponse);
 		} catch (ex) {
 			next(ex);

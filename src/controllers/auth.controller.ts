@@ -6,6 +6,7 @@ import AuthService from '@services/auth.service';
 import { NextFunction, Request, Response } from 'express-serve-static-core';
 import S3Service from '../utils/services/s3.services';
 import { FileDto } from '@/models/dtos/file.dto';
+import { RequestWitFile } from '@/models/interfaces/auth.interface';
 
 class AuthController {
 	public authService = new AuthService();
@@ -60,7 +61,7 @@ class AuthController {
 			next(ex);
 		}
 	};
-	public fileUpload = async (req: Request, res: Response, next: NextFunction) => {
+	public fileUpload = async (req: RequestWitFile, res: Response, next: NextFunction) => {
 		try {
 			const files: FileDto = req.files.file;
 			const url = req.path;
