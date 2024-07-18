@@ -23,6 +23,9 @@ export class TenantModel extends AppDBModel {
 	public companyCity: string;
 	public companyPinCode: number;
 	public whitelistedIps: string;
+	public whatsapp: boolean;
+	public sms: boolean;
+	public viber: boolean;
 }
 
 export default function (sequelize: Sequelize): typeof TenantModel {
@@ -109,6 +112,18 @@ export default function (sequelize: Sequelize): typeof TenantModel {
 			whitelistedIps: {
 				type: DataTypes.STRING,
 				allowNull: true,
+			},
+			whatsapp: {
+				type: DataTypes.BOOLEAN,
+				defaultValue: false,
+			},
+			sms: {
+				type: DataTypes.BOOLEAN,
+				defaultValue: false,
+			},
+			viber: {
+				type: DataTypes.BOOLEAN,
+				defaultValue: false,
 			},
 		},
 		{

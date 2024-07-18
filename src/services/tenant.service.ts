@@ -5,6 +5,7 @@ import { TenantDto } from '@/models/dtos/tenant.dto';
 import { SortOrder } from '@/models/enums/sort-order.enum';
 import { Op } from 'sequelize';
 import S3Services from '@/utils/services/s3.services';
+import { TenantListRequestDto } from '@/models/dtos/tenant-list.dto';
 import { insertDefaultRoles } from '@/utils/helpers/default.role.helper';
 
 export class TenantService {
@@ -64,21 +65,21 @@ export class TenantService {
 		return tenantResponse;
 	}
 
-	public async list(pageModel) {
-		const { page, pageSize, searchTerm } = pageModel;
+	public async list(pageModel: TenantListRequestDto) {
+		const { page, pageSize, search, sortField, sortOrder } = pageModel;
 
-		let whereClause;
-		if (searchTerm) {
+		let whereClause = {};
+		if (search) {
 			whereClause = {
 				...whereClause,
 				[Op.or]: {
 					name: { [Op.iLike]: pageModel.searchTerm },
 					trademark: { [Op.iLike]: pageModel.searchTerm },
 					authorisedEmail: { [Op.iLike]: pageModel.searchTerm },
+
 				},
 			};
 		}
-
 		const { count, rows } = await this.tenantModel.findAndCountAll({
 			where: {
 				...whereClause,
@@ -87,7 +88,7 @@ export class TenantService {
 			},
 			// nest: true,
 			distinct: true,
-			order: [[pageModel.sortField || 'createdAt', pageModel.sortOrder || SortOrder.ASC]],
+			order: [[sortField || 'createdAt', sortOrder || SortOrder.ASC]],
 			limit: pageSize,
 			offset: (page - 1) * pageSize,
 		});
