@@ -103,7 +103,7 @@ export class RoleService {
 		if (pageModel?.search) {
 			condition = {
 				...condition,
-				name: { [Op.iRegexp]: pageModel.search },
+				name: { [Op.iLike]: pageModel.search },
 			};
 		}
 		const rolesResult = await this.role.findAndCountAll({

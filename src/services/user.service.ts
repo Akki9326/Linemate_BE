@@ -385,11 +385,11 @@ class UserService {
 		};
 		if (pageModel?.search) {
 			condition[Op.or] = [
-				{ firstName: { [Op.iRegexp]: pageModel.search } },
-				{ lastName: { [Op.iRegexp]: pageModel.search } },
-				{ email: { [Op.iRegexp]: pageModel.search } },
-				{ mobileNumber: { [Op.iRegexp]: pageModel.search } },
-				{ employeeId: { [Op.iRegexp]: pageModel.search } },
+				{ firstName: { [Op.iLike]: pageModel.search } },
+				{ lastName: { [Op.iLike]: pageModel.search } },
+				{ email: { [Op.iLike]: pageModel.search } },
+				{ mobileNumber: { [Op.iLike]: pageModel.search } },
+				{ employeeId: { [Op.iLike]: pageModel.search } },
 			];
 		}
 		if (pageModel.filter) {
