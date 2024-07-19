@@ -1,7 +1,9 @@
 -- -- First, drop the existing column
-
-Delete from "permissions";
 ALTER TABLE "permissions" DROP CONSTRAINT IF EXISTS permissions_type_check;
+
+UPDATE permissions
+SET "type" = 'platform'
+WHERE "type" NOT IN ('tenant', 'platform');
 
 ALTER TABLE "permissions"
 ALTER COLUMN "type" SET DATA TYPE VARCHAR(50),
@@ -31,10 +33,12 @@ INSERT INTO permissions (
 );
 
 
-
-Delete from "role";
 -- Drop the existing check constraint (if exists)
 ALTER TABLE "role" DROP CONSTRAINT IF EXISTS role_type_check;
+
+UPDATE "role"
+SET "type" = 'custom'
+WHERE "type" NOT IN ('custom', 'standard');
 
 -- First, drop the existing column
 ALTER TABLE "role"
