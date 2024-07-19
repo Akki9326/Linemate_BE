@@ -113,7 +113,7 @@ class VariableServices {
 		if (pageModel?.search) {
 			condition = {
 				...condition,
-				name: { [Op.iLike]: pageModel.search },
+				name: { [Op.iLike]: `%${pageModel.search}%` },
 			};
 		}
 		const validateList = await this.variableMaster.findAndCountAll({

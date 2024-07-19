@@ -5,13 +5,13 @@ export class CountryService {
 	private countryModel = DB.Country;
 	constructor() {}
 	public async list(pageModel) {
-		const { page, pageSize, searchTerm } = pageModel;
+		const { page, pageSize, search } = pageModel;
 		let whereClause;
-		if (searchTerm) {
+		if (search) {
 			whereClause = {
 				[Op.or]: {
-					name: { [Op.iLike]: pageModel.searchTerm },
-					isdCode: { [Op.iLike]: pageModel.searchTerm },
+					name: { [Op.iLike]: `%${pageModel.search}%` },
+					isdCode: { [Op.iLike]: `%${pageModel.search}%` },
 				},
 			};
 		}
