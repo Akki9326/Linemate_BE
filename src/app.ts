@@ -101,12 +101,12 @@ class App {
 		process.on('uncaughtException', err => {
 			logger.error(`Uncaught Exception ${err.name}: ${err.message}:: stack: ${err.stack}`);
 		});
-		process.on('unhandledRejection', err => {
+		process.on('unhandledRejection', (err: Error) => {
 			logger.error(`Unhandled Rejection`);
 			let message = '';
 			if (typeof err == 'object') message = JSON.stringify(err);
 			else message = err as string;
-			logger.error(`Rejection message: ${message}`);
+			logger.error(`Rejection message: ${message}:: stack: ${err.stack}`);
 		});
 	}
 
