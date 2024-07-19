@@ -1,6 +1,7 @@
-import { IsArray, IsEmail, IsEnum, IsMobilePhone, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsDefined, IsEmail, IsEnum, IsMobilePhone, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { UserType } from '../enums/user-types.enum';
 import { TenantVariables } from '../interfaces/variable.interface';
+import { Type } from 'class-transformer';
 
 export class UserDto {
 	@IsString()
@@ -75,25 +76,33 @@ export class ChangePasswordDto {
 
 export class UserData {
 	@IsString()
+	@IsDefined()
 	public firstName: string;
 
 	@IsString()
+	@IsDefined()
 	public lastName: string;
 
 	@IsEmail()
+	@IsDefined()
 	public email: string;
 
 	@IsEnum(UserType)
+	@IsDefined()
 	public userType: UserType;
 
 	@IsMobilePhone()
+	@IsDefined()
 	public mobileNumber: string;
 
 	@IsString()
+	@IsDefined()
 	public countyCode: string;
 }
 
 export class ImportUserDto {
 	@IsArray()
+	@ValidateNested({ each: true })
+	@Type(() => UserData)
 	public data: UserData[];
 }
