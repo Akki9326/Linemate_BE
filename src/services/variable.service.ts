@@ -24,7 +24,7 @@ class VariableServices {
 			throw new BadRequestException(TenantMessage.tenantNotFound);
 		}
 		if (variableData.category === VariableCategories.Standard) {
-			throw new BadRequestException(VariableMessage.NotAddStarted);
+			throw new BadRequestException(VariableMessage.NotAddStandard);
 		}
 		if (variableData.type === VariableType.MultiSelect || variableData.type === VariableType.SingleSelect) {
 			if (!variableData.options || variableData.options.length === 0) {
@@ -64,7 +64,7 @@ class VariableServices {
 			throw new BadRequestException(TenantMessage.tenantNotFound);
 		}
 		if (variableData.category === VariableCategories.Standard) {
-			throw new BadRequestException(VariableMessage.NotEditStarted);
+			throw new BadRequestException(VariableMessage.NotEditStandard);
 		}
 		const variable = await this.variableMaster.findOne({
 			where: {
@@ -102,7 +102,7 @@ class VariableServices {
 			throw new BadRequestException(VariableMessage.variableNotFound);
 		}
 		if (variable.category === VariableCategories.Standard) {
-			throw new BadRequestException(VariableMessage.NotDeleteStarted);
+			throw new BadRequestException(VariableMessage.NotDeleteStandard);
 		}
 
 		variable.isDeleted = true;
