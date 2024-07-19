@@ -18,6 +18,7 @@ import { parse } from 'date-fns';
 import { Op } from 'sequelize';
 import { TenantService } from './tenant.service';
 import VariableServices from './variable.service';
+import { VariableCategories } from '@/models/enums/variable.enum';
 
 class UserService {
 	private users = DB.Users;
@@ -137,7 +138,9 @@ class UserService {
 			if (!tenantDetails) {
 				throw new BadRequestException(TenantMessage.tenantVariableNotFound);
 			}
-			const variableMaster = await this.variableMaster.findAll({ where: { isDeleted: false, tenantId: variable.tenantId } });
+			const variableMaster = await this.variableMaster.findAll({
+				where: { isDeleted: false, tenantId: variable.tenantId, category: VariableCategories.Custom },
+			});
 			if (!variableMaster.length) {
 				return true;
 			}
