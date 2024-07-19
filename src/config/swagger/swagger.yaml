@@ -1049,6 +1049,12 @@ paths:
               search:
                 type: string
                 example: ""
+              filter:
+                type: object
+                properties:
+                  category:
+                    type: string
+                    example: "custom"
       responses:
         '200':
           description: Success

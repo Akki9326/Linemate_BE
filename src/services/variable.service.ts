@@ -101,6 +101,10 @@ class VariableServices {
 		if (!variable) {
 			throw new BadRequestException(VariableMessage.variableNotFound);
 		}
+		if (variable.category === VariableCategories.Standard) {
+			throw new BadRequestException(VariableMessage.NotDeleteStarted);
+		}
+
 		variable.isDeleted = true;
 		await variable.save();
 		return { id: variable.id };

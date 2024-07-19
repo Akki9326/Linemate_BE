@@ -28,6 +28,7 @@ export const VariableMessage = {
 	possibleOptionRequired: 'options is required',
 	NotAddStarted: 'started variable not allowed to add',
 	NotEditStarted: 'started variable not allowed to edit',
+	NotDeleteStarted: 'started variable not allowed to delete',
 };
 export const CommonMessage = {
 	filterIsRequired: 'filter is required',
