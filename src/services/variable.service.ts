@@ -1,7 +1,7 @@
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { VariableDto } from '@/models/dtos/variable.dto';
 import { variableListDto } from '@/models/dtos/varible-list.dto';
-import { VariableType } from '@/models/enums/variable.enum';
+import { VariableCategories, VariableType } from '@/models/enums/variable.enum';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { AppMessages, TenantMessage, VariableMessage } from '@/utils/helpers/app-message.helper';
 import DB from '@databases';
@@ -22,6 +22,9 @@ class VariableServices {
 		});
 		if (!tenant) {
 			throw new BadRequestException(TenantMessage.tenantNotFound);
+		}
+		if (variableData.category === VariableCategories.Standard) {
+			throw new BadRequestException(VariableMessage.NotAddStarted);
 		}
 		if (variableData.type === VariableType.MultiSelect || variableData.type === VariableType.SingleSelect) {
 			if (!variableData.options || variableData.options.length === 0) {
@@ -60,6 +63,9 @@ class VariableServices {
 		if (!tenant) {
 			throw new BadRequestException(TenantMessage.tenantNotFound);
 		}
+		if (variableData.category === VariableCategories.Standard) {
+			throw new BadRequestException(VariableMessage.NotEditStarted);
+		}
 		const variable = await this.variableMaster.findOne({
 			where: {
 				id: variableId,
@@ -78,7 +84,6 @@ class VariableServices {
 		variable.isMandatory = variableData.isMandatory;
 		variable.type = variableData.type;
 		variable.description = variableData.description;
-		variable.category = variableData.category;
 		variable.updatedBy = updatedUser.id.toString();
 		variable.options = variableData.options;
 		variable.placeHolder = variableData.placeHolder;
@@ -108,12 +113,20 @@ class VariableServices {
 		const offset = (page - 1) * limit;
 		let condition = {};
 		if (tenantId) {
-			condition['tenantId'] = tenantId;
+			condition = {
+				[Op.or]: [{ tenantId: tenantId }, { tenantId: null }],
+			};
 		}
 		if (pageModel?.search) {
 			condition = {
 				...condition,
 				name: { [Op.iLike]: `%${pageModel.search}%` },
+			};
+		}
+		if (pageModel?.filter.category) {
+			condition = {
+				...condition,
+				category: pageModel.filter.category,
 			};
 		}
 		const validateList = await this.variableMaster.findAndCountAll({

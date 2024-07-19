@@ -7,5 +7,5 @@ export enum VariableType {
 
 export enum VariableCategories {
 	Custom = 'custom',
-	Started = 'started',
+	Standard = 'standard',
 }
