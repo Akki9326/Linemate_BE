@@ -26,6 +26,9 @@ export const TenantMessage = {
 export const VariableMessage = {
 	variableNotFound: 'variable not found',
 	possibleOptionRequired: 'options is required',
+	NotAddStandard: 'standard variable not allowed to add',
+	NotEditStandard: 'standard variable not allowed to edit',
+	NotDeleteStandard: 'standard variable not allowed to delete',
 };
 export const CommonMessage = {
 	filterIsRequired: 'filter is required',
