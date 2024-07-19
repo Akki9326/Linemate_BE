@@ -127,7 +127,7 @@ class VariableServices {
 				name: { [Op.iLike]: `%${pageModel.search}%` },
 			};
 		}
-		if (pageModel?.filter.category) {
+		if (pageModel?.filter?.category) {
 			condition = {
 				...condition,
 				category: pageModel.filter.category,

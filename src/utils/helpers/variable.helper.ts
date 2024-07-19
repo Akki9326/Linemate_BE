@@ -19,7 +19,7 @@ export const VariableHelper = {
 				const variableLabelDetails = await VariableHelper.findVariable(item.variableId, attributes);
 				return {
 					...item.dataValues,
-					name: variableLabelDetails.dataValues.name,
+					name: variableLabelDetails?.dataValues?.name,
 				};
 			}),
 		);
