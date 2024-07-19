@@ -12,24 +12,24 @@ ADD CHECK ("type" IN ('tenant', 'platform'));
 
 -- -- Example Data Insertion
 INSERT INTO permissions (
-    "name", "type", "parentId", "description"
+    "name", "type", "parentId", "description", "isActive", "isDeleted", "createdAt"
 ) VALUES (
-    'user.read', 'platform', NULL, 'Allows read access'
+    'user.read', 'platform', NULL, 'Allows read access', true, false, now()
 );
 INSERT INTO permissions (
-    "name", "type", "parentId", "description"
+    "name", "type", "parentId", "description", "isActive", "isDeleted", "createdAt"
 ) VALUES (
-    'user.write', 'platform', NULL, 'Allows write access'
+    'user.write', 'platform', NULL, 'Allows write access', true, false, now()
 );
 INSERT INTO permissions (
-    "name", "type", "parentId", "description"
+    "name", "type", "parentId", "description", "isActive", "isDeleted", "createdAt"
 ) VALUES (
-    'variable.read', 'platform', NULL, 'Allows read access'
+    'variable.read', 'platform', NULL, 'Allows read access', true, false, now()
 );
 INSERT INTO permissions (
-    "name", "type", "parentId", "description"
+    "name", "type", "parentId", "description", "isActive", "isDeleted", "createdAt"
 ) VALUES (
-    'variable.write', 'platform', NULL, 'Allows write access'
+    'variable.write', 'platform', NULL, 'Allows write access', true, false, now()
 );
 
 
@@ -47,9 +47,9 @@ ALTER COLUMN "type" SET DEFAULT 'standard',
 ADD CHECK ("type" IN ('custom', 'standard'));
 
 ALTER TABLE tenant
-ADD COLUMN "whatsapp" BOOLEAN DEFAULT false,
-ADD COLUMN "sms" BOOLEAN DEFAULT false,
-ADD COLUMN "viber" BOOLEAN DEFAULT false
+ADD COLUMN IF NOT EXISTS "whatsapp" BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS "sms" BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS "viber" BOOLEAN DEFAULT false;
 
 
 
