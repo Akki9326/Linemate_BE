@@ -63,7 +63,7 @@ export default class S3Services {
 
 			await this.s3.send(command);
 		} catch (error) {
-			console.error(error);
+			throw new ServerException(error, `Error while delete file`);
 		}
 	}
 
