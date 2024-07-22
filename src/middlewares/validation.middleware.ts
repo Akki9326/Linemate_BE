@@ -16,11 +16,21 @@ const validationMiddleware = (
 	forbidNonWhitelisted = true,
 ): RequestHandler => {
 	return (req, res, next) => {
-		const validationMessage = `${AppMessages.invalidPayload}` + `${value}`;
 		validate(plainToInstance(type, req[value]), { skipMissingProperties, whitelist, forbidNonWhitelisted }).then((errors: ValidationError[]) => {
 			if (errors.length > 0) {
-				const errorMessages = errorExtractor.extractDeepestErrors(errors);
-				next(new BadRequestException(validationMessage, errorMessages));
+				let message;
+				errors.map((error: ValidationError) => {
+					if (error.constraints) {
+						message = Object.values(error.constraints).join(', ');
+					}
+				});
+				if (message) {
+					next(new BadRequestException(message));
+				} else {
+					message = `${AppMessages.invalidPayload}` + `${value}`;
+					const errorStack = errorExtractor.extractDeepestErrors(errors);
+					next(new BadRequestException(message, errorStack));
+				}
 			} else {
 				next();
 			}
