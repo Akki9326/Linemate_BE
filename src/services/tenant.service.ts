@@ -7,6 +7,7 @@ import { Op } from 'sequelize';
 import S3Services from '@/utils/services/s3.services';
 import { TenantListRequestDto } from '@/models/dtos/tenant-list.dto';
 import { insertDefaultRoles } from '@/utils/helpers/default.role.helper';
+import { TenantMessage } from '@/utils/helpers/app-message.helper';
 
 export class TenantService {
 	private tenantModel = DB.Tenant;
@@ -18,30 +19,37 @@ export class TenantService {
 
 		const regex = new RegExp('^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$');
 
-		if (regex.test(gstNumber) == false) {
-			throw new BadRequestException('Invalid Gst Number');
-		}
+		if (regex.test(gstNumber) == false) new BadRequestException(TenantMessage.invalidGstNumber);
+
+		const gstNumberExists = await this.tenantModel.findOne({ where: { gstNumber: tenantDetails.gstNumber, isDeleted: false } });
+		if (gstNumberExists) throw new BadRequestException(TenantMessage.gstNumberIsAlreadyExists);
+
+		const companyNameExists = await this.tenantModel.findOne({ where: { name: tenantDetails.name, isDeleted: false } });
+		if (companyNameExists) throw new BadRequestException(TenantMessage.companyNameIsAlreadyExists);
+
+		const trademarkExists = await this.tenantModel.findOne({ where: { trademark: tenantDetails.trademark, isDeleted: false } });
+		if (trademarkExists) throw new BadRequestException(TenantMessage.trademarkIsAlreadyExists);
 
 		const tenant = await this.tenantModel.create({
 			...tenantDetails,
+			createdBy: userId,
 		});
 		await insertDefaultRoles(tenant.id, userId);
 		return tenant.id;
 	}
-
 	public async one(tenantId: number) {
 		const tenantResponse = await this.tenantModel.findOne({
 			where: { id: tenantId, isDeleted: false },
 		});
 		if (!tenantResponse) {
-			throw new NotFoundException('Tenant not found');
+			throw new NotFoundException(TenantMessage.tenantNotFound);
 		}
 		return tenantResponse;
 	}
 	public async delete(tenantId: number) {
 		const tenant = await this.tenantModel.findOne({ where: { id: tenantId, isDeleted: false } });
 		if (!tenant) {
-			throw new NotFoundException('Tenant not found');
+			throw new NotFoundException(TenantMessage.tenantNotFound);
 		}
 		const tenantResponse = await this.tenantModel.update(
 			{ isDeleted: true },
@@ -51,13 +59,40 @@ export class TenantService {
 		);
 		return tenantResponse;
 	}
-	public async update(tenantId: number, updateObj: TenantDto) {
+	public async update(tenantId: number, updateObj: TenantDto, userId: number) {
 		const tenant = await this.tenantModel.findOne({ where: { id: tenantId, isDeleted: false } });
-		if (!tenant) {
-			throw new NotFoundException('Tenant not found');
+		if (!tenant) throw new NotFoundException(TenantMessage.tenantNotFound);
+
+		if (updateObj.gstNumber) {
+			const regex = new RegExp('^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$');
+
+			if (regex.test(updateObj.gstNumber) == false) new BadRequestException(TenantMessage.invalidGstNumber);
+
+			const gstNumberExists = await this.tenantModel.findOne({
+				where: { gstNumber: updateObj.gstNumber, isDeleted: false, id: { [Op.ne]: tenantId } },
+				raw: true,
+			});
+			if (gstNumberExists) throw new BadRequestException(TenantMessage.gstNumberIsAlreadyExists);
 		}
+
+		if (updateObj.name) {
+			const companyNameExists = await this.tenantModel.findOne({
+				where: { name: updateObj.name, isDeleted: false, id: { [Op.ne]: tenantId } },
+				raw: true,
+			});
+			if (companyNameExists) throw new BadRequestException(TenantMessage.companyNameIsAlreadyExists);
+		}
+
+		if (updateObj.trademark) {
+			const trademarkExists = await this.tenantModel.findOne({
+				where: { trademark: updateObj.trademark, isDeleted: false, id: { [Op.ne]: tenantId } },
+				raw: true,
+			});
+			if (trademarkExists) throw new BadRequestException(TenantMessage.trademarkIsAlreadyExists);
+		}
+
 		const tenantResponse = await this.tenantModel.update(
-			{ ...updateObj },
+			{ ...updateObj, updatedBy: userId },
 			{
 				where: { id: tenantId, isDeleted: false },
 			},
@@ -87,7 +122,7 @@ export class TenantService {
 			},
 			// nest: true,
 			distinct: true,
-			order: [[sortField || 'createdAt', sortOrder || SortOrder.ASC]],
+			order: [[sortField || 'id', sortOrder || SortOrder.ASC]],
 			limit: pageSize,
 			offset: (page - 1) * pageSize,
 		});

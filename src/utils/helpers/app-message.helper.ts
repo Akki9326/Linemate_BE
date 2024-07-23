@@ -23,6 +23,10 @@ export const TenantMessage = {
 	requiredTenantFilter: 'tenantId is required in filter',
 	tenantNotFound: 'Tenant not found',
 	tenantVariableNotFound: 'Tenant variable not found',
+	trademarkIsAlreadyExists: 'Trademark is already exists in our system',
+	invalidGstNumber: 'Invalid Gst number',
+	gstNumberIsAlreadyExists: 'Gst number is already exists in our system',
+	companyNameIsAlreadyExists: 'Company name is already exists in our system',
 };
 export const VariableMessage = {
 	variableNotFound: 'variable not found',

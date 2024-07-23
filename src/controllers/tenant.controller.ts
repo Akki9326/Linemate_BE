@@ -45,11 +45,12 @@ class TenantController {
 			next(ex);
 		}
 	};
-	public updateById = async (req: Request, res: Response, next: NextFunction) => {
+	public updateById = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
 			const tenantId = parseInt(req.params.id);
 			const updateObj: TenantDto = req.body;
-			const tenantResponse = await this.tenantService.update(tenantId, updateObj);
+			const userId = req.user.id as number;
+			const tenantResponse = await this.tenantService.update(tenantId, updateObj, userId);
 			AppResponseHelper.sendSuccess(res, 'Success', tenantResponse);
 		} catch (ex) {
 			next(ex);
