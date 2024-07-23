@@ -50,7 +50,6 @@ export class TenantService {
 			},
 		);
 		return tenant.id;
-		return 1;
 	}
 	public async one(tenantId: number) {
 		const tenantResponse = await this.tenantModel.findOne({
