@@ -19,6 +19,7 @@ import UserRoute from './routes/user.route';
 import TenantRoute from './routes/tenant.route';
 import CountryRoute from './routes/country.route';
 import VariableRoute from './routes/variable.route';
+import ContentRoute from './routes/content.route';
 
 validateEnv();
 
@@ -31,6 +32,7 @@ const app = new App([
 	new TenantRoute(),
 	new CountryRoute(),
 	new VariableRoute(),
+	new ContentRoute(),
 ]);
 
 app.init();

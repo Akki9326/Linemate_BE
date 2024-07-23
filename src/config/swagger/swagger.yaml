@@ -279,6 +279,7 @@ paths:
       responses:
         '200':
           description: Success
+
   /auth/v1/login:
     post:
       summary: Login User
@@ -1083,6 +1084,173 @@ paths:
       responses:
         '200':
           description: Success
+
+  /content/v1/add:
+    post:
+      summary: Add Content
+      tags:
+        - Content
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                example: Access Portal
+              type:
+                type: string
+                example: PDF
+              description:
+                type: string
+                example: have access portal
+              uploadedFileIds:
+                type: array
+                items:
+                  type: integer
+                example: []
+              tenantId:
+                type: integer
+                example: 1
+              isPublish:
+                type: boolean
+                example: false
+      responses:
+        '200':
+          description: Success
+
+  /content/v1/{id}:
+    get:
+      summary: Get Content by Id
+      tags:
+        - Content
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Success
+    put:
+      summary: Update Content
+      tags:
+        - Content
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                example: Access Portal
+              type:
+                type: string
+                example: PDF
+              description:
+                type: string
+                example: have access portal
+              uploadedFileIds:
+                type: array
+                items:
+                  type: integer
+                example: []
+              tenantId:
+                type: integer
+                example: 1
+              isPublish:
+                type: boolean
+                example: false
+      responses:
+        '200':
+          description: Success
+    post:
+      summary: Delete Content
+      tags:
+        - Content
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Success
+
+  /content/v1/list:
+    post:
+      summary: List Contents
+      tags:
+        - Content
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tenantId
+          in: header
+          required: false
+          type: integer
+          example: 1
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              page:
+                type: integer
+                example: 1
+              limit:
+                type: integer
+                example: 10
+              sortField:
+                type: string
+                example: id
+              sortOrder:
+                type: string
+                example: ASC
+              search:
+                type: string
+                example: ""
+              filter:
+                type: object
+                properties:
+                  archive:
+                    type: boolean
+                    example: true
+                  isPublish:
+                    type: boolean
+                    example: false
+                  updatedBetween:
+                    type: object
+                    properties:
+                      startDate:
+                        type: string
+                        format: date
+                        example: "2024-07-17"
+                      endDate:
+                        type: string
+                        format: date
+                        example: "2024-07-31"
+      responses:
+        '200':
+          description: Success
+
 tags:
   - name: Permission
     description: Endpoints for creating and managing permissions.
@@ -1096,3 +1264,5 @@ tags:
     description: Endpoints for creating and managing tenants.
   - name: Variable
     description: Endpoints for creating and managing variables.
+  - name: Content
+    description: Endpoints for creating and managing content.
