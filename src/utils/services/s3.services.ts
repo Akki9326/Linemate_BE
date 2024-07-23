@@ -1,4 +1,12 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand, CopyObjectCommand } from '@aws-sdk/client-s3';
+import {
+	S3Client,
+	PutObjectCommand,
+	DeleteObjectCommand,
+	GetObjectCommand,
+	CopyObjectCommand,
+	ObjectCannedACL,
+	PutObjectAclCommand,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'; // For presigned URLs
 import { ServerException } from '@/exceptions/ServerException';
 import { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, BUCKET } from '@config';
@@ -109,8 +117,14 @@ export default class S3Services {
 				CopySource: `${BUCKET}/${sourceKey}`,
 				Key: destinationKey,
 			};
-
 			await this.s3.send(new CopyObjectCommand(copyParams));
+
+			const aclParams = {
+				Bucket: BUCKET,
+				Key: destinationKey,
+				ACL: ObjectCannedACL.public_read, // Use ObjectCannedACL enum
+			};
+			await this.s3.send(new PutObjectAclCommand(aclParams));
 			const newImageUrl = `https://${BUCKET}.s3.${AWS_REGION}.amazonaws.com/${destinationKey}`;
 
 			await this.deleteFileFromS3(sourceKey);
