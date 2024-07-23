@@ -1,7 +1,11 @@
 import { BadRequestException } from '@/exceptions/BadRequestException';
+import { AppMessages } from '@/utils/helpers/app-message.helper';
+import { ErrorExtractor } from '@/utils/helpers/error-extractor';
 import { plainToInstance } from 'class-transformer';
 import { ValidationError, validate } from 'class-validator';
 import { RequestHandler } from 'express';
+
+const errorExtractor = new ErrorExtractor();
 
 const validationMiddleware = (
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -14,8 +18,19 @@ const validationMiddleware = (
 	return (req, res, next) => {
 		validate(plainToInstance(type, req[value]), { skipMissingProperties, whitelist, forbidNonWhitelisted }).then((errors: ValidationError[]) => {
 			if (errors.length > 0) {
-				const message = errors.map((error: ValidationError) => Object.values(error.constraints)).join(', ');
-				next(new BadRequestException(message));
+				let message;
+				errors.map((error: ValidationError) => {
+					if (error.constraints) {
+						message = Object.values(error.constraints).join(', ');
+					}
+				});
+				if (message) {
+					next(new BadRequestException(message));
+				} else {
+					message = `${AppMessages.invalidPayload}` + `${value}`;
+					const errorStack = errorExtractor.extractDeepestErrors(errors);
+					next(new BadRequestException(message, errorStack));
+				}
 			} else {
 				next();
 			}

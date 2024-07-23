@@ -1,52 +1,50 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'; // For presigned URLs
 import { ServerException } from '@/exceptions/ServerException';
 import { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, BUCKET } from '@config';
-import { S3 } from 'aws-sdk';
 
 export default class S3Services {
-	private readonly s3: S3;
+	private readonly s3: S3Client;
 
 	private ConfigService = {
-		accessKeyId: AWS_ACCESS_KEY_ID,
-		secretAccessKey: AWS_SECRET_ACCESS_KEY, // Assign AWS_SECRET_ACCESS_KEY here
+		credentials: {
+			accessKeyId: AWS_ACCESS_KEY_ID,
+			secretAccessKey: AWS_SECRET_ACCESS_KEY,
+		},
 		region: AWS_REGION,
 	};
 
 	constructor() {
-		this.s3 = new S3(this.ConfigService); // Initialize the S3 instance with ConfigService
+		this.s3 = new S3Client(this.ConfigService); // Initialize the S3Client instance with ConfigService
 	}
 
 	// For connection to S3
 	getS3() {
-		return new S3(this.ConfigService);
+		return this.s3;
 	}
 
 	/**
-	 * Upload images on S3 bucket
+	 * Upload images to S3 bucket
 	 * @param file = Image file buffer
-	 * @param bucket = Path of bucket/folder
 	 * @param name = Name of image file
 	 * @param mimeType = File mime type
+	 * @param filePermission = File permission
 	 */
-	public async uploadS3(file, name: string, mimeType: string, filePermission: string = 'private'): Promise<any> {
+	public async uploadS3(file: Buffer, name: string, mimeType: string, filePermission: 'private' | 'public-read' = 'public-read'): Promise<string> {
 		try {
-			const params = {
+			// Create a PutObjectCommand with valid ACL value
+			const command = new PutObjectCommand({
 				Bucket: BUCKET,
 				Key: name,
 				Body: file,
 				ContentType: mimeType,
-				ACL: filePermission,
-			};
-
-			return new Promise((resolve, reject) => {
-				this.s3.upload(params, (err, data) => {
-					if (err) {
-						console.log(err);
-						reject(err.message);
-					}
-					resolve(data.Location);
-				});
+				ACL: filePermission, // Ensure filePermission is one of the allowed values
 			});
+
+			await this.s3.send(command);
+
+			// Construct the URL of the uploaded file
+			return `https://${BUCKET}.s3.${AWS_REGION}.amazonaws.com/${name}`;
 		} catch (error) {
 			throw new ServerException(error, `Error Uploading file`);
 		}
@@ -55,34 +53,38 @@ export default class S3Services {
 	/**
 	 * Delete file from S3 bucket
 	 * @param key = File Name
-	 * @param bucketName = Bucket/Folder path in S3
 	 */
 	public async deleteFileFromS3(key: string) {
-		const params = {
-			Bucket: BUCKET,
-			Key: key,
-		};
-		this.s3.deleteObject(params, function (err) {
-			if (err) console.log(err, err.stack);
-		});
-		return;
+		try {
+			const command = new DeleteObjectCommand({
+				Bucket: BUCKET,
+				Key: key,
+			});
+
+			await this.s3.send(command);
+		} catch (error) {
+			throw new ServerException(error, `Error while delete file`);
+		}
 	}
+
 	/**
 	 * Get Pre Signed URL of File from S3 bucket
 	 * @param key = File Name
-	 * @param expires = Presigned URL
-	 * @param bucketName = Bucket/Folder path in S3
-	 * @param contentType
+	 * @param expires = URL expiration time in seconds
+	 * @param contentType = MIME type for the response
 	 */
-	public async generatePresignedUrl(key: string, expires: number, contentType = null) {
-		const params = {
-			Bucket: BUCKET,
-			Key: key,
-			Expires: expires,
-		};
-		if (contentType != null) {
-			params['ResponseContentDisposition'] = `${contentType}; filename="${key}"`;
+	public async generatePresignedUrl(key: string, expires: number, contentType: string | null = null): Promise<string> {
+		try {
+			const command = new GetObjectCommand({
+				Bucket: BUCKET,
+				Key: key,
+				ResponseContentDisposition: contentType ? `${contentType}; filename="${key}"` : undefined,
+			});
+
+			const url = await getSignedUrl(this.s3, command, { expiresIn: expires });
+			return url;
+		} catch (error) {
+			throw new ServerException(error, `Error Generating Presigned URL`);
 		}
-		return this.s3.getSignedUrlPromise('getObject', params);
 	}
 }

@@ -12,6 +12,7 @@ export const AppMessages = {
 	existedUser: 'User already exists',
 	maxAdmin: 'Max admin allowed for admin users.',
 	wrongOldPassword: 'Old password not valid.',
+	invalidPayload: 'Invalid req data from req.',
 };
 
 export const RoleMessage = {
