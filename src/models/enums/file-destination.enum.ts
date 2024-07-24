@@ -1,5 +1,6 @@
 export enum FileDestination {
-	Tenant = 'Tenant/logo',
-	User = 'User/profile',
-	Public = 'public',
+	Tenant = 'tenants/logo',
+	User = 'users/profile',
+	TenantTemp = 'tenants/temp',
+	UserTemp = 'users/temp',
 }

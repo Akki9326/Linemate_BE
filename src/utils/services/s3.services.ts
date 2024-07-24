@@ -1,12 +1,4 @@
-import {
-	S3Client,
-	PutObjectCommand,
-	DeleteObjectCommand,
-	GetObjectCommand,
-	CopyObjectCommand,
-	ObjectCannedACL,
-	PutObjectAclCommand,
-} from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand, CopyObjectCommand, ObjectCannedACL } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'; // For presigned URLs
 import { ServerException } from '@/exceptions/ServerException';
 import { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, BUCKET } from '@config';
@@ -99,10 +91,9 @@ export default class S3Services {
 	 * Move image local to destination
 	 * @param url = Image URL
 	 * @param destinationPath = Destination path where we want to move
-	 * @param folderName = Element id to create a new filder
 	 * @param filePermission = File permissions default permissions is public
 	 */
-	public async moveFileByUrl(url: string, destinationPath: string, folderName: number): Promise<string> {
+	public async moveFileByUrl(url: string, destinationPath: string): Promise<string> {
 		try {
 			const parts = url.split('/'); // Split the URL by '/'
 			const keyParts = parts.slice(3); // Extract the Bucket and Key
@@ -110,21 +101,16 @@ export default class S3Services {
 
 			const imageName = sourceKey.split('/');
 
-			const destinationKey = `${destinationPath}/${folderName}/${imageName[imageName.length - 1]}`;
+			const destinationKey = `${destinationPath}/${imageName[imageName.length - 1]}`;
 
 			const copyParams = {
 				Bucket: BUCKET,
 				CopySource: `${BUCKET}/${sourceKey}`,
 				Key: destinationKey,
+				ACL: ObjectCannedACL.public_read,
 			};
 			await this.s3.send(new CopyObjectCommand(copyParams));
 
-			const aclParams = {
-				Bucket: BUCKET,
-				Key: destinationKey,
-				ACL: ObjectCannedACL.public_read, // Use ObjectCannedACL enum
-			};
-			await this.s3.send(new PutObjectAclCommand(aclParams));
 			const newImageUrl = `https://${BUCKET}.s3.${AWS_REGION}.amazonaws.com/${destinationKey}`;
 
 			await this.deleteFileFromS3(sourceKey);

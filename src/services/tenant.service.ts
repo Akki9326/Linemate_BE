@@ -37,7 +37,8 @@ export class TenantService {
 		});
 		await insertDefaultRoles(tenant.id, userId);
 
-		const movedUrl = await this.s3Service.moveFileByUrl(tenantDetails.logo, FileDestination.Tenant, tenant.id);
+		const fileDestination = `${FileDestination.Tenant}/${tenant.id}`;
+		const movedUrl = await this.s3Service.moveFileByUrl(tenantDetails.logo, fileDestination);
 
 		await this.tenantModel.update(
 			{
