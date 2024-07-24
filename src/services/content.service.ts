@@ -42,6 +42,7 @@ export class ContentService {
 		content.tenantId = contentDetails.tenantId;
 		content.uploadedFileIds = contentDetails.uploadedFileIds;
 		content.isPublish = contentDetails.isPublish;
+		content.isArchive = contentDetails.isArchive;
 		content.createdBy = user.id.toString();
 		content = await content.save();
 		return { id: content.id };
@@ -61,6 +62,7 @@ export class ContentService {
 		content.tenantId = contentDetails.tenantId;
 		content.uploadedFileIds = contentDetails.uploadedFileIds;
 		content.isPublish = contentDetails.isPublish;
+		content.isArchive = contentDetails.isArchive;
 		content.updatedBy = user.id.toString();
 
 		await content.save();

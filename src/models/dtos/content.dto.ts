@@ -24,4 +24,7 @@ export class ContentDto {
 
 	@IsBoolean()
 	public isPublish: boolean;
+
+	@IsBoolean()
+	public isArchive: boolean;
 }

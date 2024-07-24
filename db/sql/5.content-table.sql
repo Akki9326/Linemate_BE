@@ -11,7 +11,8 @@ CREATE TABLE "contents" (
     "description" VARCHAR(255),
     "tenantId" INTEGER,
     "uploadedFileIds" INTEGER[],
-    "isPublish" BOOLEAN NOT NULL DEFAULT false
+    "isPublish" BOOLEAN NOT NULL DEFAULT false,
+    "isArchive" BOOLEAN NOT NULL DEFAULT false
 );
 
 CREATE TABLE "uploadedFiles" (

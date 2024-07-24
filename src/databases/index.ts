@@ -1,3 +1,4 @@
+import ContentModel from '@/models/db/content.model';
 import CountryModel from '@/models/db/country.model';
 import PermissionModel from '@/models/db/permissions.model';
 import RoleModel from '@/models/db/role.model';
@@ -40,6 +41,7 @@ const DB = {
 	Country: CountryModel(sequelizeConnect),
 	VariableMaster: UserVariableMasterModel(sequelizeConnect),
 	VariableMatrix: UserVariableMatrixModel(sequelizeConnect),
+	Content: ContentModel(sequelizeConnect),
 	sequelizeConnect, // connection instance (RAW queries)
 	Sequelize, // library
 };

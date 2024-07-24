@@ -10,6 +10,7 @@ export class ContentModel extends AppDBModel {
 	public tenantId: number;
 	public uploadedFileIds: number[];
 	public isPublish: boolean;
+	public isArchive: boolean;
 }
 
 export default function (sequelize: Sequelize): typeof ContentModel {
@@ -45,6 +46,11 @@ export default function (sequelize: Sequelize): typeof ContentModel {
 				defaultValue: [],
 			},
 			isPublish: {
+				allowNull: false,
+				type: DataTypes.BOOLEAN,
+				defaultValue: false,
+			},
+			isArchive: {
 				allowNull: false,
 				type: DataTypes.BOOLEAN,
 				defaultValue: false,
