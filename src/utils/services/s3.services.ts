@@ -61,7 +61,14 @@ export default class S3Services {
 				Key: key,
 			});
 
-			await this.s3.send(command);
+			await this.s3
+				.send(command)
+				.then(() => {
+					return true;
+				})
+				.catch(error => {
+					throw new ServerException(error, `Error while deleting file with key: ${key}`);
+				});
 		} catch (error) {
 			throw new ServerException(error, `Error while delete file`);
 		}
@@ -109,12 +116,16 @@ export default class S3Services {
 				Key: destinationKey,
 				ACL: ObjectCannedACL.public_read,
 			};
-			await this.s3.send(new CopyObjectCommand(copyParams));
-
-			const newImageUrl = `https://${BUCKET}.s3.${AWS_REGION}.amazonaws.com/${destinationKey}`;
-
-			await this.deleteFileFromS3(sourceKey);
-			return newImageUrl;
+			return this.s3
+				.send(new CopyObjectCommand(copyParams))
+				.then(async () => {
+					await this.deleteFileFromS3(sourceKey);
+					const newImageUrl = `https://${BUCKET}.s3.${AWS_REGION}.amazonaws.com/${destinationKey}`;
+					return newImageUrl;
+				})
+				.catch(error => {
+					throw new ServerException(error, `Error while copying file from ${sourceKey} to ${destinationKey}`);
+				});
 		} catch (error) {
 			throw new ServerException(error, `Error Geting while file move`);
 		}
