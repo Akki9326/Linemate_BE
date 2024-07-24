@@ -109,7 +109,7 @@ export class ContentService {
 
 		if (pageModel.filter) {
 			if (pageModel.filter?.archive !== undefined && pageModel.filter?.archive !== null) {
-				condition['isActive'] = pageModel.filter.archive;
+				condition['isArchive'] = pageModel.filter.archive;
 			}
 			if (pageModel.filter?.isPublish !== undefined && pageModel.filter?.isPublish !== null) {
 				condition['isPublish'] = pageModel.filter.isPublish;
