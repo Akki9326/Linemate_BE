@@ -1,4 +1,5 @@
 import { IsString, IsNotEmpty, IsNumber, IsOptional, IsBase64 } from 'class-validator';
+import { FileType } from '../enums/file-type.enums';
 
 export class FileDto {
 	@IsString()
@@ -14,4 +15,9 @@ export class FileDto {
 
 	@IsString()
 	public mimetype: string;
+}
+
+export class FileTypeDto {
+	@IsString()
+	public type: FileType;
 }

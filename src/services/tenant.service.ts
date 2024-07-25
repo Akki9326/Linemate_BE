@@ -8,6 +8,7 @@ import S3Services from '@/utils/services/s3.services';
 import { TenantListRequestDto } from '@/models/dtos/tenant-list.dto';
 import { insertDefaultRoles } from '@/utils/helpers/default.role.helper';
 import { TenantMessage } from '@/utils/helpers/app-message.helper';
+import { FileDestination } from '@/models/enums/file-destination.enum';
 
 export class TenantService {
 	private tenantModel = DB.Tenant;
@@ -35,6 +36,20 @@ export class TenantService {
 			createdBy: userId,
 		});
 		await insertDefaultRoles(tenant.id, userId);
+
+		const fileDestination = `${FileDestination.Tenant}/${tenant.id}`;
+		const movedUrl = await this.s3Service.moveFileByUrl(tenantDetails.logo, fileDestination);
+
+		await this.tenantModel.update(
+			{
+				logo: movedUrl,
+			},
+			{
+				where: {
+					id: tenant.id,
+				},
+			},
+		);
 		return tenant.id;
 	}
 	public async one(tenantId: number) {
