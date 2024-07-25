@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand, CopyObjectCommand, ObjectCannedACL } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'; // For presigned URLs
 import { ServerException } from '@/exceptions/ServerException';
 import { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_REGION, BUCKET } from '@config';
@@ -61,7 +61,14 @@ export default class S3Services {
 				Key: key,
 			});
 
-			await this.s3.send(command);
+			await this.s3
+				.send(command)
+				.then(() => {
+					return true;
+				})
+				.catch(error => {
+					throw new ServerException(error, `Error while deleting file with key: ${key}`);
+				});
 		} catch (error) {
 			throw new ServerException(error, `Error while delete file`);
 		}
@@ -85,6 +92,42 @@ export default class S3Services {
 			return url;
 		} catch (error) {
 			throw new ServerException(error, `Error Generating Presigned URL`);
+		}
+	}
+	/**
+	 * Move image local to destination
+	 * @param url = Image URL
+	 * @param destinationPath = Destination path where we want to move
+	 * @param filePermission = File permissions default permissions is public
+	 */
+	public async moveFileByUrl(url: string, destinationPath: string): Promise<string> {
+		try {
+			const parts = url.split('/'); // Split the URL by '/'
+			const keyParts = parts.slice(3); // Extract the Bucket and Key
+			const sourceKey = keyParts.join('/');
+
+			const imageName = sourceKey.split('/');
+
+			const destinationKey = `${destinationPath}/${imageName[imageName.length - 1]}`;
+
+			const copyParams = {
+				Bucket: BUCKET,
+				CopySource: `${BUCKET}/${sourceKey}`,
+				Key: destinationKey,
+				ACL: ObjectCannedACL.public_read,
+			};
+			return this.s3
+				.send(new CopyObjectCommand(copyParams))
+				.then(async () => {
+					await this.deleteFileFromS3(sourceKey);
+					const newImageUrl = `https://${BUCKET}.s3.${AWS_REGION}.amazonaws.com/${destinationKey}`;
+					return newImageUrl;
+				})
+				.catch(error => {
+					throw new ServerException(error, `Error while copying file from ${sourceKey} to ${destinationKey}`);
+				});
+		} catch (error) {
+			throw new ServerException(error, `Error Geting while file move`);
 		}
 	}
 }

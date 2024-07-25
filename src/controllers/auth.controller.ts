@@ -7,6 +7,8 @@ import { NextFunction, Request, Response } from 'express-serve-static-core';
 import S3Service from '../utils/services/s3.services';
 import { FileDto } from '@/models/dtos/file.dto';
 import { RequestWitFile } from '@/models/interfaces/auth.interface';
+import { FileDestination } from '@/models/enums/file-destination.enum';
+import { FileType } from '@/models/enums/file-type.enums';
 
 class AuthController {
 	public authService = new AuthService();
@@ -64,8 +66,22 @@ class AuthController {
 	public fileUpload = async (req: RequestWitFile, res: Response, next: NextFunction) => {
 		try {
 			const files: FileDto = req.files.file;
-			const url = req.path;
-			const dir = url.split('/')[1]; // Get the second element after splitting by '/'
+			const type = req.body.type;
+
+			let dir;
+
+			switch (type) {
+				case FileType.Tenant:
+					dir = FileDestination.TenantTemp;
+					break;
+				case FileType.User:
+					dir = FileDestination.UserTemp;
+					break;
+				default:
+					dir = 'public';
+					break;
+			}
+
 			const imageUrl = await this.s3Service.uploadS3(files.data, `${dir}/${files.name}`, files.mimetype);
 			AppResponseHelper.sendSuccess(res, 'Success', imageUrl);
 		} catch (ex) {

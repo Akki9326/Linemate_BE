@@ -1,3 +1,4 @@
+import { FileTypeDto } from '@/models/dtos/file.dto';
 import { ForgotPasswordDto, LoginOTPDto, ResetPasswordDto } from '@/models/dtos/login.dto';
 import { Routes } from '@/models/interfaces/routes.interface';
 import AuthController from '@controllers/auth.controller';
@@ -19,7 +20,7 @@ class AuthRoute implements Routes {
 		this.router.post(`${this.path}/v1/verify-otp`, this.authController.verifyOtp);
 		this.router.post(`${this.path}/v1/reset-password`, validationMiddleware(ResetPasswordDto, 'body'), this.authController.resetPassword);
 
-		this.router.post(`${this.path}/v1/file-upload`, this.authController.fileUpload);
+		this.router.post(`${this.path}/v1/file-upload`, validationMiddleware(FileTypeDto, 'body'), this.authController.fileUpload);
 	}
 }
 
