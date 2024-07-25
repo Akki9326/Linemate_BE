@@ -1,7 +1,7 @@
-import { ContentDto } from '@/models/dtos/content.dto';
 import ContentController from '@/controllers/content.controller';
 import authMiddleware from '@/middlewares/auth.middleware';
 import headerMiddleware from '@/middlewares/header.middleWare';
+import { ContentDto } from '@/models/dtos/content.dto';
 import { Routes } from '@/models/interfaces/routes.interface';
 import validationMiddleware from '@middlewares/validation.middleware';
 import { Router } from 'express';

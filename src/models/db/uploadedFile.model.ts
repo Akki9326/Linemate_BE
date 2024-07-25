@@ -1,13 +1,12 @@
-import { DataTypes, Model, Sequelize } from 'sequelize';
+import { DataTypes, Sequelize } from 'sequelize';
+import { AppDBModel } from './app-db.model';
 
-export class UploadedFileModel extends Model {
+export class UploadedFileModel extends AppDBModel {
 	public id: number;
 	public name: string;
 	public type: string;
-	public description: string;
-	public tenantId: number;
-	public uploadedFileIds: number[];
-	public isPublish: boolean;
+	public size: number;
+	public s3Key: string;
 }
 
 export default function (sequelize: Sequelize): typeof UploadedFileModel {
@@ -31,14 +30,9 @@ export default function (sequelize: Sequelize): typeof UploadedFileModel {
 				allowNull: true,
 				type: DataTypes.INTEGER,
 			},
-			s3Key: {
-				type: DataTypes.STRING,
-				allowNull: false,
-			},
 		},
 		{
-			tableName: 'uploadedFile',
-			timestamps: false,
+			tableName: 'uploadedFiles',
 			sequelize,
 		},
 	);

@@ -20,6 +20,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { RoleService } from './role.service';
 import { TenantService } from './tenant.service';
 import { UserType } from '@/models/enums/user-types.enum';
+import { FileDto } from '@/models/dtos/file.dto';
+import { FileType } from '@/models/enums/file-type.enums';
+import { FileDestination } from '@/models/enums/file-destination.enum';
+import S3Services from '@/utils/services/s3.services';
 
 export default class AuthService {
 	private users = DB.Users;
@@ -28,6 +32,8 @@ export default class AuthService {
 	private tenantModel = DB.Tenant;
 	private roleService = new RoleService();
 	private tenantService = new TenantService();
+	public s3Service = new S3Services();
+	public uploadedFile = DB.UploadedFile;
 
 	constructor() {}
 
@@ -217,7 +223,6 @@ export default class AuthService {
 		UserCaching.pushSession(user.email, getActiveSessions);
 		return loginResponse;
 	}
-
 	public async sendResetPasswordOTP(forgotPasswordDto: ForgotPasswordDto): Promise<void> {
 		const otp = generateOtp().toString();
 		const condition = {
@@ -297,5 +302,34 @@ export default class AuthService {
 		await userToken.save();
 
 		return { email: user.email };
+	}
+	public async uploadFile(file: FileDto, type: FileType) {
+		let dir: string;
+
+		switch (type) {
+			case FileType.Tenant:
+				dir = FileDestination.TenantTemp;
+				break;
+			case FileType.User:
+				dir = FileDestination.UserTemp;
+				break;
+			case FileType.Content:
+				dir = FileDestination.ContentTemp;
+				break;
+			default:
+				dir = 'public';
+				break;
+		}
+		const imageUrl = await this.s3Service.uploadS3(file.data, `${dir}/${file.name}`, file.mimetype);
+		const fileData = new this.uploadedFile();
+		fileData.name = file.name;
+		fileData.type = file.mimetype;
+		fileData.size = file.size;
+		fileData.s3Key = file.name;
+		await fileData.save();
+		return {
+			imageUrl,
+			id: fileData.id,
+		};
 	}
 }

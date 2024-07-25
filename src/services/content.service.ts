@@ -1,18 +1,45 @@
+import { AWS_S3_FILE_URL } from '@/config';
 import DB from '@/databases';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { ContentListDto } from '@/models/dtos/content-list.dto';
 import { ContentDto } from '@/models/dtos/content.dto';
+import { FileDestination } from '@/models/enums/file-destination.enum';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { ContentMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
+import { FileHelper } from '@/utils/helpers/file.helper';
+import S3Services from '@/utils/services/s3.services';
+import { isValid, parse } from 'date-fns';
 import { Op, WhereOptions } from 'sequelize';
-import { parse, isValid } from 'date-fns';
 
 export class ContentService {
 	private content = DB.Content;
 	private user = DB.Users;
 	private tenant = DB.Tenant;
+	private uploadedFile = DB.UploadedFile;
+	public s3Service = new S3Services();
 
 	constructor() {}
+	private async findAllFile(fileIds: number[]) {
+		return await this.uploadedFile.findAll({
+			where: {
+				id: {
+					[Op.in]: fileIds,
+				},
+			},
+		});
+	}
+	private async moveFiles(fileIds: number[], tenantId: number, contentId: number) {
+		const fileDestination = `tenants/${tenantId}/contents/${contentId}`;
+		const allFile = await this.findAllFile(fileIds);
+		if (fileDestination?.length) {
+			await Promise.all(
+				allFile.map(async file => {
+					const fileUrl = `${AWS_S3_FILE_URL}/${FileDestination.ContentTemp}/${file.name}`;
+					await this.s3Service.moveFileByUrl(fileUrl, fileDestination);
+				}),
+			);
+		}
+	}
 	private async setDateRangeCondition(field: string, startDateStr: string, endDateStr: string, condition: object) {
 		const startDate = parse(startDateStr, 'yyyy-MM-dd', new Date());
 		const endDate = parse(endDateStr, 'yyyy-MM-dd', new Date());
@@ -45,6 +72,9 @@ export class ContentService {
 		content.isArchive = contentDetails.isArchive;
 		content.createdBy = user.id.toString();
 		content = await content.save();
+		if (content.uploadedFileIds) {
+			await this.moveFiles(contentDetails.uploadedFileIds, content.tenantId, content.id);
+		}
 		return { id: content.id };
 	}
 
@@ -78,12 +108,24 @@ export class ContentService {
 			throw new BadRequestException(ContentMessage.contentNotFound);
 		}
 
+		const uploadedFiles = [];
+		if (content.uploadedFileIds.length) {
+			const allFiles = await this.findAllFile(content.uploadedFileIds);
+			if (allFiles.length) {
+				const filePromises = allFiles.map(async file => {
+					const fileUrl = FileHelper.getContentUrl(content.tenantId, content.id, file.name);
+					return fileUrl;
+				});
+				uploadedFiles.push(...(await Promise.all(filePromises)));
+			}
+		}
+
 		return {
 			name: content.name,
 			type: content.type,
 			description: content.description,
 			tenantId: content.tenantId,
-			uploadedFileIds: content.uploadedFileIds,
+			uploadedFiles: uploadedFiles,
 		};
 	}
 	async fetchUserDetails(userId: number) {

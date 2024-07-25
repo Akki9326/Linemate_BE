@@ -1,19 +1,15 @@
+import { FileDto } from '@/models/dtos/file.dto';
 import { ForgotPasswordDto, LoginOTPDto, ResetPasswordDto } from '@/models/dtos/login.dto';
+import { RequestWitFile } from '@/models/interfaces/auth.interface';
 import { User } from '@/models/interfaces/users.interface';
 import UserService from '@/services/user.service';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
 import AuthService from '@services/auth.service';
 import { NextFunction, Request, Response } from 'express-serve-static-core';
-import S3Service from '../utils/services/s3.services';
-import { FileDto } from '@/models/dtos/file.dto';
-import { RequestWitFile } from '@/models/interfaces/auth.interface';
-import { FileDestination } from '@/models/enums/file-destination.enum';
-import { FileType } from '@/models/enums/file-type.enums';
 
 class AuthController {
 	public authService = new AuthService();
 	public userService = new UserService();
-	public s3Service = new S3Service();
 
 	public register = async (req: Request, res: Response, next: NextFunction) => {
 		try {
@@ -67,23 +63,8 @@ class AuthController {
 		try {
 			const files: FileDto = req.files.file;
 			const type = req.body.type;
-
-			let dir;
-
-			switch (type) {
-				case FileType.Tenant:
-					dir = FileDestination.TenantTemp;
-					break;
-				case FileType.User:
-					dir = FileDestination.UserTemp;
-					break;
-				default:
-					dir = 'public';
-					break;
-			}
-
-			const imageUrl = await this.s3Service.uploadS3(files.data, `${dir}/${files.name}`, files.mimetype);
-			AppResponseHelper.sendSuccess(res, 'Success', imageUrl);
+			const uploadFileResponse = await this.authService.uploadFile(files, type);
+			AppResponseHelper.sendSuccess(res, 'Success', uploadFileResponse);
 		} catch (ex) {
 			next(ex);
 		}

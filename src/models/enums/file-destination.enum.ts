@@ -3,4 +3,5 @@ export enum FileDestination {
 	User = 'users/profile',
 	TenantTemp = 'tenants/temp',
 	UserTemp = 'users/temp',
+	ContentTemp = 'contents/temp',
 }
