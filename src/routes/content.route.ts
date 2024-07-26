@@ -20,7 +20,7 @@ class ContentRoute implements Routes {
 		this.router.put(`${this.path}/v1/:id`, validationMiddleware(ContentDto, 'body'), authMiddleware, this.contentController.update);
 		this.router.get(`${this.path}/v1/:id`, authMiddleware, this.contentController.getById);
 		this.router.post(`${this.path}/v1/list`, authMiddleware, headerMiddleware, this.contentController.list);
-		this.router.post(`${this.path}/v1/:id`, authMiddleware, this.contentController.delete);
+		this.router.delete(`${this.path}/v1/:id`, authMiddleware, this.contentController.delete);
 	}
 }
 
