@@ -20,10 +20,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { RoleService } from './role.service';
 import { TenantService } from './tenant.service';
 import { UserType } from '@/models/enums/user-types.enum';
-import { FileDto } from '@/models/dtos/file.dto';
+import { FileDto, FileTypeDto } from '@/models/dtos/file.dto';
 import { FileType } from '@/models/enums/file-type.enums';
 import { FileDestination } from '@/models/enums/file-destination.enum';
 import S3Services from '@/utils/services/s3.services';
+import { ContentService } from './content.service';
 
 export default class AuthService {
 	private users = DB.Users;
@@ -34,6 +35,7 @@ export default class AuthService {
 	private tenantService = new TenantService();
 	public s3Service = new S3Services();
 	public uploadedFile = DB.UploadedFile;
+	public contentService = new ContentService();
 
 	constructor() {}
 
@@ -303,10 +305,10 @@ export default class AuthService {
 
 		return { email: user.email };
 	}
-	public async uploadFile(file: FileDto, type: FileType) {
+	public async uploadFile(file: FileDto, requestBody: FileTypeDto, user: JwtTokenData) {
 		let dir: string;
 
-		switch (type) {
+		switch (requestBody.type) {
 			case FileType.Tenant:
 				dir = FileDestination.TenantTemp;
 				break;
@@ -320,16 +322,27 @@ export default class AuthService {
 				dir = 'public';
 				break;
 		}
-		const imageUrl = await this.s3Service.uploadS3(file.data, `${dir}/${file.name}`, file.mimetype);
-		const fileData = new this.uploadedFile();
-		fileData.name = file.name;
-		fileData.type = file.mimetype;
-		fileData.size = file.size;
-		fileData.s3Key = file.name;
-		await fileData.save();
-		return {
+		let destinationUrl = dir;
+		if (requestBody.contentId) {
+			const content = await this.contentService.one(requestBody.contentId);
+			destinationUrl = `tenants/${content.tenantId}/contents/${requestBody.contentId}/${file.name}`;
+		} else {
+			destinationUrl = `${dir}/${file.name}`;
+		}
+		const imageUrl = await this.s3Service.uploadS3(file.data, destinationUrl, file.mimetype);
+		const response: { imageUrl: string; id?: number } = {
 			imageUrl,
-			id: fileData.id,
 		};
+		if (requestBody.type == FileType.Content) {
+			const fileData = new this.uploadedFile();
+			fileData.name = file.name;
+			fileData.type = file.mimetype;
+			fileData.size = file.size;
+			fileData.createdBy = user.id.toString();
+			await fileData.save();
+			response.id = fileData.id;
+		}
+
+		return response;
 	}
 }

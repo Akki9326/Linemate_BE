@@ -20,4 +20,8 @@ export class FileDto {
 export class FileTypeDto {
 	@IsString()
 	public type: FileType;
+
+	@IsOptional()
+	@IsString()
+	public contentId: number;
 }

@@ -1,6 +1,7 @@
-import { FileDto } from '@/models/dtos/file.dto';
+import { FileDto, FileTypeDto } from '@/models/dtos/file.dto';
 import { ForgotPasswordDto, LoginOTPDto, ResetPasswordDto } from '@/models/dtos/login.dto';
 import { RequestWitFile } from '@/models/interfaces/auth.interface';
+import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { User } from '@/models/interfaces/users.interface';
 import UserService from '@/services/user.service';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
@@ -62,8 +63,9 @@ class AuthController {
 	public fileUpload = async (req: RequestWitFile, res: Response, next: NextFunction) => {
 		try {
 			const files: FileDto = req.files.file;
-			const type = req.body.type;
-			const uploadFileResponse = await this.authService.uploadFile(files, type);
+			const requestBody = req.body as FileTypeDto;
+			const user = req.user as JwtTokenData;
+			const uploadFileResponse = await this.authService.uploadFile(files, requestBody, user);
 			AppResponseHelper.sendSuccess(res, 'Success', uploadFileResponse);
 		} catch (ex) {
 			next(ex);

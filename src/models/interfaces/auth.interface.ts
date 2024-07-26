@@ -28,6 +28,7 @@ export interface RequestWitFile extends Request {
 	files: {
 		file: FileDto;
 	};
+	user: JwtTokenData;
 }
 export class LoginResponseData {
 	token: string;

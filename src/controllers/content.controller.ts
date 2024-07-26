@@ -23,7 +23,7 @@ class ContentController {
 		try {
 			const contentData = req.body as ContentDto;
 			const contentId = parseInt(req.params.id);
-			const user = req.user;
+			const user = req.user as JwtTokenData;
 			const contentResponse = await this.contentService.update(contentData, contentId, user);
 			AppResponseHelper.sendSuccess(res, 'Success', contentResponse);
 		} catch (ex) {
@@ -49,10 +49,11 @@ class ContentController {
 			next(ex);
 		}
 	};
-	public delete = async (req: Request, res: Response, next: NextFunction) => {
+	public delete = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
 			const contentId = parseInt(req.params.id);
-			const contentResponse = await this.contentService.remove(contentId);
+			const user = req.user as JwtTokenData;
+			const contentResponse = await this.contentService.remove(contentId, user);
 			AppResponseHelper.sendSuccess(res, 'Success', contentResponse);
 		} catch (ex) {
 			next(ex);

@@ -10,6 +10,7 @@ import { FileHelper } from '@/utils/helpers/file.helper';
 import S3Services from '@/utils/services/s3.services';
 import { isValid, parse } from 'date-fns';
 import { Op, WhereOptions } from 'sequelize';
+import UserService from './user.service';
 
 export class ContentService {
 	private content = DB.Content;
@@ -17,6 +18,7 @@ export class ContentService {
 	private tenant = DB.Tenant;
 	private uploadedFile = DB.UploadedFile;
 	public s3Service = new S3Services();
+	public userService = new UserService();
 
 	constructor() {}
 	private async findAllFile(fileIds: number[]) {
@@ -99,6 +101,7 @@ export class ContentService {
 		return content.id;
 	}
 
+	// Get Content Details By contentId
 	public async one(contentId: number) {
 		const content = await this.content.findOne({
 			where: { id: contentId, isDeleted: false },
@@ -127,12 +130,6 @@ export class ContentService {
 			tenantId: content.tenantId,
 			uploadedFiles: uploadedFiles,
 		};
-	}
-	async fetchUserDetails(userId: number) {
-		const user = await this.user.findByPk(userId, {
-			attributes: ['id', 'firstName', 'lastName'],
-		});
-		return user;
 	}
 
 	public async all(pageModel: ContentListDto, tenantId: number) {
@@ -179,30 +176,40 @@ export class ContentService {
 			attributes: ['id', 'name', 'createdAt', 'tenantId', 'createdBy', 'updatedBy'],
 		});
 
-		const contentWithCreator = await Promise.all(
-			contentResult.rows.map(async role => {
-				let createdBy = null;
-				let updatedBy = null;
+		// TODO: After change createdBy and updatedBy Integer make join with user table
+		const createdByIds = contentResult.rows.map(content => content.createdBy);
+		const updatedByIds = contentResult.rows.map(content => content.updatedBy);
+		const userIds = [...new Set([...createdByIds, ...updatedByIds])];
 
-				if (role.createdBy && !isNaN(parseInt(role.createdBy))) {
-					createdBy = await this.fetchUserDetails(parseInt(role.createdBy));
-				}
+		const users = await this.user.findAll({
+			where: {
+				id: userIds,
+			},
+			attributes: ['id', 'firstName', 'lastName'],
+		});
 
-				if (role.updatedBy && !isNaN(parseInt(role.updatedBy))) {
-					updatedBy = await this.fetchUserDetails(parseInt(role.updatedBy));
-				}
+		const userMap = users.reduce((acc, user) => {
+			acc[user.id] = user;
+			return acc;
+		}, {});
 
-				return { ...role.toJSON(), createdBy, updatedBy };
-			}),
-		);
+		const combinedResult = contentResult.rows.map(content => {
+			const createdByUser = userMap[content.createdBy];
+			const updatedByUser = userMap[content.updatedBy];
+			return {
+				...content.toJSON(),
+				createdBy: createdByUser ? { firstName: createdByUser.firstName, lastName: createdByUser.lastName } : null,
+				updatedBy: updatedByUser ? { firstName: updatedByUser.firstName, lastName: updatedByUser.lastName } : null,
+			};
+		});
 
 		return {
 			count: contentResult.count,
-			rows: contentWithCreator,
+			rows: combinedResult,
 		};
 	}
 
-	public async remove(contentId: number) {
+	public async remove(contentId: number, user: JwtTokenData) {
 		const content = await this.content.findOne({
 			where: { isDeleted: false, id: contentId },
 		});
@@ -213,6 +220,7 @@ export class ContentService {
 
 		content.set({
 			isDeleted: true,
+			updatedBy: user.id.toString(),
 		});
 
 		await content.save();
