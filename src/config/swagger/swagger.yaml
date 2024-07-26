@@ -4,7 +4,7 @@ info:
   version: 1.0.0
 host: localhost:3000
 schemes:
-- http
+  - http
 
 securityDefinitions:
   BearerAuth:
@@ -275,7 +275,7 @@ paths:
                 example: ASC
               search:
                 type: string
-                example: ""
+                example: ''
       responses:
         '200':
           description: Success
@@ -365,6 +365,41 @@ paths:
         '200':
           description: Success
 
+  /auth/v1/file-upload:
+    post:
+      summary: Upload a file
+      tags:
+        - File
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: formData
+          name: type
+          required: true
+          schema:
+            type: string
+            description: The type of the file.
+            example: Logo
+        - in: formData
+          name: contentId
+          required: true
+          schema:
+            type: string
+            description: The ID related to the content.
+            example: 1
+        - in: formData
+          name: file
+          required: true
+          type: file
+          description: The file to upload.
+      responses:
+        '200':
+          description: Success
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+
   /user/v1/add:
     post:
       summary: Create User
@@ -407,7 +442,7 @@ paths:
                 example: uiui
               profilePhoto:
                 type: string
-                example: ""
+                example: ''
               tenantVariables:
                 type: array
                 items:
@@ -488,10 +523,10 @@ paths:
                 example: [1]
               employeeId:
                 type: string
-                example: ""
+                example: ''
               profilePhoto:
                 type: string
-                example: ""
+                example: ''
               tenantVariables:
                 type: array
                 items:
@@ -548,7 +583,7 @@ paths:
                 example: ASC
               search:
                 type: string
-                example: "91"
+                example: '91'
               filter:
                 type: object
                 properties:
@@ -561,11 +596,11 @@ paths:
                       startDate:
                         type: string
                         format: date
-                        example: "2024-07-10"
+                        example: '2024-07-10'
                       endDate:
                         type: string
                         format: date
-                        example: "2024-07-13"
+                        example: '2024-07-13'
       responses:
         '200':
           description: Success
@@ -634,10 +669,10 @@ paths:
                 type: array
                 items:
                   type: integer
-                example: [2, 3]   
+                example: [2, 3]
               tenantId:
                 type: integer
-                example: 3             
+                example: 3
       responses:
         '200':
           description: Success
@@ -933,7 +968,7 @@ paths:
                 type: array
                 items:
                   type: string
-                example: ["Role", "Manager"]
+                example: ['Role', 'Manager']
       responses:
         '200':
           description: Success
@@ -996,7 +1031,7 @@ paths:
                 type: array
                 items:
                   type: string
-                example: ["Role", "Manager"]
+                example: ['Role', 'Manager']
       responses:
         '200':
           description: Success
@@ -1049,13 +1084,13 @@ paths:
                 example: ASC
               search:
                 type: string
-                example: ""
+                example: ''
               filter:
                 type: object
                 properties:
                   category:
                     type: string
-                    example: "custom"
+                    example: 'custom'
       responses:
         '200':
           description: Success
@@ -1226,7 +1261,7 @@ paths:
                 example: ASC
               search:
                 type: string
-                example: ""
+                example: ''
               filter:
                 type: object
                 properties:
@@ -1242,11 +1277,11 @@ paths:
                       startDate:
                         type: string
                         format: date
-                        example: "2024-07-17"
+                        example: '2024-07-17'
                       endDate:
                         type: string
                         format: date
-                        example: "2024-07-31"
+                        example: '2024-07-31'
       responses:
         '200':
           description: Success
