@@ -1,7 +1,6 @@
 import { ContentListDto } from '@/models/dtos/content-list.dto';
 import { ContentDto } from '@/models/dtos/content.dto';
 import { RequestWithUser } from '@/models/interfaces/auth.interface';
-import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { ContentService } from '@/services/content.service';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
 import { NextFunction, Request, Response } from 'express-serve-static-core';
@@ -12,8 +11,8 @@ class ContentController {
 	public add = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
 			const contentDetails = req.body as ContentDto;
-			const user = req.user as JwtTokenData;
-			const contentResponse = await this.contentService.add(contentDetails, user);
+			const userId = req.user.id as number;
+			const contentResponse = await this.contentService.add(contentDetails, userId);
 			AppResponseHelper.sendSuccess(res, 'Success', contentResponse);
 		} catch (ex) {
 			next(ex);
@@ -23,8 +22,8 @@ class ContentController {
 		try {
 			const contentData = req.body as ContentDto;
 			const contentId = parseInt(req.params.id);
-			const user = req.user as JwtTokenData;
-			const contentResponse = await this.contentService.update(contentData, contentId, user);
+			const userId = req.user.id as number;
+			const contentResponse = await this.contentService.update(contentData, contentId, userId);
 			AppResponseHelper.sendSuccess(res, 'Success', contentResponse);
 		} catch (ex) {
 			next(ex);

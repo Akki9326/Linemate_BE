@@ -4,7 +4,6 @@ import { BadRequestException } from '@/exceptions/BadRequestException';
 import { ContentListDto } from '@/models/dtos/content-list.dto';
 import { ContentDto } from '@/models/dtos/content.dto';
 import { FileDestination } from '@/models/enums/file-destination.enum';
-import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { ContentMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
 import { FileHelper } from '@/utils/helpers/file.helper';
 import S3Services from '@/utils/services/s3.services';
@@ -54,7 +53,7 @@ export class ContentService {
 		}
 	}
 
-	public async add(contentDetails: ContentDto, user: JwtTokenData) {
+	public async add(contentDetails: ContentDto, userId: number) {
 		const tenant = await this.tenant.findOne({
 			where: {
 				id: contentDetails.tenantId,
@@ -72,7 +71,7 @@ export class ContentService {
 		content.uploadedFileIds = contentDetails.uploadedFileIds;
 		content.isPublish = contentDetails.isPublish;
 		content.isArchive = contentDetails.isArchive;
-		content.createdBy = user.id.toString();
+		content.createdBy = userId.toString();
 		content = await content.save();
 		if (content.uploadedFileIds) {
 			await this.moveFiles(contentDetails.uploadedFileIds, content.tenantId, content.id);
@@ -80,7 +79,7 @@ export class ContentService {
 		return { id: content.id };
 	}
 
-	public async update(contentDetails: ContentDto, contentId: number, user: JwtTokenData) {
+	public async update(contentDetails: ContentDto, contentId: number, userId: number) {
 		const content = await this.content.findOne({
 			where: { isDeleted: false, id: contentId },
 		});
@@ -95,7 +94,7 @@ export class ContentService {
 		content.uploadedFileIds = contentDetails.uploadedFileIds;
 		content.isPublish = contentDetails.isPublish;
 		content.isArchive = contentDetails.isArchive;
-		content.updatedBy = user.id.toString();
+		content.updatedBy = userId.toString();
 
 		await content.save();
 		return content.id;
