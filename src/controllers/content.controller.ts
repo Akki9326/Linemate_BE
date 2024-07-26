@@ -52,8 +52,8 @@ class ContentController {
 	public delete = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
 			const contentId = parseInt(req.params.id);
-			const user = req.user as JwtTokenData;
-			const contentResponse = await this.contentService.remove(contentId, user);
+			const userId = req.user.id as number;
+			const contentResponse = await this.contentService.remove(contentId, userId);
 			AppResponseHelper.sendSuccess(res, 'Success', contentResponse);
 		} catch (ex) {
 			next(ex);

@@ -1178,7 +1178,7 @@ paths:
       responses:
         '200':
           description: Success
-    post:
+    delete:
       summary: Delete Content
       tags:
         - Content

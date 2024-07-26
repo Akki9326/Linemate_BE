@@ -209,7 +209,7 @@ export class ContentService {
 		};
 	}
 
-	public async remove(contentId: number, user: JwtTokenData) {
+	public async remove(contentId: number, userId: number) {
 		const content = await this.content.findOne({
 			where: { isDeleted: false, id: contentId },
 		});
@@ -220,7 +220,7 @@ export class ContentService {
 
 		content.set({
 			isDeleted: true,
-			updatedBy: user.id.toString(),
+			updatedBy: userId.toString(),
 		});
 
 		await content.save();
