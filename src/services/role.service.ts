@@ -128,7 +128,7 @@ export class RoleService {
 		return rolesResult;
 	}
 
-	public async remove(roleId: number) {
+	public async remove(roleId: number, userId: number) {
 		const role = await this.role.findOne({
 			where: { isDeleted: false, id: roleId },
 		});
@@ -144,6 +144,7 @@ export class RoleService {
 
 		role.set({
 			isDeleted: true,
+			updatedBy: userId,
 		});
 
 		await role.save();

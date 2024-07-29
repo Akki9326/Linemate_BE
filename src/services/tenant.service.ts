@@ -61,13 +61,13 @@ export class TenantService {
 		}
 		return tenantResponse;
 	}
-	public async delete(tenantId: number) {
+	public async delete(tenantId: number, userId: number) {
 		const tenant = await this.tenantModel.findOne({ where: { id: tenantId, isDeleted: false } });
 		if (!tenant) {
 			throw new NotFoundException(TenantMessage.tenantNotFound);
 		}
 		const tenantResponse = await this.tenantModel.update(
-			{ isDeleted: true },
+			{ isDeleted: true, updatedBy: userId },
 			{
 				where: { id: tenantId, isDeleted: false },
 			},

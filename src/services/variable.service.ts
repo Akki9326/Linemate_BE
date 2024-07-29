@@ -91,7 +91,7 @@ class VariableServices {
 		await variable.save();
 		return { id: variable.id };
 	}
-	public async delete(variableId: number) {
+	public async delete(variableId: number, userId: number) {
 		const variable = await this.variableMaster.findOne({
 			where: {
 				id: variableId,
@@ -106,6 +106,8 @@ class VariableServices {
 		}
 
 		variable.isDeleted = true;
+		variable.updatedBy = userId;
+
 		await variable.save();
 		return { id: variable.id };
 	}

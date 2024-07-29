@@ -58,10 +58,11 @@ class PermissionServices {
 			order: [[orderByField, sortDirection]],
 		});
 	}
-	public async remove(roleId: number) {
+	public async remove(roleId: number, userId: number) {
 		const permissionResponse = await this.permissionModel.update(
 			{
 				isDeleted: true,
+				updatedBy: userId,
 			},
 			{
 				where: { id: roleId },

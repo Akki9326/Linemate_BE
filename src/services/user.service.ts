@@ -357,7 +357,7 @@ class UserService {
 		}
 		return { id: user.id };
 	}
-	public async delete(userIds: UserListDto) {
+	public async delete(userIds: UserListDto, userId: number) {
 		const usersToDelete = await this.users.findAll({
 			where: {
 				id: {
@@ -371,6 +371,7 @@ class UserService {
 		}
 		for (const user of usersToDelete) {
 			user.isDeleted = true;
+			user.updatedBy = userId;
 			await user.save();
 		}
 		return usersToDelete.map(user => ({ id: user.id }));
@@ -437,7 +438,7 @@ class UserService {
 		}
 		return userList;
 	}
-	public async deActive(userIds: UserActionDto) {
+	public async deActive(userIds: UserActionDto, userId: number) {
 		const usersToDelete = await this.users.findAll({
 			where: {
 				id: {
@@ -452,6 +453,7 @@ class UserService {
 		}
 		for (const user of usersToDelete) {
 			user.isActive = false;
+			user.updatedBy = userId;
 			await user.save();
 		}
 		return usersToDelete.map(user => ({ id: user.id }));
