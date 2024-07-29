@@ -338,7 +338,7 @@ export default class AuthService {
 			fileData.name = file.name;
 			fileData.type = file.mimetype;
 			fileData.size = file.size;
-			fileData.createdBy = user.id.toString();
+			fileData.createdBy = user.id;
 			await fileData.save();
 			response.id = fileData.id;
 		}

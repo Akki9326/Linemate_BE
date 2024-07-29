@@ -71,7 +71,7 @@ export class ContentService {
 		content.uploadedFileIds = contentDetails.uploadedFileIds;
 		content.isPublish = contentDetails.isPublish;
 		content.isArchive = contentDetails.isArchive;
-		content.createdBy = userId.toString();
+		content.createdBy = userId;
 		content = await content.save();
 		if (content.uploadedFileIds) {
 			await this.moveFiles(contentDetails.uploadedFileIds, content.tenantId, content.id);
@@ -94,7 +94,7 @@ export class ContentService {
 		content.uploadedFileIds = contentDetails.uploadedFileIds;
 		content.isPublish = contentDetails.isPublish;
 		content.isArchive = contentDetails.isArchive;
-		content.updatedBy = userId.toString();
+		content.updatedBy = userId;
 
 		await content.save();
 		return content.id;
@@ -219,7 +219,7 @@ export class ContentService {
 
 		content.set({
 			isDeleted: true,
-			updatedBy: userId.toString(),
+			updatedBy: userId,
 		});
 
 		await content.save();

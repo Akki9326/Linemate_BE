@@ -37,7 +37,7 @@ class VariableServices {
 		userVariable.type = variableData.type;
 		userVariable.description = variableData.description;
 		userVariable.category = variableData.category;
-		userVariable.createdBy = createdUser.id.toString();
+		userVariable.createdBy = createdUser.id;
 		userVariable.options = variableData.options;
 		userVariable.tenantId = variableData.tenantId;
 		userVariable.placeHolder = variableData.placeHolder;
@@ -84,7 +84,7 @@ class VariableServices {
 		variable.isMandatory = variableData.isMandatory;
 		variable.type = variableData.type;
 		variable.description = variableData.description;
-		variable.updatedBy = updatedUser.id.toString();
+		variable.updatedBy = updatedUser.id;
 		variable.options = variableData.options;
 		variable.placeHolder = variableData.placeHolder;
 		variable.tenantId = variableData.tenantId;

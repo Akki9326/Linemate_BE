@@ -26,7 +26,7 @@ export class RoleService {
 			permissionsIds: roleDetails.permissionIds,
 			userIds: roleDetails.userIds,
 			tenantId: roleDetails.tenantId,
-			createdBy: user.id.toString(),
+			createdBy: user.id,
 		});
 		await role.save();
 		return role.id;
@@ -47,7 +47,7 @@ export class RoleService {
 			permissionsIds: roleDetails.permissionIds,
 			userIds: roleDetails.userIds,
 			tenantId: roleDetails.tenantId,
-			updatedBy: user.id.toString(),
+			updatedBy: user.id,
 		});
 
 		await role.save();
@@ -119,12 +119,12 @@ export class RoleService {
 				let createdBy = null;
 				let updatedBy = null;
 
-				if (role.createdBy && !isNaN(parseInt(role.createdBy))) {
-					createdBy = await this.fetchUserDetails(parseInt(role.createdBy));
+				if (role.createdBy && !isNaN(role.createdBy)) {
+					createdBy = await this.fetchUserDetails(role.createdBy);
 				}
 
-				if (role.updatedBy && !isNaN(parseInt(role.updatedBy))) {
-					updatedBy = await this.fetchUserDetails(parseInt(role.updatedBy));
+				if (role.updatedBy && !isNaN(role.updatedBy)) {
+					updatedBy = await this.fetchUserDetails(role.updatedBy);
 				}
 
 				return { ...role.toJSON(), createdBy, updatedBy };

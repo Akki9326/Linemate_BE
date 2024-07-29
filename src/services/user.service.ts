@@ -162,7 +162,7 @@ class UserService {
 				variableListMatrix.tenantId = tenant.tenantId;
 				(variableListMatrix.userId = userId), (variableListMatrix.variableId = variable.variableId);
 				variableListMatrix.value = variable.value;
-				variableListMatrix.createdBy = userId.toString();
+				variableListMatrix.createdBy = userId;
 				await variableListMatrix.save();
 			});
 		});
@@ -184,7 +184,7 @@ class UserService {
 					variableListMatrix.variableId = variable.variableId;
 				}
 				variableListMatrix.value = variable.value;
-				variableListMatrix.updatedBy = userId.toString();
+				variableListMatrix.updatedBy = userId;
 				await variableListMatrix.save();
 			}
 		}
@@ -256,7 +256,7 @@ class UserService {
 		user.email = userData.email;
 		user.mobileNumber = userData.mobileNumber;
 		user.isTemporaryPassword = true;
-		user.createdBy = createdUser.id.toString();
+		user.createdBy = createdUser.id;
 		user.password = PasswordHelper.hashPassword(temporaryPassword);
 		user.tenantIds = userData.userType !== UserType.ChiefAdmin ? userData.tenantIds : [];
 		user.userType = userData.userType;
@@ -349,7 +349,7 @@ class UserService {
 		user.countryCode = userData.countyCode;
 		user.employeeId = userData.employeeId;
 		user.profilePhoto = userData.profilePhoto;
-		user.updatedBy = updatedBy.toString();
+		user.updatedBy = updatedBy;
 		await user.save();
 		this.updateUserRole(userOldType, userData, user.id);
 		if (userData.userType !== UserType.ChiefAdmin) {
