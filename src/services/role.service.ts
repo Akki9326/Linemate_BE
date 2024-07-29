@@ -5,11 +5,12 @@ import { RoleDto, RoleListRequestDto } from '@/models/dtos/role.dto';
 import { UserType } from '@/models/enums/user-types.enum';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { RoleMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
-import { Op, WhereOptions } from 'sequelize';
+import { BelongsTo, Op, WhereOptions } from 'sequelize';
 
 export class RoleService {
 	private role = DB.Roles;
 	private permissionModel = DB.Permission;
+	private users = DB.Users;
 
 	constructor() {}
 
@@ -111,30 +112,20 @@ export class RoleService {
 			offset,
 			limit: pageSize,
 			order: [[sortField, sortOrder]],
-			attributes: ['id', 'name', 'createdAt', 'tenantId', 'createdBy', 'updatedBy'],
+			attributes: ['id', 'name', 'createdAt', 'tenantId'],
+			include: [
+				{
+					association: new BelongsTo(this.users, this.role, { as: 'Creator', foreignKey: 'createdBy' }),
+					attributes: ['firstName', 'lastName'],
+				},
+				{
+					association: new BelongsTo(this.users, this.role, { as: 'Updater', foreignKey: 'updatedBy' }),
+					attributes: ['firstName', 'lastName'],
+				},
+			],
 		});
 
-		const rolesWithCreator = await Promise.all(
-			rolesResult.rows.map(async role => {
-				let createdBy = null;
-				let updatedBy = null;
-
-				if (role.createdBy && !isNaN(role.createdBy)) {
-					createdBy = await this.fetchUserDetails(role.createdBy);
-				}
-
-				if (role.updatedBy && !isNaN(role.updatedBy)) {
-					updatedBy = await this.fetchUserDetails(role.updatedBy);
-				}
-
-				return { ...role.toJSON(), createdBy, updatedBy };
-			}),
-		);
-
-		return {
-			count: rolesResult.count,
-			rows: rolesWithCreator,
-		};
+		return rolesResult;
 	}
 
 	public async remove(roleId: number) {
