@@ -116,11 +116,11 @@ export class RoleService {
 			include: [
 				{
 					association: new BelongsTo(this.users, this.role, { as: 'Creator', foreignKey: 'createdBy' }),
-					attributes: ['firstName', 'lastName'],
+					attributes: ['id', 'firstName', 'lastName'],
 				},
 				{
 					association: new BelongsTo(this.users, this.role, { as: 'Updater', foreignKey: 'updatedBy' }),
-					attributes: ['firstName', 'lastName'],
+					attributes: ['id', 'firstName', 'lastName'],
 				},
 			],
 		});

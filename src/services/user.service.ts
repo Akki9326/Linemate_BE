@@ -464,7 +464,7 @@ class UserService {
 		return userList;
 	}
 	public async deActive(userIds: UserActionDto, userId: number) {
-		const usersToDelete = await this.users.findAll({
+		const usersToDeActive = await this.users.findAll({
 			where: {
 				id: {
 					[Op.in]: userIds,
@@ -473,15 +473,35 @@ class UserService {
 				isActive: true,
 			},
 		});
-		if (!usersToDelete.length) {
-			throw new BadRequestException(AppMessages.userNotFound);
+		if (!usersToDeActive.length) {
+			throw new BadRequestException(AppMessages.activeUserNotFound);
 		}
-		for (const user of usersToDelete) {
+		for (const user of usersToDeActive) {
 			user.isActive = false;
 			user.updatedBy = userId;
 			await user.save();
 		}
-		return usersToDelete.map(user => ({ id: user.id }));
+		return usersToDeActive.map(user => ({ id: user.id }));
+	}
+	public async active(userIds: UserActionDto, userId: number) {
+		const usersToActive = await this.users.findAll({
+			where: {
+				id: {
+					[Op.in]: userIds,
+				},
+				isDeleted: false,
+				isActive: false,
+			},
+		});
+		if (!usersToActive.length) {
+			throw new BadRequestException(AppMessages.deActiveUserNotFound);
+		}
+		for (const user of usersToActive) {
+			user.isActive = true;
+			user.updatedBy = userId;
+			await user.save();
+		}
+		return usersToActive.map(user => ({ id: user.id }));
 	}
 	public async changePassword(changePasswordUsers: ChangePasswordDto, createdBy: JwtTokenData) {
 		const usersData = await this.users.findAll({

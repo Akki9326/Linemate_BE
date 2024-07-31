@@ -651,6 +651,29 @@ paths:
         '200':
           description: Success
 
+  /user/v1/active-users:
+    post:
+      summary: Activate Bulk Users
+      tags:
+        - User
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              userIds:
+                type: array
+                items:
+                  type: integer
+                example: [2]
+      responses:
+        '200':
+          description: Success
+
   /user/v1/change-password:
     post:
       summary: Change Password for Bulk Users

@@ -70,6 +70,16 @@ class UserController {
 			next(ex);
 		}
 	};
+	public activeUser = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const userIds = req.body.userIds as UserActionDto;
+			const userId: number = req.user.id;
+			const userResponse = await this.userService.active(userIds, userId);
+			AppResponseHelper.sendSuccess(res, 'Success', userResponse);
+		} catch (ex) {
+			next(ex);
+		}
+	};
 	public changePassword = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
 			const changePasswordUsers = req.body as ChangePasswordDto;

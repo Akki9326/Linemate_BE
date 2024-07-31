@@ -22,6 +22,7 @@ class UserRoute implements Routes {
 		this.router.get(`${this.path}/v1/:id`, authMiddleware, headerMiddleware, this.userController.one);
 		this.router.post(`${this.path}/v1/delete-users`, validationMiddleware(UserActionDto, 'body'), authMiddleware, this.userController.delete);
 		this.router.post(`${this.path}/v1/de-active`, validationMiddleware(UserActionDto, 'body'), authMiddleware, this.userController.deActiveUser);
+		this.router.post(`${this.path}/v1/active-users`, validationMiddleware(UserActionDto, 'body'), authMiddleware, this.userController.activeUser);
 		this.router.post(
 			`${this.path}/v1/change-password`,
 			validationMiddleware(ChangePasswordDto, 'body'),
