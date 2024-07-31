@@ -373,16 +373,16 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - in: formData
-          name: type
+        - name: type
+          in: formData
           required: true
-          schema:
-            type: string
-            description: The type of the file.
-            example: Logo
+          type: string
+          enum: [tenantLogo, userProfile, content]
+          description: The type of the file.
+          example: Tenant_Logo
         - in: formData
-          name: contentId
-          required: true
+          name: elementId
+          required: false
           schema:
             type: string
             description: The ID related to the content.
@@ -1154,6 +1154,9 @@ paths:
               isPublish:
                 type: boolean
                 example: false
+              isArchive:
+                type: boolean
+                example: false
       responses:
         '200':
           description: Success
@@ -1208,6 +1211,9 @@ paths:
                 type: integer
                 example: 1
               isPublish:
+                type: boolean
+                example: false
+              isArchive:
                 type: boolean
                 example: false
       responses:

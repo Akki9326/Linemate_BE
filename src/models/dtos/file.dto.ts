@@ -23,5 +23,5 @@ export class FileTypeDto {
 
 	@IsOptional()
 	@IsString()
-	public contentId: number;
+	public elementId: number;
 }

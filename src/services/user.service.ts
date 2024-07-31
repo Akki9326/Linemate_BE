@@ -301,6 +301,31 @@ class UserService {
 		}
 		return { ...user.dataValues, tenantDetails, tenantVariableDetail };
 	}
+	public async getUserById(userId: number) {
+		const user = await this.users.findOne({
+			where: {
+				id: userId,
+				isDeleted: false,
+			},
+			attributes: [
+				'id',
+				'firstName',
+				'lastName',
+				'email',
+				'mobileNumber',
+				'tenantIds',
+				'isTemporaryPassword',
+				'userType',
+				'countryCode',
+				'employeeId',
+				'profilePhoto',
+			],
+		});
+		if (!user) {
+			throw new BadRequestException(AppMessages.userNotFound);
+		}
+		return user;
+	}
 	public async update(userData: UserDto, userId: number, updatedBy: number) {
 		const existingUser = await this.users.findOne({
 			where: {
