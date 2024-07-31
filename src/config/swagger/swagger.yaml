@@ -4,7 +4,7 @@ info:
   version: 1.0.0
 host: localhost:3000
 schemes:
-- http
+  - http
 
 securityDefinitions:
   BearerAuth:
@@ -275,10 +275,11 @@ paths:
                 example: ASC
               search:
                 type: string
-                example: ""
+                example: ''
       responses:
         '200':
           description: Success
+
   /auth/v1/login:
     post:
       summary: Login User
@@ -364,6 +365,41 @@ paths:
         '200':
           description: Success
 
+  /auth/v1/file-upload:
+    post:
+      summary: Upload a file
+      tags:
+        - File
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: formData
+          name: type
+          required: true
+          schema:
+            type: string
+            description: The type of the file.
+            example: Logo
+        - in: formData
+          name: contentId
+          required: true
+          schema:
+            type: string
+            description: The ID related to the content.
+            example: 1
+        - in: formData
+          name: file
+          required: true
+          type: file
+          description: The file to upload.
+      responses:
+        '200':
+          description: Success
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+
   /user/v1/add:
     post:
       summary: Create User
@@ -406,7 +442,7 @@ paths:
                 example: uiui
               profilePhoto:
                 type: string
-                example: ""
+                example: ''
               tenantVariables:
                 type: array
                 items:
@@ -487,10 +523,10 @@ paths:
                 example: [1]
               employeeId:
                 type: string
-                example: ""
+                example: ''
               profilePhoto:
                 type: string
-                example: ""
+                example: ''
               tenantVariables:
                 type: array
                 items:
@@ -547,7 +583,7 @@ paths:
                 example: ASC
               search:
                 type: string
-                example: "91"
+                example: '91'
               filter:
                 type: object
                 properties:
@@ -560,11 +596,11 @@ paths:
                       startDate:
                         type: string
                         format: date
-                        example: "2024-07-10"
+                        example: '2024-07-10'
                       endDate:
                         type: string
                         format: date
-                        example: "2024-07-13"
+                        example: '2024-07-13'
       responses:
         '200':
           description: Success
@@ -633,10 +669,10 @@ paths:
                 type: array
                 items:
                   type: integer
-                example: [2, 3]   
+                example: [2, 3]
               tenantId:
                 type: integer
-                example: 3             
+                example: 3
       responses:
         '200':
           description: Success
@@ -932,7 +968,7 @@ paths:
                 type: array
                 items:
                   type: string
-                example: ["Role", "Manager"]
+                example: ['Role', 'Manager']
       responses:
         '200':
           description: Success
@@ -995,7 +1031,7 @@ paths:
                 type: array
                 items:
                   type: string
-                example: ["Role", "Manager"]
+                example: ['Role', 'Manager']
       responses:
         '200':
           description: Success
@@ -1048,13 +1084,13 @@ paths:
                 example: ASC
               search:
                 type: string
-                example: ""
+                example: ''
               filter:
                 type: object
                 properties:
                   category:
                     type: string
-                    example: "custom"
+                    example: 'custom'
       responses:
         '200':
           description: Success
@@ -1083,6 +1119,173 @@ paths:
       responses:
         '200':
           description: Success
+
+  /content/v1/add:
+    post:
+      summary: Add Content
+      tags:
+        - Content
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                example: Access Portal
+              type:
+                type: string
+                example: PDF
+              description:
+                type: string
+                example: have access portal
+              uploadedFileIds:
+                type: array
+                items:
+                  type: integer
+                example: []
+              tenantId:
+                type: integer
+                example: 1
+              isPublish:
+                type: boolean
+                example: false
+      responses:
+        '200':
+          description: Success
+
+  /content/v1/{id}:
+    get:
+      summary: Get Content by Id
+      tags:
+        - Content
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Success
+    put:
+      summary: Update Content
+      tags:
+        - Content
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                example: Access Portal
+              type:
+                type: string
+                example: PDF
+              description:
+                type: string
+                example: have access portal
+              uploadedFileIds:
+                type: array
+                items:
+                  type: integer
+                example: []
+              tenantId:
+                type: integer
+                example: 1
+              isPublish:
+                type: boolean
+                example: false
+      responses:
+        '200':
+          description: Success
+    delete:
+      summary: Delete Content
+      tags:
+        - Content
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Success
+
+  /content/v1/list:
+    post:
+      summary: List Contents
+      tags:
+        - Content
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tenantId
+          in: header
+          required: false
+          type: integer
+          example: 1
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              page:
+                type: integer
+                example: 1
+              limit:
+                type: integer
+                example: 10
+              sortField:
+                type: string
+                example: id
+              sortOrder:
+                type: string
+                example: ASC
+              search:
+                type: string
+                example: ''
+              filter:
+                type: object
+                properties:
+                  archive:
+                    type: boolean
+                    example: true
+                  isPublish:
+                    type: boolean
+                    example: false
+                  updatedBetween:
+                    type: object
+                    properties:
+                      startDate:
+                        type: string
+                        format: date
+                        example: '2024-07-17'
+                      endDate:
+                        type: string
+                        format: date
+                        example: '2024-07-31'
+      responses:
+        '200':
+          description: Success
+
 tags:
   - name: Permission
     description: Endpoints for creating and managing permissions.
@@ -1096,3 +1299,5 @@ tags:
     description: Endpoints for creating and managing tenants.
   - name: Variable
     description: Endpoints for creating and managing variables.
+  - name: Content
+    description: Endpoints for creating and managing content.

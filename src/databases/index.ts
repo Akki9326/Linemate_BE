@@ -1,7 +1,9 @@
+import ContentModel from '@/models/db/content.model';
 import CountryModel from '@/models/db/country.model';
 import PermissionModel from '@/models/db/permissions.model';
 import RoleModel from '@/models/db/role.model';
 import TenantModel from '@/models/db/tenant.model';
+import UploadedFileModel from '@/models/db/uploadedFile.model';
 import UserPasswordModel from '@/models/db/userPassword.model';
 import UserTokenModel from '@/models/db/userToken.model';
 import UserVariableMasterModel from '@/models/db/userVariableMaster';
@@ -40,6 +42,8 @@ const DB = {
 	Country: CountryModel(sequelizeConnect),
 	VariableMaster: UserVariableMasterModel(sequelizeConnect),
 	VariableMatrix: UserVariableMatrixModel(sequelizeConnect),
+	Content: ContentModel(sequelizeConnect),
+	UploadedFile: UploadedFileModel(sequelizeConnect),
 	sequelizeConnect, // connection instance (RAW queries)
 	Sequelize, // library
 };

@@ -31,4 +31,5 @@ export const {
 	AWS_ACCESS_KEY_ID,
 	AWS_REGION,
 	BUCKET,
+	AWS_S3_FILE_URL,
 } = process.env;

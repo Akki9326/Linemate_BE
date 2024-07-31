@@ -80,7 +80,6 @@ class UserService {
 				const roles = await this.role.findAll({
 					where: { tenantId: tenantId },
 				});
-				console.log('roles', roles);
 
 				await Promise.all(
 					roles.map(async role => {

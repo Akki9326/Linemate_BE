@@ -38,3 +38,6 @@ export const VariableMessage = {
 export const CommonMessage = {
 	filterIsRequired: 'filter is required',
 };
+export const ContentMessage = {
+	contentNotFound: 'content not found',
+};
