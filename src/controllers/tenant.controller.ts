@@ -36,10 +36,11 @@ class TenantController {
 			next(ex);
 		}
 	};
-	public deleteById = async (req: Request, res: Response, next: NextFunction) => {
+	public deleteById = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
 			const tenantId = parseInt(req.params.id);
-			const tenantResponse = await this.tenantService.delete(tenantId);
+			const userId = req.user.id as number;
+			const tenantResponse = await this.tenantService.delete(tenantId, userId);
 			AppResponseHelper.sendSuccess(res, 'Success', tenantResponse);
 		} catch (ex) {
 			next(ex);

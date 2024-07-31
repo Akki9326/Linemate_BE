@@ -1,5 +1,5 @@
 import { DataTypes, Sequelize } from 'sequelize';
-import { AppDBModel } from './app-db.model';
+import { AppDB_Common_Fields, AppDBModel } from './app-db.model';
 
 export class UploadedFileModel extends AppDBModel {
 	public id: number;
@@ -11,6 +11,7 @@ export class UploadedFileModel extends AppDBModel {
 export default function (sequelize: Sequelize): typeof UploadedFileModel {
 	UploadedFileModel.init(
 		{
+			...AppDB_Common_Fields,
 			id: {
 				autoIncrement: true,
 				primaryKey: true,

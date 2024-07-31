@@ -28,10 +28,11 @@ class VariableController {
 			next(ex);
 		}
 	};
-	public delete = async (req: Request, res: Response, next: NextFunction) => {
+	public delete = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
 			const variableId = parseInt(req.params.id);
-			const variableResponse = await this.variableServices.delete(variableId);
+			const userId: number = req.user.id;
+			const variableResponse = await this.variableServices.delete(variableId, userId);
 			AppResponseHelper.sendSuccess(res, 'Success', variableResponse);
 		} catch (ex) {
 			next(ex);

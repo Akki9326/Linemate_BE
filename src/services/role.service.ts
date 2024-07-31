@@ -5,11 +5,12 @@ import { RoleDto, RoleListRequestDto } from '@/models/dtos/role.dto';
 import { UserType } from '@/models/enums/user-types.enum';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { RoleMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
-import { Op, WhereOptions } from 'sequelize';
+import { BelongsTo, Op, WhereOptions } from 'sequelize';
 
 export class RoleService {
 	private role = DB.Roles;
 	private permissionModel = DB.Permission;
+	private users = DB.Users;
 
 	constructor() {}
 
@@ -26,7 +27,7 @@ export class RoleService {
 			permissionsIds: roleDetails.permissionIds,
 			userIds: roleDetails.userIds,
 			tenantId: roleDetails.tenantId,
-			createdBy: user.id.toString(),
+			createdBy: user.id,
 		});
 		await role.save();
 		return role.id;
@@ -47,7 +48,7 @@ export class RoleService {
 			permissionsIds: roleDetails.permissionIds,
 			userIds: roleDetails.userIds,
 			tenantId: roleDetails.tenantId,
-			updatedBy: user.id.toString(),
+			updatedBy: user.id,
 		});
 
 		await role.save();
@@ -111,33 +112,23 @@ export class RoleService {
 			offset,
 			limit: pageSize,
 			order: [[sortField, sortOrder]],
-			attributes: ['id', 'name', 'createdAt', 'tenantId', 'createdBy', 'updatedBy'],
+			attributes: ['id', 'name', 'createdAt', 'tenantId'],
+			include: [
+				{
+					association: new BelongsTo(this.users, this.role, { as: 'Creator', foreignKey: 'createdBy' }),
+					attributes: ['firstName', 'lastName'],
+				},
+				{
+					association: new BelongsTo(this.users, this.role, { as: 'Updater', foreignKey: 'updatedBy' }),
+					attributes: ['firstName', 'lastName'],
+				},
+			],
 		});
 
-		const rolesWithCreator = await Promise.all(
-			rolesResult.rows.map(async role => {
-				let createdBy = null;
-				let updatedBy = null;
-
-				if (role.createdBy && !isNaN(parseInt(role.createdBy))) {
-					createdBy = await this.fetchUserDetails(parseInt(role.createdBy));
-				}
-
-				if (role.updatedBy && !isNaN(parseInt(role.updatedBy))) {
-					updatedBy = await this.fetchUserDetails(parseInt(role.updatedBy));
-				}
-
-				return { ...role.toJSON(), createdBy, updatedBy };
-			}),
-		);
-
-		return {
-			count: rolesResult.count,
-			rows: rolesWithCreator,
-		};
+		return rolesResult;
 	}
 
-	public async remove(roleId: number) {
+	public async remove(roleId: number, userId: number) {
 		const role = await this.role.findOne({
 			where: { isDeleted: false, id: roleId },
 		});
@@ -153,6 +144,7 @@ export class RoleService {
 
 		role.set({
 			isDeleted: true,
+			updatedBy: userId,
 		});
 
 		await role.save();

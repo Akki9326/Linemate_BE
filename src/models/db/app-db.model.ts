@@ -3,9 +3,9 @@ import { DataTypes, Model, Sequelize } from 'sequelize';
 export class AppDBModel extends Model {
 	public isActive: boolean;
 	public isDeleted: boolean;
-	public createdBy: string;
+	public createdBy: number;
 	public createdAt: Date;
-	public updatedBy: string;
+	public updatedBy: number;
 	public updatedAt: Date;
 }
 
@@ -22,12 +22,12 @@ export const AppDB_Common_Fields = {
 	},
 	createdBy: {
 		allowNull: false,
-		type: DataTypes.STRING,
+		type: DataTypes.INTEGER,
 		defaultValue: 'System',
 	},
 	updatedBy: {
 		allowNull: true,
-		type: DataTypes.STRING,
+		type: DataTypes.INTEGER,
 	},
 	isActive: {
 		allowNull: false,

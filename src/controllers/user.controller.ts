@@ -4,7 +4,7 @@ import { RequestWithUser } from '@/models/interfaces/auth.interface';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import UserService from '@/services/user.service';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
-import { NextFunction, Request, Response } from 'express-serve-static-core';
+import { NextFunction, Response } from 'express-serve-static-core';
 
 class UserController {
 	public userService = new UserService();
@@ -29,10 +29,11 @@ class UserController {
 			next(ex);
 		}
 	};
-	public delete = async (req: Request, res: Response, next: NextFunction) => {
+	public delete = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
 			const userIds = req.body.userIds as UserListDto;
-			const userResponse = await this.userService.delete(userIds);
+			const userId: number = req.user.id;
+			const userResponse = await this.userService.delete(userIds, userId);
 			AppResponseHelper.sendSuccess(res, 'Success', userResponse);
 		} catch (ex) {
 			next(ex);
@@ -59,10 +60,11 @@ class UserController {
 			next(ex);
 		}
 	};
-	public deActiveUser = async (req: Request, res: Response, next: NextFunction) => {
+	public deActiveUser = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
 			const userIds = req.body.userIds as UserActionDto;
-			const userResponse = await this.userService.deActive(userIds);
+			const userId: number = req.user.id;
+			const userResponse = await this.userService.deActive(userIds, userId);
 			AppResponseHelper.sendSuccess(res, 'Success', userResponse);
 		} catch (ex) {
 			next(ex);

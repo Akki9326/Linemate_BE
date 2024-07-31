@@ -8,7 +8,7 @@ import { ContentMessage, TenantMessage } from '@/utils/helpers/app-message.helpe
 import { FileHelper } from '@/utils/helpers/file.helper';
 import S3Services from '@/utils/services/s3.services';
 import { isValid, parse } from 'date-fns';
-import { Op, WhereOptions } from 'sequelize';
+import { BelongsTo, Op, WhereOptions } from 'sequelize';
 import UserService from './user.service';
 
 export class ContentService {
@@ -71,7 +71,7 @@ export class ContentService {
 		content.uploadedFileIds = contentDetails.uploadedFileIds;
 		content.isPublish = contentDetails.isPublish;
 		content.isArchive = contentDetails.isArchive;
-		content.createdBy = userId.toString();
+		content.createdBy = userId;
 		content = await content.save();
 		if (content.uploadedFileIds) {
 			await this.moveFiles(contentDetails.uploadedFileIds, content.tenantId, content.id);
@@ -94,7 +94,7 @@ export class ContentService {
 		content.uploadedFileIds = contentDetails.uploadedFileIds;
 		content.isPublish = contentDetails.isPublish;
 		content.isArchive = contentDetails.isArchive;
-		content.updatedBy = userId.toString();
+		content.updatedBy = userId;
 
 		await content.save();
 		return content.id;
@@ -173,39 +173,19 @@ export class ContentService {
 			limit: pageSize,
 			order: [[sortField, sortOrder]],
 			attributes: ['id', 'name', 'createdAt', 'tenantId', 'createdBy', 'updatedBy'],
+			include: [
+				{
+					association: new BelongsTo(this.user, this.content, { as: 'Creator', foreignKey: 'createdBy' }),
+					attributes: ['firstName', 'lastName'],
+				},
+				{
+					association: new BelongsTo(this.user, this.content, { as: 'Updater', foreignKey: 'updatedBy' }),
+					attributes: ['firstName', 'lastName'],
+				},
+			],
 		});
 
-		// TODO: After change createdBy and updatedBy Integer make join with user table
-		const createdByIds = contentResult.rows.map(content => content.createdBy);
-		const updatedByIds = contentResult.rows.map(content => content.updatedBy);
-		const userIds = [...new Set([...createdByIds, ...updatedByIds])];
-
-		const users = await this.user.findAll({
-			where: {
-				id: userIds,
-			},
-			attributes: ['id', 'firstName', 'lastName'],
-		});
-
-		const userMap = users.reduce((acc, user) => {
-			acc[user.id] = user;
-			return acc;
-		}, {});
-
-		const combinedResult = contentResult.rows.map(content => {
-			const createdByUser = userMap[content.createdBy];
-			const updatedByUser = userMap[content.updatedBy];
-			return {
-				...content.toJSON(),
-				createdBy: createdByUser ? { firstName: createdByUser.firstName, lastName: createdByUser.lastName } : null,
-				updatedBy: updatedByUser ? { firstName: updatedByUser.firstName, lastName: updatedByUser.lastName } : null,
-			};
-		});
-
-		return {
-			count: contentResult.count,
-			rows: combinedResult,
-		};
+		return contentResult;
 	}
 
 	public async remove(contentId: number, userId: number) {
@@ -219,7 +199,7 @@ export class ContentService {
 
 		content.set({
 			isDeleted: true,
-			updatedBy: userId.toString(),
+			updatedBy: userId,
 		});
 
 		await content.save();

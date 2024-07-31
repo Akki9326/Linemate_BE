@@ -47,10 +47,11 @@ class PermissionController {
 			next(ex);
 		}
 	};
-	public delete = async (req: Request, res: Response, next: NextFunction) => {
+	public delete = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
 			const permissionId = parseInt(req.params.id);
-			const permissionResponse = await this.permissionServices.remove(permissionId);
+			const userId: number = req.user.id;
+			const permissionResponse = await this.permissionServices.remove(permissionId, userId);
 			AppResponseHelper.sendSuccess(res, 'Success', permissionResponse);
 		} catch (ex) {
 			next(ex);

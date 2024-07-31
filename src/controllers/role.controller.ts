@@ -47,10 +47,11 @@ class RoleController {
 			next(ex);
 		}
 	};
-	public delete = async (req: Request, res: Response, next: NextFunction) => {
+	public delete = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
 			const roleId = parseInt(req.params.id);
-			const roleResponse = await this.roleService.remove(roleId);
+			const userId: number = req.user.id;
+			const roleResponse = await this.roleService.remove(roleId, userId);
 			AppResponseHelper.sendSuccess(res, 'Success', roleResponse);
 		} catch (ex) {
 			next(ex);
