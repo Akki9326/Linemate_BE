@@ -172,15 +172,15 @@ export class ContentService {
 			offset,
 			limit: pageSize,
 			order: [[sortField, sortOrder]],
-			attributes: ['id', 'name', 'createdAt', 'tenantId', 'createdBy', 'updatedBy'],
+			attributes: ['id', 'name', 'createdAt', 'tenantId'],
 			include: [
 				{
 					association: new BelongsTo(this.user, this.content, { as: 'Creator', foreignKey: 'createdBy' }),
-					attributes: ['firstName', 'lastName'],
+					attributes: ['id', 'firstName', 'lastName'],
 				},
 				{
 					association: new BelongsTo(this.user, this.content, { as: 'Updater', foreignKey: 'updatedBy' }),
-					attributes: ['firstName', 'lastName'],
+					attributes: ['id', 'firstName', 'lastName'],
 				},
 			],
 		});

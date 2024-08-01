@@ -8,6 +8,8 @@ export const AppMessages = {
 	accountLocked: 'Account is locked due to too many failed login attempts.',
 	expiredOtp: 'OTP has expired.',
 	userNotFound: 'User not found.',
+	deActiveUserNotFound: 'De Active Users not found.',
+	activeUserNotFound: 'Active Users not found.',
 	passwordReused: 'New password cannot be the same as the last 5 passwords.',
 	existedUser: 'User already exists',
 	maxAdmin: 'Max admin allowed for admin users.',

@@ -15,7 +15,7 @@ import DB from '@databases';
 import { generateOtp } from '@utils/util';
 import { addMinutes } from 'date-fns';
 import JWT from 'jsonwebtoken';
-import { Op } from 'sequelize';
+import { BelongsTo, Op } from 'sequelize';
 import { v4 as uuidv4 } from 'uuid';
 import { RoleService } from './role.service';
 import { TenantService } from './tenant.service';
@@ -25,6 +25,7 @@ import { FileType } from '@/models/enums/file-type.enums';
 import { FileDestination } from '@/models/enums/file-destination.enum';
 import S3Services from '@/utils/services/s3.services';
 import { ContentService } from './content.service';
+import UserService from './user.service';
 
 export default class AuthService {
 	private users = DB.Users;
@@ -36,6 +37,7 @@ export default class AuthService {
 	public s3Service = new S3Services();
 	public uploadedFile = DB.UploadedFile;
 	public contentService = new ContentService();
+	public userService = new UserService();
 
 	constructor() {}
 
@@ -147,10 +149,10 @@ export default class AuthService {
 			sessionId,
 			userType: user.userType,
 		});
-		let tenantDetails = [];
+		let allTenants = [];
 		if (user.userType !== UserType.ChiefAdmin) {
 			if (user.tenantIds && user.tenantIds.length > 0) {
-				const allTenants = await this.tenantModel.findAll({
+				allTenants = await this.tenantModel.findAll({
 					where: {
 						id: {
 							[Op.in]: user.tenantIds,
@@ -159,36 +161,36 @@ export default class AuthService {
 						isActive: true,
 					},
 					attributes: ['id', 'name', 'trademark', 'phoneNumber', 'createdBy'],
+					include: [
+						{
+							association: new BelongsTo(this.users, this.tenantModel, { as: 'Creator', foreignKey: 'createdBy' }),
+							attributes: ['id', 'firstName', 'lastName'],
+						},
+						{
+							association: new BelongsTo(this.users, this.tenantModel, { as: 'Updater', foreignKey: 'updatedBy' }),
+							attributes: ['id', 'firstName', 'lastName'],
+						},
+					],
 				});
-				tenantDetails = await Promise.all(
-					allTenants.map(async tenant => {
-						const plainTenant = tenant.get({ plain: true });
-						const createdBy = parseInt(plainTenant.createdBy);
-						return {
-							...plainTenant,
-							createdBy: Number.isInteger(createdBy) && (await this.findUserById(parseInt(plainTenant.createdBy))),
-						};
-					}),
-				);
 			}
 		} else {
-			const allTenants = await this.tenantModel.findAll({
+			allTenants = await this.tenantModel.findAll({
 				where: {
 					isDeleted: false,
 					isActive: true,
 				},
 				attributes: ['id', 'name', 'trademark', 'phoneNumber', 'createdBy'],
+				include: [
+					{
+						association: new BelongsTo(this.users, this.tenantModel, { as: 'Creator', foreignKey: 'createdBy' }),
+						attributes: ['id', 'firstName', 'lastName'],
+					},
+					{
+						association: new BelongsTo(this.users, this.tenantModel, { as: 'Updater', foreignKey: 'updatedBy' }),
+						attributes: ['id', 'firstName', 'lastName'],
+					},
+				],
 			});
-			tenantDetails = await Promise.all(
-				allTenants.map(async tenant => {
-					const plainTenant = tenant.get({ plain: true });
-					const createdBy = parseInt(plainTenant.createdBy);
-					return {
-						...plainTenant,
-						createdBy: Number.isInteger(createdBy) && (await this.findUserById(parseInt(plainTenant.createdBy))),
-					};
-				}),
-			);
 		}
 		const loginResponse: LoginResponseData = {
 			userData: {
@@ -208,7 +210,7 @@ export default class AuthService {
 				firstName: user.firstName,
 				lastName: user.lastName,
 				countryCode: user.countryCode,
-				tenantIds: tenantDetails,
+				tenantIds: allTenants,
 				isTemporaryPassword: user.isTemporaryPassword,
 			},
 			token: userToken.token,
@@ -307,28 +309,37 @@ export default class AuthService {
 	}
 	public async uploadFile(file: FileDto, requestBody: FileTypeDto, user: JwtTokenData) {
 		let dir: string;
+		let destinationUrl = dir;
 
 		switch (requestBody.type) {
-			case FileType.Tenant:
+			case FileType.TenantLogo:
 				dir = FileDestination.TenantTemp;
+				if (requestBody.elementId) {
+					destinationUrl = `${FileDestination.Tenant}/${requestBody.elementId}/${file.name}`;
+				}
 				break;
-			case FileType.User:
+			case FileType.UserProfile:
 				dir = FileDestination.UserTemp;
+				if (requestBody.elementId) {
+					destinationUrl = `${FileDestination.User}/${requestBody.elementId}/${file.name}`;
+				}
 				break;
 			case FileType.Content:
 				dir = FileDestination.ContentTemp;
+				if (requestBody.elementId) {
+					const content = await this.contentService.one(requestBody.elementId);
+					destinationUrl = `tenants/${content.tenantId}/contents/${requestBody.elementId}/${file.name}`;
+				}
 				break;
 			default:
 				dir = 'public';
 				break;
 		}
-		let destinationUrl = dir;
-		if (requestBody.contentId) {
-			const content = await this.contentService.one(requestBody.contentId);
-			destinationUrl = `tenants/${content.tenantId}/contents/${requestBody.contentId}/${file.name}`;
-		} else {
+
+		if (!requestBody.elementId) {
 			destinationUrl = `${dir}/${file.name}`;
 		}
+
 		const imageUrl = await this.s3Service.uploadS3(file.data, destinationUrl, file.mimetype);
 		const response: { imageUrl: string; id?: number } = {
 			imageUrl,

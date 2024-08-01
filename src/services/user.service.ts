@@ -19,6 +19,8 @@ import { Op } from 'sequelize';
 import { TenantService } from './tenant.service';
 import VariableServices from './variable.service';
 import { VariableCategories } from '@/models/enums/variable.enum';
+import { FileDestination } from '@/models/enums/file-destination.enum';
+import S3Services from '@/utils/services/s3.services';
 
 class UserService {
 	private users = DB.Users;
@@ -28,6 +30,7 @@ class UserService {
 	private variableMatrix = DB.VariableMatrix;
 	private tenantService = new TenantService();
 	private variableServices = new VariableServices();
+	public s3Service = new S3Services();
 
 	constructor() {}
 	public async sendAccountActivationEmail(userData, temporaryPassword: string, createdUser: JwtTokenData) {
@@ -264,6 +267,18 @@ class UserService {
 		user.employeeId = userData?.employeeId;
 		user.profilePhoto = userData?.profilePhoto;
 		user = await user.save();
+		const fileDestination = `${FileDestination.User}/${user.id}`;
+		const movedUrl = await this.s3Service.moveFileByUrl(user.profilePhoto, fileDestination);
+		await this.users.update(
+			{
+				profilePhoto: movedUrl,
+			},
+			{
+				where: {
+					id: user.id,
+				},
+			},
+		);
 		this.mapUserTypeToRole(user.dataValues?.userType, user.id, userData.tenantIds);
 		if (userData.userType !== UserType.ChiefAdmin) {
 			this.sendAccountActivationEmail(user, temporaryPassword, createdUser);
@@ -300,6 +315,31 @@ class UserService {
 			tenantVariableDetail = await VariableHelper.findTenantVariableDetails(userId, tenantId);
 		}
 		return { ...user.dataValues, tenantDetails, tenantVariableDetail };
+	}
+	public async getUserById(userId: number) {
+		const user = await this.users.findOne({
+			where: {
+				id: userId,
+				isDeleted: false,
+			},
+			attributes: [
+				'id',
+				'firstName',
+				'lastName',
+				'email',
+				'mobileNumber',
+				'tenantIds',
+				'isTemporaryPassword',
+				'userType',
+				'countryCode',
+				'employeeId',
+				'profilePhoto',
+			],
+		});
+		if (!user) {
+			throw new BadRequestException(AppMessages.userNotFound);
+		}
+		return user;
 	}
 	public async update(userData: UserDto, userId: number, updatedBy: number) {
 		const existingUser = await this.users.findOne({
@@ -439,7 +479,7 @@ class UserService {
 		return userList;
 	}
 	public async deActive(userIds: UserActionDto, userId: number) {
-		const usersToDelete = await this.users.findAll({
+		const usersToDeActive = await this.users.findAll({
 			where: {
 				id: {
 					[Op.in]: userIds,
@@ -448,15 +488,35 @@ class UserService {
 				isActive: true,
 			},
 		});
-		if (!usersToDelete.length) {
-			throw new BadRequestException(AppMessages.userNotFound);
+		if (!usersToDeActive.length) {
+			throw new BadRequestException(AppMessages.activeUserNotFound);
 		}
-		for (const user of usersToDelete) {
+		for (const user of usersToDeActive) {
 			user.isActive = false;
 			user.updatedBy = userId;
 			await user.save();
 		}
-		return usersToDelete.map(user => ({ id: user.id }));
+		return usersToDeActive.map(user => ({ id: user.id }));
+	}
+	public async active(userIds: UserActionDto, userId: number) {
+		const usersToActive = await this.users.findAll({
+			where: {
+				id: {
+					[Op.in]: userIds,
+				},
+				isDeleted: false,
+				isActive: false,
+			},
+		});
+		if (!usersToActive.length) {
+			throw new BadRequestException(AppMessages.deActiveUserNotFound);
+		}
+		for (const user of usersToActive) {
+			user.isActive = true;
+			user.updatedBy = userId;
+			await user.save();
+		}
+		return usersToActive.map(user => ({ id: user.id }));
 	}
 	public async changePassword(changePasswordUsers: ChangePasswordDto, createdBy: JwtTokenData) {
 		const usersData = await this.users.findAll({
