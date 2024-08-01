@@ -41,3 +41,7 @@ export const CommonMessage = {
 export const ContentMessage = {
 	contentNotFound: 'content not found',
 };
+
+export const assessmentMessage = {
+	assessmentNotFound: 'assessment not found',
+};
