@@ -19,6 +19,8 @@ import { Op } from 'sequelize';
 import { TenantService } from './tenant.service';
 import VariableServices from './variable.service';
 import { VariableCategories } from '@/models/enums/variable.enum';
+import { FileDestination } from '@/models/enums/file-destination.enum';
+import S3Services from '@/utils/services/s3.services';
 
 class UserService {
 	private users = DB.Users;
@@ -28,6 +30,7 @@ class UserService {
 	private variableMatrix = DB.VariableMatrix;
 	private tenantService = new TenantService();
 	private variableServices = new VariableServices();
+	public s3Service = new S3Services();
 
 	constructor() {}
 	public async sendAccountActivationEmail(userData, temporaryPassword: string, createdUser: JwtTokenData) {
@@ -264,6 +267,18 @@ class UserService {
 		user.employeeId = userData?.employeeId;
 		user.profilePhoto = userData?.profilePhoto;
 		user = await user.save();
+		const fileDestination = `${FileDestination.User}/${user.id}`;
+		const movedUrl = await this.s3Service.moveFileByUrl(user.profilePhoto, fileDestination);
+		await this.users.update(
+			{
+				profilePhoto: movedUrl,
+			},
+			{
+				where: {
+					id: user.id,
+				},
+			},
+		);
 		this.mapUserTypeToRole(user.dataValues?.userType, user.id, userData.tenantIds);
 		if (userData.userType !== UserType.ChiefAdmin) {
 			this.sendAccountActivationEmail(user, temporaryPassword, createdUser);
