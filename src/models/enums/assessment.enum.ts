@@ -3,3 +3,9 @@ export enum ScoringType {
 	PerQuestion = 'per question',
 	NoScore = 'no score',
 }
+
+export enum QuestionType {
+	MultiSelect = 'multi select',
+	SingleSelect = 'single select',
+	Boolean = 'boolean',
+}

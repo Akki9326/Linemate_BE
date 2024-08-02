@@ -42,6 +42,10 @@ export default function (sequelize: Sequelize): typeof assessmentMasterModel {
 			contentId: {
 				type: DataTypes.INTEGER,
 				allowNull: false,
+				references: {
+					model: 'contents',
+					key: 'id',
+				},
 			},
 			timed: {
 				type: DataTypes.INTEGER,

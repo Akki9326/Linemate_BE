@@ -1,5 +1,25 @@
-import { IsEnum, IsNumber, IsString } from 'class-validator';
-import { ScoringType } from '../enums/assessment.enum';
+import { IsArray, IsEnum, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { QuestionType, ScoringType } from '../enums/assessment.enum';
+import { Type } from 'class-transformer';
+
+export class questionData {
+	@IsString()
+	public question: string;
+
+	@IsEnum(QuestionType)
+	public type: QuestionType;
+
+	@IsArray()
+	public options: string[];
+
+	@IsString()
+	@IsOptional()
+	public answer: string;
+
+	@IsNumber()
+	@IsOptional()
+	public score: number;
+}
 
 export class assessmentDto {
 	@IsString()
@@ -22,4 +42,9 @@ export class assessmentDto {
 
 	@IsNumber()
 	public pass: number;
+
+	@IsArray()
+	@ValidateNested({ each: true })
+	@Type(() => questionData)
+	public questions: questionData[];
 }

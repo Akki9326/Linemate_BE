@@ -1,3 +1,4 @@
+import { AssessmentListRequestDto } from '@/models/dtos/assessment-list.dto';
 import { assessmentDto } from '@/models/dtos/assessment.dto';
 import { RequestWithUser } from '@/models/interfaces/auth.interface';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
@@ -38,36 +39,25 @@ class AssessmentController {
 			next(ex);
 		}
 	};
-	// public delete = async (req: RequestWithUser, res: Response, next: NextFunction) => {
-	// 	try {
-	// 		const variableId = parseInt(req.params.id);
-	// 		const userId: number = req.user.id;
-	// 		const variableResponse = await this.AssessmentServices.delete(variableId, userId);
-	// 		AppResponseHelper.sendSuccess(res, 'Success', variableResponse);
-	// 	} catch (ex) {
-	// 		next(ex);
-	// 	}
-	// };
-	// public list = async (req: RequestWithUser, res: Response, next: NextFunction) => {
-	// 	try {
-	// 		const pageModel = req.body as variableListDto;
-	// 		const tenantId = req.tenantId as number;
-	// 		const variableResponse = await this.AssessmentServices.all(pageModel, tenantId);
-	// 		AppResponseHelper.sendSuccess(res, 'Success', variableResponse);
-	// 	} catch (ex) {
-	// 		next(ex);
-	// 	}
-	// };
-	// public getUserVariable = async (req: Request, res: Response, next: NextFunction) => {
-	// 	try {
-	// 		const userId = parseInt(req.params.userId);
-	// 		const tenantId = req.body.tenantId as number;
-	// 		const userResponse = await this.AssessmentServices.getVariableDetails(userId, tenantId);
-	// 		AppResponseHelper.sendSuccess(res, 'Success', userResponse);
-	// 	} catch (ex) {
-	// 		next(ex);
-	// 	}
-	// };
+	public delete = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const assessmentId = parseInt(req.params.id);
+			const userId: number = req.user.id;
+			const assessmentResponse = await this.AssessmentServices.delete(assessmentId, userId);
+			AppResponseHelper.sendSuccess(res, 'Success', assessmentResponse);
+		} catch (ex) {
+			next(ex);
+		}
+	};
+	public list = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const pageModel = req.body as AssessmentListRequestDto;
+			const assessmentResponse = await this.AssessmentServices.all(pageModel);
+			AppResponseHelper.sendSuccess(res, 'Success', assessmentResponse);
+		} catch (ex) {
+			next(ex);
+		}
+	};
 }
 
 export default AssessmentController;

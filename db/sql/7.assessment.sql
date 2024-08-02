@@ -25,6 +25,7 @@ CREATE TABLE "assessmentMatrix" (
     "isDeleted" BOOLEAN NOT NULL DEFAULT false,
     "assessmentId" INTEGER NOT NULL,
     "question" TEXT NOT NULL,
+    "type" VARCHAR(50) NOT NULL CHECK ("type" IN ('multi select', 'single select', 'boolean', 'input')),
     "optionIds" INTEGER[],
     "correctAnswer" INTEGER,
     "score" INTEGER
