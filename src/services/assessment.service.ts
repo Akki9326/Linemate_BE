@@ -3,7 +3,7 @@ import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { assessmentMessage, ContentMessage } from '@/utils/helpers/app-message.helper';
 import DB from '@databases';
 import { assessmentDto, questionData } from '@/models/dtos/assessment.dto';
-import { BelongsTo } from 'sequelize';
+import { BelongsTo, HasMany } from 'sequelize';
 import { AssessmentListRequestDto } from '@/models/dtos/assessment-list.dto';
 import { Op } from 'sequelize';
 import { QuestionType, ScoringType } from '@/models/enums/assessment.enum';
@@ -55,6 +55,7 @@ class AssessmentServices {
 						questionObj['score'] = questionElement.score;
 					}
 				}
+
 				if (questionElement.type == QuestionType.SingleSelect) {
 					if (!questionElement.answer) {
 						throw new BadRequestException(assessmentMessage.correctAnswerIsRequired);
@@ -128,23 +129,29 @@ class AssessmentServices {
 					attributes: ['name', 'description', 'type'],
 				},
 				{
-					association: new BelongsTo(this.users, this.assessmentMaster, { as: 'Creator', foreignKey: 'createdBy' }),
+					association: new BelongsTo(this.assessmentMaster, this.users, { as: 'creator', foreignKey: 'createdBy' }),
 					attributes: ['firstName', 'lastName'],
 				},
 				{
-					association: new BelongsTo(this.users, this.assessmentMaster, { as: 'Updater', foreignKey: 'updatedBy' }),
+					association: new BelongsTo(this.assessmentMaster, this.users, { as: 'updater', foreignKey: 'updatedBy' }),
 					attributes: ['firstName', 'lastName'],
 				},
 				{
-					association: new BelongsTo(this.assessmentMaster, this.assessmentMatrix, { as: 'question', foreignKey: 'assessmentId' }),
+					association: new HasMany(this.assessmentMaster, this.assessmentMatrix, { as: 'question', foreignKey: 'assessmentId' }),
+					attributes: ['question', 'type', 'score'],
+					include: [
+						{
+							association: new HasMany(this.assessmentMatrix, this.assessmentOption, { as: 'options', foreignKey: 'questionId' }),
+							attributes: ['id', 'option'],
+						},
+						{
+							association: new BelongsTo(this.assessmentMatrix, this.assessmentOption, { as: 'answer', foreignKey: 'correctAnswer' }),
+							attributes: ['id', 'option'],
+						},
+					],
 				},
-				// {
-				// 	association: new BelongsTo(this.assessmentOption, this.assessmentMaster, { as: 'option', foreignKey: 'optionIds' }),
-				// },
 			],
 		});
-
-		console.log(`---assessment--`, assessment);
 
 		if (!assessment) {
 			throw new BadRequestException(assessmentMessage.assessmentNotFound);
@@ -200,12 +207,26 @@ class AssessmentServices {
 					attributes: ['name', 'description', 'type'],
 				},
 				{
-					association: new BelongsTo(this.users, this.assessmentMaster, { as: 'Creator', foreignKey: 'createdBy' }),
+					association: new BelongsTo(this.assessmentMaster, this.users, { as: 'creator', foreignKey: 'createdBy' }),
 					attributes: ['firstName', 'lastName'],
 				},
 				{
-					association: new BelongsTo(this.users, this.assessmentMaster, { as: 'Updater', foreignKey: 'updatedBy' }),
+					association: new BelongsTo(this.assessmentMaster, this.users, { as: 'updater', foreignKey: 'updatedBy' }),
 					attributes: ['firstName', 'lastName'],
+				},
+				{
+					association: new HasMany(this.assessmentMaster, this.assessmentMatrix, { as: 'question', foreignKey: 'assessmentId' }),
+					attributes: ['question', 'type', 'score'],
+					include: [
+						{
+							association: new HasMany(this.assessmentMatrix, this.assessmentOption, { as: 'options', foreignKey: 'questionId' }),
+							attributes: ['id', 'option'],
+						},
+						{
+							association: new BelongsTo(this.assessmentMatrix, this.assessmentOption, { as: 'answer', foreignKey: 'correctAnswer' }),
+							attributes: ['id', 'option'],
+						},
+					],
 				},
 			],
 			order: [[orderByField, sortDirection]],
