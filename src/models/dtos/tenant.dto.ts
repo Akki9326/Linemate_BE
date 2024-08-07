@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsBoolean } from 'class-validator';
+import { IsString, IsNotEmpty, IsBoolean, IsOptional } from 'class-validator';
 
 export class TenantDto {
 	@IsString()
@@ -73,5 +73,6 @@ export class TenantDto {
 	public whitelistedIps: string;
 
 	@IsString()
+	@IsOptional()
 	public logo: string;
 }
