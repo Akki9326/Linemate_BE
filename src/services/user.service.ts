@@ -269,23 +269,25 @@ class UserService {
 		user.employeeId = userData?.employeeId;
 		user.profilePhoto = userData?.profilePhoto;
 		user = await user.save();
-		const fileDestination = `${FileDestination.User}/${user.id}`;
-		const movedUrl = await this.s3Service.moveFileByUrl(user.profilePhoto, fileDestination);
 		this.mapUserTypeToRole(user.dataValues?.userType, user.id, userData.tenantIds);
 		if (userData.userType !== UserType.ChiefAdmin) {
 			this.sendAccountActivationEmail(user, temporaryPassword, createdUser);
 			this.addTenantVariables(userData.tenantVariables, user.id);
 		}
-		await this.users.update(
-			{
-				profilePhoto: movedUrl,
-			},
-			{
-				where: {
-					id: user.id,
+		if (user?.profilePhoto) {
+			const fileDestination = `${FileDestination.User}/${user.id}`;
+			const movedUrl = await this.s3Service.moveFileByUrl(user.profilePhoto, fileDestination);
+			await this.users.update(
+				{
+					profilePhoto: movedUrl,
 				},
-			},
-		);
+				{
+					where: {
+						id: user.id,
+					},
+				},
+			);
+		}
 		return { id: user.id };
 	}
 	public async one(userId: number, tenantId: number) {
