@@ -2,7 +2,10 @@ import { FRONTEND_URL, MAX_CHIEF } from '@/config';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { UserListDto } from '@/models/dtos/user-list.dto';
 import { ChangePasswordDto, ImportUserDto, UserActionDto, UserDto } from '@/models/dtos/user.dto';
+import { FileDestination } from '@/models/enums/file-destination.enum';
 import { UserType, getPermissionGroup } from '@/models/enums/user-types.enum';
+import { VariableCategories } from '@/models/enums/variable.enum';
+import { FilterResponse } from '@/models/interfaces/filter.interface';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { User } from '@/models/interfaces/users.interface';
 import { TenantVariables } from '@/models/interfaces/variable.interface';
@@ -12,15 +15,13 @@ import { findDefaultRole } from '@/utils/helpers/default.role.helper';
 import { PasswordHelper } from '@/utils/helpers/password.helper';
 import { VariableHelper } from '@/utils/helpers/variable.helper';
 import { Email } from '@/utils/services/email';
+import S3Services from '@/utils/services/s3.services';
 import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.transaction';
 import DB from '@databases';
 import { parse } from 'date-fns';
 import { Op } from 'sequelize';
 import { TenantService } from './tenant.service';
 import VariableServices from './variable.service';
-import { VariableCategories } from '@/models/enums/variable.enum';
-import { FileDestination } from '@/models/enums/file-destination.enum';
-import S3Services from '@/utils/services/s3.services';
 
 class UserService {
 	private users = DB.Users;
@@ -418,6 +419,43 @@ class UserService {
 		}
 		return usersToDelete.map(user => ({ id: user.id }));
 	}
+	private async getUserIdsFromVariableMatrix(filterCriteria: { variableId: number; value: string }[]) {
+		const whereConditions = filterCriteria.map(criteria => ({
+			variableId: criteria.variableId,
+			value: criteria.value,
+		}));
+		const matchingRecords = await this.variableMatrix.findAll({
+			where: {
+				[Op.or]: whereConditions,
+			},
+			attributes: ['userId'],
+		});
+
+		const matchingUserIds = Array.from(new Set(matchingRecords.map(record => record.userId)));
+
+		return matchingUserIds;
+	}
+	private async mappingDynamicFilter(condition: object, dynamicFilter: FilterResponse[]) {
+		dynamicFilter.forEach(filter => {
+			if (filter.filterKey === 'joiningDate') {
+				const parsedStartDate = parse(String(filter.minValue), 'yyyy-MM-dd', new Date());
+				const parsedEndDate = parse(String(filter.maxValue), 'yyyy-MM-dd', new Date());
+				condition['createdAt'] = {
+					[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
+				};
+			}
+		});
+		const variableList = dynamicFilter
+			.filter(filter => 'variableId' in filter && 'selectedValue' in filter)
+			.map(filter => ({
+				value: filter.selectedValue,
+				variableId: filter.variableId,
+			}));
+		condition['id'] = {
+			[Op.in]: await this.getUserIdsFromVariableMatrix(variableList),
+		};
+	}
+
 	public async all(pageModel: UserListDto, tenantId: number) {
 		const page = pageModel.page || 1,
 			limit = pageModel.pageSize || 10,
@@ -438,17 +476,10 @@ class UserService {
 			];
 		}
 		if (pageModel.filter) {
-			// TODO: add role and cohort filter after done these feature are done
+			// TODO: add cohort filter after done these feature are done
 			condition['isActive'] = pageModel.filter.isActive;
-			if (pageModel.filter.joiningDate) {
-				const { startDate, endDate } = pageModel.filter.joiningDate;
-				if (startDate && endDate) {
-					const parsedStartDate = parse(startDate, 'yyyy-MM-dd', new Date());
-					const parsedEndDate = parse(endDate, 'yyyy-MM-dd', new Date());
-					condition['createdAt'] = {
-						[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
-					};
-				}
+			if (pageModel.filter.dynamicFilter) {
+				await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter);
 			}
 		}
 		if (tenantId) {
@@ -456,7 +487,6 @@ class UserService {
 				[Op.contains]: [tenantId],
 			};
 		}
-
 		const userList = await this.users.findAndCountAll({
 			where: condition,
 			offset,

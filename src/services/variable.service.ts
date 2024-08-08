@@ -158,6 +158,18 @@ class VariableServices {
 		const responseList = VariableHelper.findTenantVariableDetails(userId, tenantId);
 		return responseList;
 	}
+	// without pagination variable list
+	public async getVariableByTenantId(tenantId: number) {
+		const condition = {
+			[Op.or]: [{ tenantId: tenantId }, { type: VariableType.SingleSelect }, { type: VariableType.MultiSelect }],
+		};
+		const validateList = await this.variableMaster.findAll({
+			where: { isDeleted: false, ...condition },
+			attributes: ['id', 'name', 'options'],
+		});
+		console.log('validateList', validateList);
+		return validateList;
+	}
 }
 
 export default VariableServices;

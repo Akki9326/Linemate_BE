@@ -590,21 +590,72 @@ paths:
                   isActive:
                     type: boolean
                     example: true
-                  joiningDate:
-                    type: object
-                    properties:
-                      startDate:
-                        type: string
-                        format: date
-                        example: '2024-07-10'
-                      endDate:
-                        type: string
-                        format: date
-                        example: '2024-07-13'
+                  dynamicFilter:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        filterTitle:
+                          type: string
+                          example: "Joining Date"
+                        filterKey:
+                          type: string
+                          example: "joiningDate"
+                        filterType:
+                          type: string
+                          example: "DateRange"
+                        minValue:
+                          type: string | number
+                          format: date
+                          example: "2024-08-01"
+                        maxValue:
+                          type: string | number
+                          format: date
+                          example: "2024-08-31"
+                      required:
+                        - filterTitle
+                        - filterKey
+                        - filterType
+                        - minValue
+                        - maxValue
+                    example:
+                      - filterTitle: "Joining Date"
+                        filterKey: "joiningDate"
+                        filterType: "DateRange"
+                        minValue: "2024-08-01"
+                        maxValue: "2024-08-31"
+                      - filterTitle: "role"
+                        filterKey: "role"
+                        filterType: "DropDown"
+                        selectedValue: "hr"
+                        variableId: 6
+                        options:
+                          - "manager"
+                          - "hr"
+                      - filterTitle: "role"
+                        filterKey: "role"
+                        filterType: "DropDown"
+                        selectedValue: "manager"
+                        variableId: 7
+                        options:
+                          - "manager"
+                          - "hr"
+                      - filterTitle: "role12"
+                        filterKey: "role12"
+                        filterType: "DropDown"
+                        selectedValue: "manager"
+                        variableId: 8
+                        options:
+                          - "manager"
+                          - "hr"
+                      - filterTitle: "Experience"
+                        filterKey: "experience"
+                        filterType: "NumberRange"
+                        maxValue: 2
+                        minValue: 1
       responses:
         '200':
           description: Success
-
   /user/v1/delete-users:
     post:
       summary: Delete Bulk Users
@@ -1314,6 +1365,53 @@ paths:
       responses:
         '200':
           description: Success
+  /filters/v1/list:
+    get:
+      summary: List Filters
+      description: Retrieve a list of filters based on the specified criteria.
+      tags:
+        - Filters
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: filterFor
+          required: true
+          type: string
+          description: Specify the category for which filters are being requested, e.g., 'employee,tenant,content'.
+        - name: tenantId
+          in: header
+          required: true
+          type: integer
+          example: 1
+      responses:
+        '200':
+          description: Successful retrieval of filters
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: success
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    type:
+                      type: string
+                    description:
+                      type: string
+        '400':
+          description: Bad request if the query parameters are missing or invalid
+        '401':
+          description: Unauthorized if the token is invalid or expired
+        '500':
+          description: Internal server error       
 
 tags:
   - name: Permission
@@ -1330,3 +1428,5 @@ tags:
     description: Endpoints for creating and managing variables.
   - name: Content
     description: Endpoints for creating and managing content.
+  - name: Filter
+    description: Endpoints for get dynamic filters .
