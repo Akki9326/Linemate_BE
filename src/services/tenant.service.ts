@@ -36,20 +36,21 @@ export class TenantService {
 			createdBy: userId,
 		});
 		await insertDefaultRoles(tenant.id, userId);
+		if (tenantDetails?.logo) {
+			const fileDestination = `${FileDestination.Tenant}/${tenant.id}`;
+			const movedUrl = await this.s3Service.moveFileByUrl(tenantDetails.logo, fileDestination);
 
-		const fileDestination = `${FileDestination.Tenant}/${tenant.id}`;
-		const movedUrl = await this.s3Service.moveFileByUrl(tenantDetails.logo, fileDestination);
-
-		await this.tenantModel.update(
-			{
-				logo: movedUrl,
-			},
-			{
-				where: {
-					id: tenant.id,
+			await this.tenantModel.update(
+				{
+					logo: movedUrl,
 				},
-			},
-		);
+				{
+					where: {
+						id: tenant.id,
+					},
+				},
+			);
+		}
 		return tenant.id;
 	}
 	public async one(tenantId: number) {
