@@ -22,6 +22,7 @@ import { VariableCategories } from '@/models/enums/variable.enum';
 import { FileDestination } from '@/models/enums/file-destination.enum';
 import S3Services from '@/utils/services/s3.services';
 import 'reflect-metadata';
+import { RoleType } from '@/models/enums/role.enum';
 
 class UserService {
 	private users = DB.Users;
@@ -270,6 +271,11 @@ class UserService {
 		user = await user.save();
 		const fileDestination = `${FileDestination.User}/${user.id}`;
 		const movedUrl = await this.s3Service.moveFileByUrl(user.profilePhoto, fileDestination);
+		this.mapUserTypeToRole(user.dataValues?.userType, user.id, userData.tenantIds);
+		if (userData.userType !== UserType.ChiefAdmin) {
+			this.sendAccountActivationEmail(user, temporaryPassword, createdUser);
+			this.addTenantVariables(userData.tenantVariables, user.id);
+		}
 		await this.users.update(
 			{
 				profilePhoto: movedUrl,
@@ -280,11 +286,6 @@ class UserService {
 				},
 			},
 		);
-		this.mapUserTypeToRole(user.dataValues?.userType, user.id, userData.tenantIds);
-		if (userData.userType !== UserType.ChiefAdmin) {
-			this.sendAccountActivationEmail(user, temporaryPassword, createdUser);
-			this.addTenantVariables(userData.tenantVariables, user.id);
-		}
 		return { id: user.id };
 	}
 	public async one(userId: number, tenantId: number) {
@@ -636,6 +637,7 @@ class UserService {
 					plainPassword: plainPassword,
 					employeeId: row['employeeId'],
 					role: role[0],
+					tenantVariables: row['tenantVariables'] && row['tenantVariables'].length ? row['tenantVariables'] : [],
 				};
 			});
 
@@ -650,33 +652,54 @@ class UserService {
 				};
 				delete newUserObj.role;
 
-				const createUser = await this.users.create(newUserObj);
-				const role = await this.role.findOne({ where: { name: userEle.role, tenantId: tenantId } });
-				let newUserlist = [];
-				if (role) {
-					newUserlist = [...role.userIds, createUser.id];
-					await this.role.update({ userIds: newUserlist }, { where: { id: role.id } });
-				} else {
-					newUserlist = [createUser.id];
-					await this.role.create({ name: userEle.role, tenantId: tenantId, userIds: newUserlist });
-				}
+				const userExists = await this.users.findOne({ where: { email: newUserObj.email, isDeleted: false } });
+				if (!userExists) {
+					const createUser = await this.users.create(newUserObj);
+					const role = await this.role.findOne({ where: { name: userEle.role, tenantId: tenantId } });
+					let newUserlist = [];
+					if (role) {
+						newUserlist = [...role.userIds, createUser.id];
+						await this.role.update({ userIds: newUserlist }, { where: { id: role.id } });
+					} else {
+						newUserlist = [createUser.id];
+						await this.role.create({
+							name: userEle.role,
+							tenantId: tenantId,
+							userIds: newUserlist,
+							type: RoleType.Custom,
+							description: userEle.role,
+						});
+					}
 
-				const plainPassword = plainPasswords.find(p => p.email === userEle.email).password;
-				const emailSubject = await EmailSubjects.accountActivationSubject(tenantExists.name);
-				const emailBody = EmailTemplates.accountActivationEmail(
-					tenantExists.name,
-					userEle.firstName,
-					userEle.lastName,
-					userEle.email,
-					plainPassword,
-					FRONTEND_URL,
-				);
-				await Email.sendEmail(userEle.email, emailSubject, emailBody);
+					if (userEle.tenantVariables && userEle.tenantVariables.length) {
+						await this.validateTenantVariable(userEle.tenantVariables);
+						this.addTenantVariables(userEle.tenantVariables, createUser.id);
+					}
+
+					const plainPassword = plainPasswords.find(p => p.email === userEle.email).password;
+					const emailSubject = await EmailSubjects.accountActivationSubject(tenantExists.name);
+					const emailBody = EmailTemplates.accountActivationEmail(
+						tenantExists.name,
+						userEle.firstName,
+						userEle.lastName,
+						userEle.email,
+						plainPassword,
+						FRONTEND_URL,
+					);
+					await Email.sendEmail(userEle.email, emailSubject, emailBody);
+				}
 			}
 		}
 	}
-	public async getUserFields(cls: typeof UserData): Promise<string[]> {
-		return cls.fields;
+	public async getUserFields(tenantId: number) {
+		const getTenantVariable = await this.variableMaster.findAll({
+			where: { tenantId: tenantId },
+			attributes: ['id', 'name', 'isMandatory', 'type', 'category', 'options'],
+		});
+		return {
+			defaultFields: UserData.fields,
+			variableFields: getTenantVariable,
+		};
 	}
 }
 
