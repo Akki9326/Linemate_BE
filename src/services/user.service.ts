@@ -1,10 +1,8 @@
 import { FRONTEND_URL, MAX_CHIEF } from '@/config';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { UserListDto } from '@/models/dtos/user-list.dto';
-import { ChangePasswordDto, ImportUserDto, UserActionDto, UserDto } from '@/models/dtos/user.dto';
-import { FileDestination } from '@/models/enums/file-destination.enum';
+import { ChangePasswordDto, ImportUserDto, UserActionDto, UserData, UserDto } from '@/models/dtos/user.dto';
 import { UserType, getPermissionGroup } from '@/models/enums/user-types.enum';
-import { VariableCategories } from '@/models/enums/variable.enum';
 import { FilterResponse } from '@/models/interfaces/filter.interface';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { User } from '@/models/interfaces/users.interface';
@@ -15,13 +13,17 @@ import { findDefaultRole } from '@/utils/helpers/default.role.helper';
 import { PasswordHelper } from '@/utils/helpers/password.helper';
 import { VariableHelper } from '@/utils/helpers/variable.helper';
 import { Email } from '@/utils/services/email';
-import S3Services from '@/utils/services/s3.services';
 import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.transaction';
 import DB from '@databases';
 import { parse } from 'date-fns';
 import { Op } from 'sequelize';
 import { TenantService } from './tenant.service';
 import VariableServices from './variable.service';
+import { VariableCategories } from '@/models/enums/variable.enum';
+import { FileDestination } from '@/models/enums/file-destination.enum';
+import S3Services from '@/utils/services/s3.services';
+import 'reflect-metadata';
+import { RoleType } from '@/models/enums/role.enum';
 
 class UserService {
 	private users = DB.Users;
@@ -268,6 +270,11 @@ class UserService {
 		user.employeeId = userData?.employeeId;
 		user.profilePhoto = userData?.profilePhoto;
 		user = await user.save();
+		this.mapUserTypeToRole(user.dataValues?.userType, user.id, userData.tenantIds);
+		if (userData.userType !== UserType.ChiefAdmin) {
+			this.sendAccountActivationEmail(user, temporaryPassword, createdUser);
+			this.addTenantVariables(userData.tenantVariables, user.id);
+		}
 		if (user?.profilePhoto) {
 			const fileDestination = `${FileDestination.User}/${user.id}`;
 			const movedUrl = await this.s3Service.moveFileByUrl(user.profilePhoto, fileDestination);
@@ -281,11 +288,6 @@ class UserService {
 					},
 				},
 			);
-		}
-		this.mapUserTypeToRole(user.dataValues?.userType, user.id, userData.tenantIds);
-		if (userData.userType !== UserType.ChiefAdmin) {
-			this.sendAccountActivationEmail(user, temporaryPassword, createdUser);
-			this.addTenantVariables(userData.tenantVariables, user.id);
 		}
 		return { id: user.id };
 	}
@@ -654,6 +656,7 @@ class UserService {
 			const modifyUserData = userData.map(row => {
 				const plainPassword = PasswordHelper.generateTemporaryPassword();
 				const hashedPassword = PasswordHelper.hashPassword(plainPassword);
+				const role = row['permissionGroup'].split(',');
 				return {
 					firstName: row['firstName'],
 					lastName: row['lastName'],
@@ -664,6 +667,9 @@ class UserService {
 					tenantIds: [tenantId],
 					password: hashedPassword,
 					plainPassword: plainPassword,
+					employeeId: row['employeeId'],
+					role: role[0],
+					tenantVariables: row['tenantVariables'] && row['tenantVariables'].length ? row['tenantVariables'] : [],
 				};
 			});
 
@@ -671,23 +677,61 @@ class UserService {
 				email: user['email'],
 				password: user['plainPassword'],
 			}));
-			const usersToCreate = modifyUserData.map(({ ...user }) => user);
 
-			const createdUsers = await this.users.bulkCreate(usersToCreate, { ignoreDuplicates: true });
-			for (const user of createdUsers) {
-				const plainPassword = plainPasswords.find(p => p.email === user.email).password;
-				const emailSubject = await EmailSubjects.accountActivationSubject(tenantExists.name);
-				const emailBody = EmailTemplates.accountActivationEmail(
-					tenantExists.name,
-					user.firstName,
-					user.firstName,
-					user.email,
-					plainPassword,
-					FRONTEND_URL,
-				);
-				await Email.sendEmail(user.email, emailSubject, emailBody);
+			for (const userEle of modifyUserData) {
+				const newUserObj = {
+					...userEle,
+				};
+				delete newUserObj.role;
+
+				const userExists = await this.users.findOne({ where: { email: newUserObj.email, isDeleted: false } });
+				if (!userExists) {
+					const createUser = await this.users.create(newUserObj);
+					const role = await this.role.findOne({ where: { name: userEle.role, tenantId: tenantId } });
+					let newUserlist = [];
+					if (role) {
+						newUserlist = [...role.userIds, createUser.id];
+						await this.role.update({ userIds: newUserlist }, { where: { id: role.id } });
+					} else {
+						newUserlist = [createUser.id];
+						await this.role.create({
+							name: userEle.role,
+							tenantId: tenantId,
+							userIds: newUserlist,
+							type: RoleType.Custom,
+							description: userEle.role,
+						});
+					}
+
+					if (userEle.tenantVariables && userEle.tenantVariables.length) {
+						await this.validateTenantVariable(userEle.tenantVariables);
+						this.addTenantVariables(userEle.tenantVariables, createUser.id);
+					}
+
+					const plainPassword = plainPasswords.find(p => p.email === userEle.email).password;
+					const emailSubject = await EmailSubjects.accountActivationSubject(tenantExists.name);
+					const emailBody = EmailTemplates.accountActivationEmail(
+						tenantExists.name,
+						userEle.firstName,
+						userEle.lastName,
+						userEle.email,
+						plainPassword,
+						FRONTEND_URL,
+					);
+					await Email.sendEmail(userEle.email, emailSubject, emailBody);
+				}
 			}
 		}
+	}
+	public async getUserFields(tenantId: number) {
+		const getTenantVariable = await this.variableMaster.findAll({
+			where: { tenantId: tenantId },
+			attributes: ['id', 'name', 'isMandatory', 'type', 'category', 'options'],
+		});
+		return {
+			defaultFields: UserData.fields,
+			variableFields: getTenantVariable,
+		};
 	}
 }
 
