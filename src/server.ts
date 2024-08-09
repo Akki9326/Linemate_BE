@@ -20,6 +20,7 @@ import TenantRoute from './routes/tenant.route';
 import CountryRoute from './routes/country.route';
 import VariableRoute from './routes/variable.route';
 import ContentRoute from './routes/content.route';
+import FiltersRoute from './routes/filters.route';
 
 validateEnv();
 
@@ -33,6 +34,7 @@ const app = new App([
 	new CountryRoute(),
 	new VariableRoute(),
 	new ContentRoute(),
+	new FiltersRoute(),
 ]);
 
 app.init();
