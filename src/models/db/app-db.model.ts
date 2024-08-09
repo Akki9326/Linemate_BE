@@ -23,7 +23,7 @@ export const AppDB_Common_Fields = {
 	createdBy: {
 		allowNull: false,
 		type: DataTypes.INTEGER,
-		defaultValue: 'System',
+		defaultValue: 0,
 	},
 	updatedBy: {
 		allowNull: true,

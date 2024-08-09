@@ -4,7 +4,7 @@ import { RequestWithUser } from '@/models/interfaces/auth.interface';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import UserService from '@/services/user.service';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
-import { NextFunction, Response } from 'express-serve-static-core';
+import { NextFunction, Response, Request } from 'express-serve-static-core';
 
 class UserController {
 	public userService = new UserService();
@@ -104,6 +104,15 @@ class UserController {
 			const tenantId = parseInt(req.params.tenantId) as number;
 			const userData: ImportUserDto[] = req.body.data;
 			const userResponse = await this.userService.importUser(tenantId, userData);
+			AppResponseHelper.sendSuccess(res, 'Success', userResponse);
+		} catch (ex) {
+			next(ex);
+		}
+	};
+	public getUserFields = async (req: Request, res: Response, next: NextFunction) => {
+		try {
+			const tenantId = parseInt(req.params.tenantId) as number;
+			const userResponse = await this.userService.getUserFields(tenantId);
 			AppResponseHelper.sendSuccess(res, 'Success', userResponse);
 		} catch (ex) {
 			next(ex);

@@ -101,6 +101,7 @@ export default class S3Services {
 	 * @param filePermission = File permissions default permissions is public
 	 */
 	public async moveFileByUrl(url: string, destinationPath: string): Promise<string> {
+		let newImageUrl = '';
 		try {
 			const parts = url.split('/'); // Split the URL by '/'
 			const keyParts = parts.slice(3); // Extract the Bucket and Key
@@ -116,18 +117,14 @@ export default class S3Services {
 				Key: destinationKey,
 				ACL: ObjectCannedACL.public_read,
 			};
-			return this.s3
-				.send(new CopyObjectCommand(copyParams))
-				.then(async () => {
-					await this.deleteFileFromS3(sourceKey);
-					const newImageUrl = `https://${BUCKET}.s3.${AWS_REGION}.amazonaws.com/${destinationKey}`;
-					return newImageUrl;
-				})
-				.catch(error => {
-					throw new ServerException(error, `Error while copying file from ${sourceKey} to ${destinationKey}`);
-				});
+			return this.s3.send(new CopyObjectCommand(copyParams)).then(async () => {
+				await this.deleteFileFromS3(sourceKey);
+				newImageUrl = `https://${BUCKET}.s3.${AWS_REGION}.amazonaws.com/${destinationKey}`;
+				return newImageUrl;
+			});
 		} catch (error) {
-			throw new ServerException(error, `Error Geting while file move`);
+			return newImageUrl;
+			// throw new ServerException(error, `Error Geting while file move`);
 		}
 	}
 }
