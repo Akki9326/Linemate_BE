@@ -990,7 +990,7 @@ paths:
               page:
                 type: integer
                 example: 1
-              limit:
+              pageSize:
                 type: integer
                 example: 10
               sortField:
