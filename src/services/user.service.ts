@@ -460,7 +460,7 @@ class UserService {
 
 	public async all(pageModel: UserListDto, tenantId: number) {
 		const page = pageModel.page || 1,
-			limit = pageModel.pageSize || 10,
+			limit = pageModel.limit || 10,
 			orderByField = pageModel.sortField || 'id',
 			sortDirection = pageModel.sortOrder || 'ASC';
 		const offset = (page - 1) * limit;

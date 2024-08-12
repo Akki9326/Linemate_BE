@@ -45,7 +45,7 @@ class PermissionServices {
 	}
 	public async all(pageModel: PermissionListRequestDto) {
 		const page = pageModel.page || 1,
-			limit = pageModel.pageSize || 10,
+			limit = pageModel.limit || 10,
 			orderByField = pageModel.sortField || 'id',
 			sortDirection = pageModel.sortOrder || 'ASC';
 		const offset = (page - 1) * limit;

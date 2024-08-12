@@ -93,8 +93,8 @@ export class RoleService {
 	}
 
 	public async all(pageModel: RoleListRequestDto, tenantId: number) {
-		const { page = 1, pageSize = 10, sortField = 'id', sortOrder = 'ASC' } = pageModel;
-		const offset = (page - 1) * pageSize;
+		const { page = 1, limit = 10, sortField = 'id', sortOrder = 'ASC' } = pageModel;
+		const offset = (page - 1) * limit;
 		let condition: WhereOptions = { isDeleted: false };
 		if (tenantId) {
 			condition = { ...condition, tenantId };
@@ -110,7 +110,7 @@ export class RoleService {
 		const rolesResult = await this.role.findAndCountAll({
 			where: condition,
 			offset,
-			limit: pageSize,
+			limit: limit,
 			order: [[sortField, sortOrder]],
 			attributes: ['id', 'name', 'createdAt', 'tenantId'],
 			include: [
