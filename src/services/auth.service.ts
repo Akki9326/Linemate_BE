@@ -325,7 +325,7 @@ export default class AuthService {
 
 		const fileExtensionValid = await this.validateMimeType(file.mimetype);
 		if (!fileExtensionValid) {
-			throw new BadRequestException(AppMessages.userNotFound);
+			throw new BadRequestException(AppMessages.invalidFileType);
 		}
 		switch (requestBody.type) {
 			case FileType.TenantLogo:
