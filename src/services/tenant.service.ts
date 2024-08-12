@@ -120,7 +120,7 @@ export class TenantService {
 
 	public async list(pageModel: TenantListRequestDto, userId: number) {
 		const page = pageModel.page || 1,
-			limit = pageModel.pageSize || 10,
+			limit = pageModel.limit || 10,
 			sortField = pageModel.sortField || 'id',
 			sortOrder = pageModel.sortOrder || SortOrder.ASC;
 

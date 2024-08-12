@@ -5,7 +5,7 @@ export class CountryService {
 	private countryModel = DB.Country;
 	constructor() {}
 	public async list(pageModel) {
-		const { page, pageSize, search } = pageModel;
+		const { page, limit, search } = pageModel;
 		let whereClause;
 		if (search) {
 			whereClause = {
@@ -16,7 +16,7 @@ export class CountryService {
 			};
 		}
 
-		const offset = (page - 1) * pageSize || 0;
+		const offset = (page - 1) * limit || 0;
 
 		const { count, rows } = await this.countryModel.findAndCountAll({
 			where: {
@@ -24,7 +24,7 @@ export class CountryService {
 			},
 			nest: true,
 			distinct: true,
-			limit: pageSize ?? 10,
+			limit: limit ?? 10,
 			offset: offset,
 		});
 
