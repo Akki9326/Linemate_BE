@@ -11,6 +11,7 @@ CREATE TABLE "assessmentMaster" (
     "totalQuestion" INTEGER NOT NULL,
     "scoring" VARCHAR(50) NOT NULL CHECK ("scoring" IN ('max score', 'per question', 'no score')),
     "contentId" INTEGER NOT NULL,
+    "score" INTEGER,
     "timed" INTEGER,
     "pass" INTEGER NOT NULL
 );

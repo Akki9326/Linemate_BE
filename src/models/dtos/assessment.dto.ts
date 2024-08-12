@@ -43,6 +43,10 @@ export class assessmentDto {
 	@IsNumber()
 	public pass: number;
 
+	@IsOptional()
+	@IsNumber()
+	public score: number;
+
 	@IsArray()
 	@ValidateNested({ each: true })
 	@Type(() => questionData)

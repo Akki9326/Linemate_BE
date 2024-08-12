@@ -46,5 +46,6 @@ export const assessmentMessage = {
 	assessmentNotFound: 'assessment not found',
 	correctAnswerIsRequired: 'correct answer is required',
 	correctAnswerIsNotInOptions: 'correct answer is should be in options',
-	scoreIsRequiredInPerQuestion: 'score is required in per question type scoring',
+	scoreIsRequiredInPerQuestion: 'score is required in Per question type scoring',
+	scoreIsRequiredInMaxScoreTypeQuestion: 'score is required in Max question type scoring',
 };

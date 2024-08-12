@@ -15,6 +15,57 @@ class AssessmentServices {
 	private content = DB.Content;
 	private users = DB.Users;
 	constructor() {}
+
+	private async validateQuestion(assessmentData: assessmentDto) {
+		const questions: questionData[] = assessmentData.questions;
+
+		for (const questionElement of questions) {
+			if (assessmentData.scoring == ScoringType.PerQuestion) {
+				if (!questionElement.score) {
+					throw new BadRequestException(assessmentMessage.scoreIsRequiredInPerQuestion);
+				}
+			}
+
+			if (assessmentData.scoring == ScoringType.MaxScore) {
+				if (!assessmentData.score) {
+					throw new BadRequestException(assessmentMessage.scoreIsRequiredInMaxScoreTypeQuestion);
+				}
+			}
+
+			if (questionElement.type == QuestionType.SingleSelect) {
+				if (!questionElement.answer) {
+					throw new BadRequestException(assessmentMessage.correctAnswerIsRequired);
+				}
+			}
+
+			if (questionElement.answer) {
+				if (!questionElement.options.includes(questionElement.answer)) {
+					throw new BadRequestException(assessmentMessage.correctAnswerIsNotInOptions);
+				}
+			}
+		}
+	}
+	private async storeQuestion(questionList: questionData[], assessmentId: number) {
+		for (const questionElement of questionList) {
+			const questionObj = {};
+
+			questionObj['question'] = questionElement.question;
+			questionObj['type'] = questionElement.type;
+			questionObj['assessmentId'] = assessmentId;
+
+			const createQuestion = await this.assessmentMatrix.create(questionObj);
+			let currectAnswerId;
+			const optionsIds = [];
+			for (let i = 0; i < questionElement.options.length; i++) {
+				const option = await this.assessmentOption.create({ option: questionElement.options[i], questionId: createQuestion.id });
+				optionsIds.push(option.id);
+				if (questionElement.options[i] === questionElement.answer) {
+					currectAnswerId = option.id;
+				}
+			}
+			await this.assessmentMatrix.update({ correctAnswer: currectAnswerId, optionIds: optionsIds }, { where: { id: createQuestion.id } });
+		}
+	}
 	public async add(assessmentData: assessmentDto, createdUser: JwtTokenData) {
 		const content = await this.content.findOne({
 			where: {
@@ -28,6 +79,10 @@ class AssessmentServices {
 
 		let assessmentId;
 		try {
+			/** validate all question  */
+			await this.validateQuestion(assessmentData);
+
+			/** create new assessment records  */
 			let assessment = new this.assessmentMaster();
 			assessment.name = assessmentData.name;
 			assessment.contentId = assessmentData.contentId;
@@ -40,48 +95,15 @@ class AssessmentServices {
 			assessment = await assessment.save();
 			assessmentId = assessment.id;
 
-			const questionList: questionData[] = assessmentData.questions;
-			for (const questionElement of questionList) {
-				const questionObj = {};
-
-				questionObj['question'] = questionElement.question;
-				questionObj['type'] = questionElement.type;
-				questionObj['assessmentId'] = assessmentId;
-
-				if (assessmentData.scoring == ScoringType.PerQuestion) {
-					if (!questionElement.score) {
-						throw new BadRequestException(assessmentMessage.scoreIsRequiredInPerQuestion);
-					} else {
-						questionObj['score'] = questionElement.score;
-					}
-				}
-
-				if (questionElement.type == QuestionType.SingleSelect) {
-					if (!questionElement.answer) {
-						throw new BadRequestException(assessmentMessage.correctAnswerIsRequired);
-					}
-				}
-
-				if (questionElement.answer) {
-					if (!questionElement.options.includes(questionElement.answer)) {
-						throw new BadRequestException(assessmentMessage.correctAnswerIsNotInOptions);
-					}
-				}
-
-				const createQuestion = await this.assessmentMatrix.create(questionObj);
-				let currectAnswerId;
-				const optionsIds = [];
-				for (let i = 0; i < questionElement.options.length; i++) {
-					const option = await this.assessmentOption.create({ option: questionElement.options[i], questionId: createQuestion.id });
-					optionsIds.push(option.id);
-					if (questionElement.options[i] === questionElement.answer) {
-						currectAnswerId = option.id;
-					}
-				}
-				await this.assessmentMatrix.update({ correctAnswer: currectAnswerId, optionIds: optionsIds }, { where: { id: createQuestion.id } });
+			if (assessmentData.scoring === ScoringType.MaxScore) {
+				assessment.score = assessmentData.score;
 			}
+
+			const questionList: questionData[] = assessmentData.questions;
+
+			/** store assessment question */
+			await this.storeQuestion(questionList, assessmentId);
 		} catch (error) {
-			await this.assessmentMaster.destroy({ where: { id: assessmentId } });
 			throw new BadRequestException(error.message);
 		}
 		return { id: assessmentId };
@@ -105,6 +127,11 @@ class AssessmentServices {
 		});
 		if (!assessment) {
 			throw new BadRequestException(assessmentMessage.assessmentNotFound);
+		}
+
+		if (assessmentData.questions) {
+			await this.validateQuestion(assessmentData);
+			await this.storeQuestion(assessmentData.questions, assessmentId);
 		}
 
 		assessment.name = assessmentData.name;
@@ -173,6 +200,8 @@ class AssessmentServices {
 		assessment.updatedBy = userId;
 
 		await assessment.save();
+		await this.assessmentMatrix.update({where: {assessmentId: assessmentId})
+
 		return { id: assessment.id };
 	}
 	public async all(pageModel: AssessmentListRequestDto) {

@@ -11,6 +11,7 @@ export class assessmentMasterModel extends AppDBModel {
 	public contentId: number;
 	public timed: number;
 	public pass: number;
+	public score: number;
 }
 
 export default function (sequelize: Sequelize): typeof assessmentMasterModel {
@@ -54,6 +55,10 @@ export default function (sequelize: Sequelize): typeof assessmentMasterModel {
 			pass: {
 				type: DataTypes.INTEGER,
 				allowNull: false,
+			},
+			score: {
+				type: DataTypes.INTEGER,
+				allowNull: true,
 			},
 		},
 		{
