@@ -200,7 +200,7 @@ class AssessmentServices {
 		assessment.updatedBy = userId;
 
 		await assessment.save();
-		await this.assessmentMatrix.update({where: {assessmentId: assessmentId})
+		await this.assessmentMatrix.update({ isDeleted: true }, { where: { assessmentId: assessmentId } });
 
 		return { id: assessment.id };
 	}

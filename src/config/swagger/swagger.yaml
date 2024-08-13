@@ -1286,6 +1286,232 @@ paths:
         '200':
           description: Success
 
+  /assessment/v1/add:
+    post:
+      summary: "Create a new assessment"
+      tags:
+        - Assessment
+      description: "Creates a new assessment with questions."
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          description: Assessment object that needs to be added
+          required: true
+          schema:
+            type: object
+            required:
+              - name
+              - description
+              - pass
+              - timed
+              - contentId
+              - scoring
+              - totalQuestion
+              - score
+              - questions
+            properties:
+              name:
+                type: string
+                example: "Test Assessment"
+              description:
+                type: string
+                example: "Test Assessment"
+              pass:
+                type: integer
+                example: 50
+              timed:
+                type: integer
+                example: 10
+              contentId:
+                type: integer
+                example: 1
+              scoring:
+                type: string
+                example: "max score"
+              totalQuestion:
+                type: integer
+                example: 10
+              score:
+                type: integer
+                example: 50
+              questions:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - question
+                    - type
+                    - options
+                    - answer
+                  properties:
+                    question:
+                      type: string
+                      example: "what is your age range?"
+                    type:
+                      type: string
+                      example: "single select"
+                    options:
+                      type: array
+                      items:
+                        type: string
+                        example: "0-15,15-20,20-30,30-60"
+                    answer:
+                      type: string
+                      example: "20-30"
+      responses:
+        201:
+          description: Assessment created successfully
+        400:
+          description: Invalid input
+
+
+  /assessment/v1/{id}:
+    get:
+      summary: Get assement by Id
+      tags:
+        - Assessment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Success
+    put:
+      summary: Update Assessment
+      tags:
+        - Assessment
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          description: Assessment object that needs to be added
+          required: true
+          schema:
+            type: object
+            required:
+              - name
+              - description
+              - pass
+              - timed
+              - contentId
+              - scoring
+              - totalQuestion
+              - score
+              - questions
+            properties:
+              name:
+                type: string
+                example: "Test Assessment"
+              description:
+                type: string
+                example: "Test Assessment"
+              pass:
+                type: integer
+                example: 50
+              timed:
+                type: integer
+                example: 10
+              contentId:
+                type: integer
+                example: 1
+              scoring:
+                type: string
+                example: "max score"
+              totalQuestion:
+                type: integer
+                example: 10
+              score:
+                type: integer
+                example: 50
+              questions:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - question
+                    - type
+                    - options
+                    - answer
+                  properties:
+                    question:
+                      type: string
+                      example: "what is your age range?"
+                    type:
+                      type: string
+                      example: "single select"
+                    options:
+                      type: array
+                      items:
+                        type: string
+                        example: "0-15,15-20,20-30,30-60"
+                    answer:
+                      type: string
+                      example: "20-30"
+      responses:
+        '200':
+          description: Success
+    delete:
+      summary: Delete Assessment
+      tags:
+        - Assessment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Success
+
+  /assessment/v1/list:
+    post:
+      summary: List assessment
+      tags:
+        - Assessment
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              page:
+                type: integer
+                example: 1
+              limit:
+                type: integer
+                example: 10
+              sortField:
+                type: string
+                example: id
+              sortOrder:
+                type: string
+                example: ASC
+              search:
+                type: string
+                example: ''
+              filter:
+                type: object
+                properties:
+                  contentId:
+                    type: integer
+                    example: 1
+      responses:
+        '200':
+          description: Success
+
+  
 tags:
   - name: Permission
     description: Endpoints for creating and managing permissions.
@@ -1301,3 +1527,5 @@ tags:
     description: Endpoints for creating and managing variables.
   - name: Content
     description: Endpoints for creating and managing content.
+  - name: Assessment
+    description: Endpoints for creating and managing assessment.
