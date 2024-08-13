@@ -21,7 +21,7 @@ import { RoleService } from './role.service';
 import { TenantService } from './tenant.service';
 import { UserType } from '@/models/enums/user-types.enum';
 import { FileDto, FileTypeDto } from '@/models/dtos/file.dto';
-import { FileType } from '@/models/enums/file-type.enums';
+import { FileMimeType, FileType } from '@/models/enums/file-type.enums';
 import { FileDestination } from '@/models/enums/file-destination.enum';
 import S3Services from '@/utils/services/s3.services';
 import { ContentService } from './content.service';
@@ -307,10 +307,26 @@ export default class AuthService {
 
 		return { email: user.email };
 	}
+	public async validateMimeType(mimetype: string) {
+		const allowedExtensions = [...Object.values(FileMimeType)];
+
+		// Split the MIME type into its components
+		const mimeTypeParts = mimetype.split('/')[1];
+		const subTypeParts = mimeTypeParts.split('.');
+		const fileExtension = subTypeParts[subTypeParts.length - 1] || mimeTypeParts;
+
+		// Cast fileExtension to FileMimeType
+		return allowedExtensions.includes(fileExtension as FileMimeType);
+	}
+
 	public async uploadFile(file: FileDto, requestBody: FileTypeDto, user: JwtTokenData) {
 		let dir: string;
 		let destinationUrl = dir;
 
+		const fileExtensionValid = await this.validateMimeType(file.mimetype);
+		if (!fileExtensionValid) {
+			throw new BadRequestException(AppMessages.invalidFileType);
+		}
 		switch (requestBody.type) {
 			case FileType.TenantLogo:
 				dir = FileDestination.TenantTemp;
