@@ -98,6 +98,20 @@ export class UserData {
 	@IsString()
 	@IsDefined()
 	public countyCode: string;
+
+	@IsString()
+	@IsDefined()
+	public permissionGroup: string;
+
+	@IsString()
+	@IsDefined()
+	public employeeId: string;
+
+	@IsArray()
+	@IsOptional()
+	public tenantVariables: TenantVariables[];
+
+	public static fields = ['firstName', 'lastName', 'email', 'userType', 'mobileNumber', 'countyCode', 'permissionGroup', 'employeeId'];
 }
 
 export class ImportUserDto {

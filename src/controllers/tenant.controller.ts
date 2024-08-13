@@ -27,10 +27,11 @@ class TenantController {
 			next(ex);
 		}
 	};
-	public list = async (req: Request, res: Response, next: NextFunction) => {
+	public list = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
 			const pageModel: TenantListRequestDto = req.body;
-			const tenantResponse = await this.tenantService.list(pageModel);
+			const userId = req.user.id as number;
+			const tenantResponse = await this.tenantService.list(pageModel, userId);
 			AppResponseHelper.sendSuccess(res, 'Success', tenantResponse);
 		} catch (ex) {
 			next(ex);

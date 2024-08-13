@@ -1,5 +1,5 @@
 export enum FileType {
-	Tenant = 'Tenant',
-	User = 'User',
-	Content = 'Content',
+	TenantLogo = 'tenantLogo',
+	UserProfile = 'userProfile',
+	Content = 'content',
 }

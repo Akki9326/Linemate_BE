@@ -373,16 +373,16 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - in: formData
-          name: type
+        - name: type
+          in: formData
           required: true
-          schema:
-            type: string
-            description: The type of the file.
-            example: Logo
+          type: string
+          enum: [tenantLogo, userProfile, content]
+          description: The type of the file.
+          example: Tenant_Logo
         - in: formData
-          name: contentId
-          required: true
+          name: elementId
+          required: false
           schema:
             type: string
             description: The ID related to the content.
@@ -590,21 +590,72 @@ paths:
                   isActive:
                     type: boolean
                     example: true
-                  joiningDate:
-                    type: object
-                    properties:
-                      startDate:
-                        type: string
-                        format: date
-                        example: '2024-07-10'
-                      endDate:
-                        type: string
-                        format: date
-                        example: '2024-07-13'
+                  dynamicFilter:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        filterTitle:
+                          type: string
+                          example: "Joining Date"
+                        filterKey:
+                          type: string
+                          example: "joiningDate"
+                        filterType:
+                          type: string
+                          example: "DateRange"
+                        minValue:
+                          type: string | number
+                          format: date
+                          example: "2024-08-01"
+                        maxValue:
+                          type: string | number
+                          format: date
+                          example: "2024-08-31"
+                      required:
+                        - filterTitle
+                        - filterKey
+                        - filterType
+                        - minValue
+                        - maxValue
+                    example:
+                      - filterTitle: "Joining Date"
+                        filterKey: "joiningDate"
+                        filterType: "DateRange"
+                        minValue: "2024-08-01"
+                        maxValue: "2024-08-31"
+                      - filterTitle: "role"
+                        filterKey: "role"
+                        filterType: "DropDown"
+                        selectedValue: "hr"
+                        variableId: 6
+                        options:
+                          - "manager"
+                          - "hr"
+                      - filterTitle: "role"
+                        filterKey: "role"
+                        filterType: "DropDown"
+                        selectedValue: "manager"
+                        variableId: 7
+                        options:
+                          - "manager"
+                          - "hr"
+                      - filterTitle: "role12"
+                        filterKey: "role12"
+                        filterType: "DropDown"
+                        selectedValue: "manager"
+                        variableId: 8
+                        options:
+                          - "manager"
+                          - "hr"
+                      - filterTitle: "Experience"
+                        filterKey: "experience"
+                        filterType: "NumberRange"
+                        maxValue: 2
+                        minValue: 1
       responses:
         '200':
           description: Success
-
   /user/v1/delete-users:
     post:
       summary: Delete Bulk Users
@@ -631,6 +682,29 @@ paths:
   /user/v1/de-active:
     post:
       summary: Deactivate Bulk Users
+      tags:
+        - User
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              userIds:
+                type: array
+                items:
+                  type: integer
+                example: [2]
+      responses:
+        '200':
+          description: Success
+
+  /user/v1/active-users:
+    post:
+      summary: Activate Bulk Users
       tags:
         - User
       security:
@@ -1154,6 +1228,9 @@ paths:
               isPublish:
                 type: boolean
                 example: false
+              isArchive:
+                type: boolean
+                example: false
       responses:
         '200':
           description: Success
@@ -1208,6 +1285,9 @@ paths:
                 type: integer
                 example: 1
               isPublish:
+                type: boolean
+                example: false
+              isArchive:
                 type: boolean
                 example: false
       responses:
@@ -1285,6 +1365,53 @@ paths:
       responses:
         '200':
           description: Success
+  /filters/v1/list:
+    get:
+      summary: List Filters
+      description: Retrieve a list of filters based on the specified criteria.
+      tags:
+        - Filters
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: filterFor
+          required: true
+          type: string
+          description: Specify the category for which filters are being requested, e.g., 'employee,tenant,content'.
+        - name: tenantId
+          in: header
+          required: true
+          type: integer
+          example: 1
+      responses:
+        '200':
+          description: Successful retrieval of filters
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: success
+              data:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    name:
+                      type: string
+                    type:
+                      type: string
+                    description:
+                      type: string
+        '400':
+          description: Bad request if the query parameters are missing or invalid
+        '401':
+          description: Unauthorized if the token is invalid or expired
+        '500':
+          description: Internal server error       
 
   /assessment/v1/add:
     post:
@@ -1529,3 +1656,5 @@ tags:
     description: Endpoints for creating and managing content.
   - name: Assessment
     description: Endpoints for creating and managing assessment.
+  - name: Filter
+    description: Endpoints for get dynamic filters .

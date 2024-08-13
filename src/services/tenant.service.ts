@@ -9,10 +9,12 @@ import { TenantListRequestDto } from '@/models/dtos/tenant-list.dto';
 import { insertDefaultRoles } from '@/utils/helpers/default.role.helper';
 import { TenantMessage } from '@/utils/helpers/app-message.helper';
 import { FileDestination } from '@/models/enums/file-destination.enum';
+import { UserType } from '@/models/enums/user-types.enum';
 
 export class TenantService {
 	private tenantModel = DB.Tenant;
 	public s3Service = new S3Services();
+	public users = DB.Users;
 
 	constructor() {}
 	async add(tenantDetails: TenantDto, userId: number): Promise<number> {
@@ -36,20 +38,21 @@ export class TenantService {
 			createdBy: userId,
 		});
 		await insertDefaultRoles(tenant.id, userId);
+		if (tenantDetails?.logo) {
+			const fileDestination = `${FileDestination.Tenant}/${tenant.id}`;
+			const movedUrl = await this.s3Service.moveFileByUrl(tenantDetails.logo, fileDestination);
 
-		const fileDestination = `${FileDestination.Tenant}/${tenant.id}`;
-		const movedUrl = await this.s3Service.moveFileByUrl(tenantDetails.logo, fileDestination);
-
-		await this.tenantModel.update(
-			{
-				logo: movedUrl,
-			},
-			{
-				where: {
-					id: tenant.id,
+			await this.tenantModel.update(
+				{
+					logo: movedUrl,
 				},
-			},
-		);
+				{
+					where: {
+						id: tenant.id,
+					},
+				},
+			);
+		}
 		return tenant.id;
 	}
 	public async one(tenantId: number) {
@@ -115,11 +118,21 @@ export class TenantService {
 		return tenantResponse;
 	}
 
-	public async list(pageModel: TenantListRequestDto) {
-		const { page, pageSize, search, sortField, sortOrder } = pageModel;
+	public async list(pageModel: TenantListRequestDto, userId: number) {
+		const page = pageModel.page || 1,
+			limit = pageModel.limit || 10,
+			sortField = pageModel.sortField || 'id',
+			sortOrder = pageModel.sortOrder || SortOrder.ASC;
+
+		const user = await this.users.findOne({
+			where: {
+				id: userId,
+				isDeleted: false,
+			},
+		});
 
 		let whereClause = {};
-		if (search) {
+		if (pageModel.search) {
 			whereClause = {
 				...whereClause,
 				[Op.or]: {
@@ -129,22 +142,39 @@ export class TenantService {
 				},
 			};
 		}
-		const { count, rows } = await this.tenantModel.findAndCountAll({
-			where: {
-				...whereClause,
-				isActive: true,
-				isDeleted: false,
-			},
-			// nest: true,
-			distinct: true,
-			order: [[sortField || 'id', sortOrder || SortOrder.ASC]],
-			limit: pageSize,
-			offset: (page - 1) * pageSize,
-		});
+		let tenantDetails;
 
-		return {
-			total: count,
-			data: rows,
-		};
+		if (user.userType !== UserType.ChiefAdmin) {
+			if (user.tenantIds && user.tenantIds.length > 0) {
+				tenantDetails = await this.tenantModel.findAndCountAll({
+					where: {
+						id: {
+							[Op.in]: user.tenantIds,
+						},
+						...whereClause,
+						isDeleted: false,
+						isActive: true,
+					},
+					distinct: true,
+					order: [[sortField, sortOrder]],
+					limit: limit,
+					offset: (page - 1) * limit,
+				});
+			}
+		} else {
+			tenantDetails = await this.tenantModel.findAndCountAll({
+				where: {
+					...whereClause,
+					isDeleted: false,
+					isActive: true,
+				},
+				distinct: true,
+				order: [[sortField, sortOrder]],
+				limit: limit,
+				offset: (page - 1) * limit,
+			});
+		}
+
+		return tenantDetails;
 	}
 }

@@ -6,7 +6,7 @@ export class ListRequestDto<T> {
 	public page: number;
 
 	@IsNotEmpty()
-	public pageSize: number;
+	public limit: number;
 
 	@IsOptional()
 	@IsString()

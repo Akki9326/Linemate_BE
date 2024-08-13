@@ -113,7 +113,7 @@ class VariableServices {
 	}
 	public async all(pageModel: variableListDto, tenantId: number) {
 		const page = pageModel.page || 1,
-			limit = pageModel.pageSize || 10,
+			limit = pageModel.limit || 10,
 			orderByField = pageModel.sortField || 'id',
 			sortDirection = pageModel.sortOrder || 'ASC';
 		const offset = (page - 1) * limit;
@@ -157,6 +157,18 @@ class VariableServices {
 
 		const responseList = VariableHelper.findTenantVariableDetails(userId, tenantId);
 		return responseList;
+	}
+	// without pagination variable list
+	public async getVariableByTenantId(tenantId: number) {
+		const condition = {
+			[Op.or]: [{ tenantId: tenantId }, { type: VariableType.SingleSelect }, { type: VariableType.MultiSelect }],
+		};
+		const validateList = await this.variableMaster.findAll({
+			where: { isDeleted: false, ...condition },
+			attributes: ['id', 'name', 'options'],
+		});
+		console.log('validateList', validateList);
+		return validateList;
 	}
 }
 

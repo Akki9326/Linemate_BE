@@ -1,8 +1,9 @@
 import { FRONTEND_URL, MAX_CHIEF } from '@/config';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { UserListDto } from '@/models/dtos/user-list.dto';
-import { ChangePasswordDto, ImportUserDto, UserActionDto, UserDto } from '@/models/dtos/user.dto';
+import { ChangePasswordDto, ImportUserDto, UserActionDto, UserData, UserDto } from '@/models/dtos/user.dto';
 import { UserType, getPermissionGroup } from '@/models/enums/user-types.enum';
+import { FilterResponse } from '@/models/interfaces/filter.interface';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { User } from '@/models/interfaces/users.interface';
 import { TenantVariables } from '@/models/interfaces/variable.interface';
@@ -19,6 +20,10 @@ import { Op } from 'sequelize';
 import { TenantService } from './tenant.service';
 import VariableServices from './variable.service';
 import { VariableCategories } from '@/models/enums/variable.enum';
+import { FileDestination } from '@/models/enums/file-destination.enum';
+import S3Services from '@/utils/services/s3.services';
+import 'reflect-metadata';
+import { RoleType } from '@/models/enums/role.enum';
 
 class UserService {
 	private users = DB.Users;
@@ -28,6 +33,7 @@ class UserService {
 	private variableMatrix = DB.VariableMatrix;
 	private tenantService = new TenantService();
 	private variableServices = new VariableServices();
+	public s3Service = new S3Services();
 
 	constructor() {}
 	public async sendAccountActivationEmail(userData, temporaryPassword: string, createdUser: JwtTokenData) {
@@ -269,6 +275,20 @@ class UserService {
 			this.sendAccountActivationEmail(user, temporaryPassword, createdUser);
 			this.addTenantVariables(userData.tenantVariables, user.id);
 		}
+		if (user?.profilePhoto) {
+			const fileDestination = `${FileDestination.User}/${user.id}`;
+			const movedUrl = await this.s3Service.moveFileByUrl(user.profilePhoto, fileDestination);
+			await this.users.update(
+				{
+					profilePhoto: movedUrl,
+				},
+				{
+					where: {
+						id: user.id,
+					},
+				},
+			);
+		}
 		return { id: user.id };
 	}
 	public async one(userId: number, tenantId: number) {
@@ -300,6 +320,31 @@ class UserService {
 			tenantVariableDetail = await VariableHelper.findTenantVariableDetails(userId, tenantId);
 		}
 		return { ...user.dataValues, tenantDetails, tenantVariableDetail };
+	}
+	public async getUserById(userId: number) {
+		const user = await this.users.findOne({
+			where: {
+				id: userId,
+				isDeleted: false,
+			},
+			attributes: [
+				'id',
+				'firstName',
+				'lastName',
+				'email',
+				'mobileNumber',
+				'tenantIds',
+				'isTemporaryPassword',
+				'userType',
+				'countryCode',
+				'employeeId',
+				'profilePhoto',
+			],
+		});
+		if (!user) {
+			throw new BadRequestException(AppMessages.userNotFound);
+		}
+		return user;
 	}
 	public async update(userData: UserDto, userId: number, updatedBy: number) {
 		const existingUser = await this.users.findOne({
@@ -376,9 +421,46 @@ class UserService {
 		}
 		return usersToDelete.map(user => ({ id: user.id }));
 	}
+	private async getUserIdsFromVariableMatrix(filterCriteria: { variableId: number; value: string }[]) {
+		const whereConditions = filterCriteria.map(criteria => ({
+			variableId: criteria.variableId,
+			value: criteria.value,
+		}));
+		const matchingRecords = await this.variableMatrix.findAll({
+			where: {
+				[Op.or]: whereConditions,
+			},
+			attributes: ['userId'],
+		});
+
+		const matchingUserIds = Array.from(new Set(matchingRecords.map(record => record.userId)));
+
+		return matchingUserIds;
+	}
+	private async mappingDynamicFilter(condition: object, dynamicFilter: FilterResponse[]) {
+		dynamicFilter.forEach(filter => {
+			if (filter.filterKey === 'joiningDate') {
+				const parsedStartDate = parse(String(filter.minValue), 'yyyy-MM-dd', new Date());
+				const parsedEndDate = parse(String(filter.maxValue), 'yyyy-MM-dd', new Date());
+				condition['createdAt'] = {
+					[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
+				};
+			}
+		});
+		const variableList = dynamicFilter
+			.filter(filter => 'variableId' in filter && 'selectedValue' in filter)
+			.map(filter => ({
+				value: filter.selectedValue,
+				variableId: filter.variableId,
+			}));
+		condition['id'] = {
+			[Op.in]: await this.getUserIdsFromVariableMatrix(variableList),
+		};
+	}
+
 	public async all(pageModel: UserListDto, tenantId: number) {
 		const page = pageModel.page || 1,
-			limit = pageModel.pageSize || 10,
+			limit = pageModel.limit || 10,
 			orderByField = pageModel.sortField || 'id',
 			sortDirection = pageModel.sortOrder || 'ASC';
 		const offset = (page - 1) * limit;
@@ -396,17 +478,10 @@ class UserService {
 			];
 		}
 		if (pageModel.filter) {
-			// TODO: add role and cohort filter after done these feature are done
+			// TODO: add cohort filter after done these feature are done
 			condition['isActive'] = pageModel.filter.isActive;
-			if (pageModel.filter.joiningDate) {
-				const { startDate, endDate } = pageModel.filter.joiningDate;
-				if (startDate && endDate) {
-					const parsedStartDate = parse(startDate, 'yyyy-MM-dd', new Date());
-					const parsedEndDate = parse(endDate, 'yyyy-MM-dd', new Date());
-					condition['createdAt'] = {
-						[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
-					};
-				}
+			if (pageModel.filter.dynamicFilter) {
+				await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter);
 			}
 		}
 		if (tenantId) {
@@ -414,7 +489,6 @@ class UserService {
 				[Op.contains]: [tenantId],
 			};
 		}
-
 		const userList = await this.users.findAndCountAll({
 			where: condition,
 			offset,
@@ -439,7 +513,7 @@ class UserService {
 		return userList;
 	}
 	public async deActive(userIds: UserActionDto, userId: number) {
-		const usersToDelete = await this.users.findAll({
+		const usersToDeActive = await this.users.findAll({
 			where: {
 				id: {
 					[Op.in]: userIds,
@@ -448,15 +522,35 @@ class UserService {
 				isActive: true,
 			},
 		});
-		if (!usersToDelete.length) {
-			throw new BadRequestException(AppMessages.userNotFound);
+		if (!usersToDeActive.length) {
+			throw new BadRequestException(AppMessages.activeUserNotFound);
 		}
-		for (const user of usersToDelete) {
+		for (const user of usersToDeActive) {
 			user.isActive = false;
 			user.updatedBy = userId;
 			await user.save();
 		}
-		return usersToDelete.map(user => ({ id: user.id }));
+		return usersToDeActive.map(user => ({ id: user.id }));
+	}
+	public async active(userIds: UserActionDto, userId: number) {
+		const usersToActive = await this.users.findAll({
+			where: {
+				id: {
+					[Op.in]: userIds,
+				},
+				isDeleted: false,
+				isActive: false,
+			},
+		});
+		if (!usersToActive.length) {
+			throw new BadRequestException(AppMessages.deActiveUserNotFound);
+		}
+		for (const user of usersToActive) {
+			user.isActive = true;
+			user.updatedBy = userId;
+			await user.save();
+		}
+		return usersToActive.map(user => ({ id: user.id }));
 	}
 	public async changePassword(changePasswordUsers: ChangePasswordDto, createdBy: JwtTokenData) {
 		const usersData = await this.users.findAll({
@@ -562,6 +656,7 @@ class UserService {
 			const modifyUserData = userData.map(row => {
 				const plainPassword = PasswordHelper.generateTemporaryPassword();
 				const hashedPassword = PasswordHelper.hashPassword(plainPassword);
+				const role = row['permissionGroup'].split(',');
 				return {
 					firstName: row['firstName'],
 					lastName: row['lastName'],
@@ -572,6 +667,9 @@ class UserService {
 					tenantIds: [tenantId],
 					password: hashedPassword,
 					plainPassword: plainPassword,
+					employeeId: row['employeeId'],
+					role: role[0],
+					tenantVariables: row['tenantVariables'] && row['tenantVariables'].length ? row['tenantVariables'] : [],
 				};
 			});
 
@@ -579,23 +677,61 @@ class UserService {
 				email: user['email'],
 				password: user['plainPassword'],
 			}));
-			const usersToCreate = modifyUserData.map(({ ...user }) => user);
 
-			const createdUsers = await this.users.bulkCreate(usersToCreate, { ignoreDuplicates: true });
-			for (const user of createdUsers) {
-				const plainPassword = plainPasswords.find(p => p.email === user.email).password;
-				const emailSubject = await EmailSubjects.accountActivationSubject(tenantExists.name);
-				const emailBody = EmailTemplates.accountActivationEmail(
-					tenantExists.name,
-					user.firstName,
-					user.firstName,
-					user.email,
-					plainPassword,
-					FRONTEND_URL,
-				);
-				await Email.sendEmail(user.email, emailSubject, emailBody);
+			for (const userEle of modifyUserData) {
+				const newUserObj = {
+					...userEle,
+				};
+				delete newUserObj.role;
+
+				const userExists = await this.users.findOne({ where: { email: newUserObj.email, isDeleted: false } });
+				if (!userExists) {
+					const createUser = await this.users.create(newUserObj);
+					const role = await this.role.findOne({ where: { name: userEle.role, tenantId: tenantId } });
+					let newUserlist = [];
+					if (role) {
+						newUserlist = [...role.userIds, createUser.id];
+						await this.role.update({ userIds: newUserlist }, { where: { id: role.id } });
+					} else {
+						newUserlist = [createUser.id];
+						await this.role.create({
+							name: userEle.role,
+							tenantId: tenantId,
+							userIds: newUserlist,
+							type: RoleType.Custom,
+							description: userEle.role,
+						});
+					}
+
+					if (userEle.tenantVariables && userEle.tenantVariables.length) {
+						await this.validateTenantVariable(userEle.tenantVariables);
+						this.addTenantVariables(userEle.tenantVariables, createUser.id);
+					}
+
+					const plainPassword = plainPasswords.find(p => p.email === userEle.email).password;
+					const emailSubject = await EmailSubjects.accountActivationSubject(tenantExists.name);
+					const emailBody = EmailTemplates.accountActivationEmail(
+						tenantExists.name,
+						userEle.firstName,
+						userEle.lastName,
+						userEle.email,
+						plainPassword,
+						FRONTEND_URL,
+					);
+					await Email.sendEmail(userEle.email, emailSubject, emailBody);
+				}
 			}
 		}
+	}
+	public async getUserFields(tenantId: number) {
+		const getTenantVariable = await this.variableMaster.findAll({
+			where: { tenantId: tenantId },
+			attributes: ['id', 'name', 'isMandatory', 'type', 'category', 'options'],
+		});
+		return {
+			defaultFields: UserData.fields,
+			variableFields: getTenantVariable,
+		};
 	}
 }
 

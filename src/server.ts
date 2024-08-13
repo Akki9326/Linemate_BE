@@ -21,6 +21,7 @@ import CountryRoute from './routes/country.route';
 import VariableRoute from './routes/variable.route';
 import ContentRoute from './routes/content.route';
 import AssessmentRoute from './routes/assessment.route';
+import FiltersRoute from './routes/filters.route';
 
 validateEnv();
 
@@ -35,6 +36,7 @@ const app = new App([
 	new VariableRoute(),
 	new ContentRoute(),
 	new AssessmentRoute(),
+	new FiltersRoute(),
 ]);
 
 app.init();
