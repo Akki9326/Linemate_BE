@@ -18,14 +18,16 @@ export class TenantService {
 
 	constructor() {}
 	async add(tenantDetails: TenantDto, userId: number): Promise<number> {
-		const gstNumber = tenantDetails.gstNumber;
+		const gstNumber = tenantDetails?.gstNumber;
 
-		const regex = new RegExp('^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$');
+		if (gstNumber) {
+			const regex = new RegExp('^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$');
 
-		if (regex.test(gstNumber) == false) new BadRequestException(TenantMessage.invalidGstNumber);
+			if (regex.test(gstNumber) == false) new BadRequestException(TenantMessage.invalidGstNumber);
 
-		const gstNumberExists = await this.tenantModel.findOne({ where: { gstNumber: tenantDetails.gstNumber, isDeleted: false } });
-		if (gstNumberExists) throw new BadRequestException(TenantMessage.gstNumberIsAlreadyExists);
+			const gstNumberExists = await this.tenantModel.findOne({ where: { gstNumber: tenantDetails.gstNumber, isDeleted: false } });
+			if (gstNumberExists) throw new BadRequestException(TenantMessage.gstNumberIsAlreadyExists);
+		}
 
 		const companyNameExists = await this.tenantModel.findOne({ where: { name: tenantDetails.name, isDeleted: false } });
 		if (companyNameExists) throw new BadRequestException(TenantMessage.companyNameIsAlreadyExists);
