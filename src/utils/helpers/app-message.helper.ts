@@ -46,6 +46,9 @@ export const CommonMessage = {
 export const ContentMessage = {
 	contentNotFound: 'content not found',
 };
+export const CohortMessage = {
+	cohortNotFound: 'cohort not found',
+};
 export const FilterMessage = {
 	filterForNotFound: 'filterFor is required in query params',
 };

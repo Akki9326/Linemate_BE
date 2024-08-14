@@ -25,7 +25,6 @@ export default function (sequelize: Sequelize): typeof ContentModel {
 			name: {
 				allowNull: false,
 				type: DataTypes.STRING,
-				unique: true,
 			},
 			type: {
 				allowNull: false,
