@@ -1,3 +1,5 @@
+import { FileMimeType } from '@/models/enums/file-type.enums';
+
 export const AppMessages = {
 	forgotPasswordSuccess: 'We’ll send you an email with a password reset link if your email is registered with us.',
 	invalidUsername: 'Please check the email or mobile number.',
@@ -15,6 +17,7 @@ export const AppMessages = {
 	maxAdmin: 'Max admin allowed for admin users.',
 	wrongOldPassword: 'Old password not valid.',
 	invalidPayload: 'Invalid req data from req.',
+	invalidFileType: `Invalid file extension type. type must be valid for : ${[...Object.values(FileMimeType)]}`,
 };
 
 export const RoleMessage = {
