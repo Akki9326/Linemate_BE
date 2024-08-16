@@ -30,6 +30,7 @@ export default function (sequelize: Sequelize): typeof ContentModel {
 				allowNull: false,
 				type: DataTypes.ENUM,
 				values: Object.values(ConteTypes),
+				unique: true,
 			},
 			description: {
 				allowNull: true,
