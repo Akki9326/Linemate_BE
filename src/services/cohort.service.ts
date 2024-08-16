@@ -23,16 +23,16 @@ export class CohortService {
 	}
 
 	public async ruleOptions(tenantId: number) {
-		const cohortsList = await this.cohort.findAll({
-			where: { tenantId: tenantId, isDeleted: false },
-			attributes: ['id', 'name'],
-		});
+		// const cohortsList = await this.cohort.findAll({
+		// 	where: { tenantId: tenantId, isDeleted: false },
+		// 	attributes: ['id', 'name'],
+		// });
 		const customVariable = await this.getCustomFields(tenantId);
 		const response = [
 			{
 				title: RuleTypes.Cohort,
 				type: CohortRuleDataTypes.DropDown,
-				options: cohortsList,
+				options: [],
 				operators: [RuleOperators.EQUAL],
 			},
 			{
