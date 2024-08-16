@@ -1,3 +1,5 @@
+import CohortMasterModel from '@/models/db/cohortMaster.model';
+import CohortMatrixModel from '@/models/db/cohortMatrix.model';
 import ContentModel from '@/models/db/content.model';
 import CountryModel from '@/models/db/country.model';
 import PermissionModel from '@/models/db/permissions.model';
@@ -11,7 +13,6 @@ import UserVariableMatrixModel from '@/models/db/userVariableMatrix';
 import UserModel from '@/models/db/users.model';
 import { DB_DATABASE, DB_HOST, DB_PASSWORD, DB_PORT, DB_USER } from '@config';
 import Sequelize from 'sequelize';
-import CohortModel from '@/models/db/cohort.model';
 
 export const sequelizeConnect = new Sequelize.Sequelize(DB_DATABASE, DB_USER, DB_PASSWORD, {
 	dialect: 'postgres',
@@ -45,7 +46,8 @@ const DB = {
 	VariableMatrix: UserVariableMatrixModel(sequelizeConnect),
 	Content: ContentModel(sequelizeConnect),
 	UploadedFile: UploadedFileModel(sequelizeConnect),
-	Cohort: CohortModel(sequelizeConnect),
+	CohortMaster: CohortMasterModel(sequelizeConnect),
+	CohortMatrix: CohortMatrixModel(sequelizeConnect),
 	sequelizeConnect, // connection instance (RAW queries)
 	Sequelize, // library
 };

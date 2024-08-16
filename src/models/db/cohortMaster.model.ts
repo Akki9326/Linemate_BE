@@ -1,7 +1,7 @@
 import { DataTypes, Sequelize } from 'sequelize';
 import { AppDB_Common_Fields, AppDBModel } from './app-db.model';
 
-export class CohortModel extends AppDBModel {
+export class CohortMasterModel extends AppDBModel {
 	public id: number;
 	public name: string;
 	public description: string;
@@ -9,8 +9,8 @@ export class CohortModel extends AppDBModel {
 	public tenantId: number;
 }
 
-export default function (sequelize: Sequelize): typeof CohortModel {
-	CohortModel.init(
+export default function (sequelize: Sequelize): typeof CohortMasterModel {
+	CohortMasterModel.init(
 		{
 			...AppDB_Common_Fields,
 			id: {
@@ -37,10 +37,10 @@ export default function (sequelize: Sequelize): typeof CohortModel {
 			},
 		},
 		{
-			tableName: 'cohorts',
+			tableName: 'cohortsMaster',
 			sequelize,
 		},
 	);
 
-	return CohortModel;
+	return CohortMasterModel;
 }
