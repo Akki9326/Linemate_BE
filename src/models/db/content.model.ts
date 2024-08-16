@@ -8,6 +8,7 @@ export class ContentModel extends AppDBModel {
 	public type: string;
 	public description: string;
 	public tenantId: number;
+	public assessmentId: number;
 	public uploadedFileIds: number[];
 	public isPublish: boolean;
 	public isArchive: boolean;
@@ -39,6 +40,10 @@ export default function (sequelize: Sequelize): typeof ContentModel {
 			tenantId: {
 				type: DataTypes.INTEGER,
 				allowNull: false,
+			},
+			assessmentId: {
+				type: DataTypes.INTEGER,
+				allowNull: true,
 			},
 			uploadedFileIds: {
 				type: DataTypes.ARRAY(DataTypes.INTEGER),

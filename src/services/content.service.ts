@@ -8,13 +8,16 @@ import { ContentMessage, TenantMessage } from '@/utils/helpers/app-message.helpe
 import { FileHelper } from '@/utils/helpers/file.helper';
 import S3Services from '@/utils/services/s3.services';
 import { isValid, parse } from 'date-fns';
-import { BelongsTo, Op, WhereOptions } from 'sequelize';
+import { BelongsTo, HasMany, Op, WhereOptions } from 'sequelize';
 import UserService from './user.service';
 
 export class ContentService {
 	private content = DB.Content;
 	private user = DB.Users;
 	private tenant = DB.Tenant;
+	private assessmentMaster = DB.AssessmentMaster;
+	private assessmentMatrix = DB.AssessmentMatrix;
+	private assessmentOption = DB.AssessmentOption;
 	private uploadedFile = DB.UploadedFile;
 	public s3Service = new S3Services();
 	public userService = new UserService();
@@ -181,6 +184,34 @@ export class ContentService {
 				{
 					association: new BelongsTo(this.user, this.content, { as: 'Updater', foreignKey: 'updatedBy' }),
 					attributes: ['id', 'firstName', 'lastName'],
+				},
+				{
+					association: new BelongsTo(this.content, this.assessmentMaster, { as: 'assessment', foreignKey: 'assessmentId' }),
+					attributes: ['id', 'totalQuestion', 'scoring', 'timed', 'pass', 'score'],
+					include: [
+						{
+							association: new BelongsTo(this.assessmentMaster, this.user, { as: 'creator', foreignKey: 'createdBy' }),
+							attributes: ['firstName', 'lastName'],
+						},
+						{
+							association: new BelongsTo(this.assessmentMaster, this.user, { as: 'updater', foreignKey: 'updatedBy' }),
+							attributes: ['firstName', 'lastName'],
+						},
+						{
+							association: new HasMany(this.assessmentMaster, this.assessmentMatrix, { as: 'question', foreignKey: 'assessmentId' }),
+							attributes: ['question', 'type', 'score'],
+							include: [
+								{
+									association: new HasMany(this.assessmentMatrix, this.assessmentOption, { as: 'options', foreignKey: 'questionId' }),
+									attributes: ['id', 'option'],
+								},
+								{
+									association: new BelongsTo(this.assessmentMatrix, this.assessmentOption, { as: 'answer', foreignKey: 'correctAnswer' }),
+									attributes: ['id', 'option'],
+								},
+							],
+						},
+					],
 				},
 			],
 		});

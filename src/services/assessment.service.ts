@@ -1,18 +1,21 @@
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
-import { assessmentMessage, ContentMessage } from '@/utils/helpers/app-message.helper';
+import { assessmentMessage, ContentMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
 import DB from '@databases';
 import { assessmentDto, questionData } from '@/models/dtos/assessment.dto';
 import { BelongsTo, HasMany } from 'sequelize';
 import { AssessmentListRequestDto } from '@/models/dtos/assessment-list.dto';
 import { Op } from 'sequelize';
 import { QuestionType, ScoringType } from '@/models/enums/assessment.enum';
+import { ConteTypes } from '@/models/enums/contentType.enum';
 
 class AssessmentServices {
 	private assessmentMaster = DB.AssessmentMaster;
 	private assessmentMatrix = DB.AssessmentMatrix;
-	private assessmentOption = DB.assessmentOption;
+	private assessmentOption = DB.AssessmentOption;
+	private assessmentSkill = DB.AssessmentSkillMatrix;
 	private content = DB.Content;
+	private tenant = DB.Tenant;
 	private users = DB.Users;
 	constructor() {}
 
@@ -67,14 +70,14 @@ class AssessmentServices {
 		}
 	}
 	public async add(assessmentData: assessmentDto, createdUser: JwtTokenData) {
-		const content = await this.content.findOne({
+		const tenant = await this.tenant.findOne({
 			where: {
-				id: assessmentData.contentId,
+				id: assessmentData.tenantId,
 				isDeleted: false,
 			},
 		});
-		if (!content) {
-			throw new BadRequestException(ContentMessage.contentNotFound);
+		if (!tenant) {
+			throw new BadRequestException(TenantMessage.tenantNotFound);
 		}
 
 		let assessmentId;
@@ -85,7 +88,6 @@ class AssessmentServices {
 			/** create new assessment records  */
 			let assessment = new this.assessmentMaster();
 			assessment.name = assessmentData.name;
-			assessment.contentId = assessmentData.contentId;
 			assessment.description = assessmentData.description;
 			assessment.pass = assessmentData.pass;
 			assessment.createdBy = createdUser.id;
@@ -101,18 +103,33 @@ class AssessmentServices {
 
 			const questionList: questionData[] = assessmentData.questions;
 
+			if (assessmentData.skill.length) {
+				const skills = assessmentData.skill.map(skill => ({
+					skill: skill,
+					assessmentId: assessmentId,
+				}));
+				await this.assessmentSkill.bulkCreate(skills);
+			}
 			/** store assessment question */
 			await this.storeQuestion(questionList, assessmentId);
+			await this.content.create({
+				name: assessmentData.name,
+				type: ConteTypes.Assessment,
+				description: assessmentData.description,
+				tenantId: assessmentData.tenantId,
+				assessmentId,
+			});
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
 		return { id: assessmentId };
 	}
-	public async update(assessmentData: assessmentDto, assessmentId: number, updatedUser: JwtTokenData) {
+	public async update(assessmentData: assessmentDto, contentId: number, updatedUser: JwtTokenData) {
 		const content = await this.content.findOne({
 			where: {
-				id: assessmentData.contentId,
+				id: contentId,
 				isDeleted: false,
+				type: ConteTypes.Assessment,
 			},
 		});
 		if (!content) {
@@ -121,7 +138,7 @@ class AssessmentServices {
 
 		const assessment = await this.assessmentMaster.findOne({
 			where: {
-				id: assessmentId,
+				id: content.assessmentId,
 				isDeleted: false,
 			},
 		});
@@ -131,11 +148,17 @@ class AssessmentServices {
 
 		if (assessmentData.questions) {
 			await this.validateQuestion(assessmentData);
-			await this.storeQuestion(assessmentData.questions, assessmentId);
+			await this.storeQuestion(assessmentData.questions, assessment.id);
 		}
 
+		if (assessmentData.skill.length) {
+			const skills = assessmentData.skill.map(skill => ({
+				skill: skill,
+				assessmentId: content.assessmentId,
+			}));
+			await this.assessmentSkill.bulkCreate(skills);
+		}
 		assessment.name = assessmentData.name;
-		assessment.contentId = assessmentData.contentId;
 		assessment.description = assessmentData.description;
 		assessment.pass = assessmentData.pass;
 		assessment.updatedBy = updatedUser.id;

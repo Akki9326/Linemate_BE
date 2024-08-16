@@ -8,7 +8,6 @@ export class assessmentMasterModel extends AppDBModel {
 	public description: string;
 	public totalQuestion: number;
 	public scoring: ScoringType;
-	public contentId: number;
 	public timed: number;
 	public pass: number;
 	public score: number;
@@ -39,14 +38,6 @@ export default function (sequelize: Sequelize): typeof assessmentMasterModel {
 				type: DataTypes.ENUM,
 				values: Object.values(ScoringType),
 				allowNull: false,
-			},
-			contentId: {
-				type: DataTypes.INTEGER,
-				allowNull: false,
-				references: {
-					model: 'contents',
-					key: 'id',
-				},
 			},
 			timed: {
 				type: DataTypes.INTEGER,

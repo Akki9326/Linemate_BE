@@ -1438,6 +1438,7 @@ paths:
               - totalQuestion
               - score
               - questions
+              - skill
             properties:
               name:
                 type: string
@@ -1487,6 +1488,11 @@ paths:
                     answer:
                       type: string
                       example: "20-30"
+              skill:
+                type: array
+                items:
+                  type: string
+                  example: "new Skill"
       responses:
         201:
           description: Assessment created successfully
@@ -1532,6 +1538,7 @@ paths:
               - totalQuestion
               - score
               - questions
+              - skill
             properties:
               name:
                 type: string
@@ -1581,6 +1588,11 @@ paths:
                     answer:
                       type: string
                       example: "20-30"
+              skill:
+                type: array
+                items:
+                  type: string
+                  example: "new Skill"
       responses:
         '200':
           description: Success

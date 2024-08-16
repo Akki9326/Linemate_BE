@@ -12,6 +12,7 @@ import UserModel from '@/models/db/users.model';
 import AssessmentMasterModel from '@/models/db/assessmentMaster';
 import AssessmentMatrixModel from '@/models/db/assessmentMatrix';
 import AssessmentOptionModel from '@/models/db/assessmentOption';
+import assessmentSkillMatrixModel from '@/models/db/assessmentSkillMatrix';
 import { DB_DATABASE, DB_HOST, DB_PASSWORD, DB_PORT, DB_USER } from '@config';
 import Sequelize from 'sequelize';
 
@@ -49,7 +50,8 @@ const DB = {
 	UploadedFile: UploadedFileModel(sequelizeConnect),
 	AssessmentMaster: AssessmentMasterModel(sequelizeConnect),
 	AssessmentMatrix: AssessmentMatrixModel(sequelizeConnect),
-	assessmentOption: AssessmentOptionModel(sequelizeConnect),
+	AssessmentOption: AssessmentOptionModel(sequelizeConnect),
+	AssessmentSkillMatrix: assessmentSkillMatrixModel(sequelizeConnect),
 
 	sequelizeConnect, // connection instance (RAW queries)
 	Sequelize, // library
