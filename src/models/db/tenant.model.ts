@@ -43,7 +43,7 @@ export default function (sequelize: Sequelize): typeof TenantModel {
 			},
 			companyType: {
 				type: DataTypes.STRING,
-				allowNull: false,
+				allowNull: true,
 			},
 			trademark: {
 				type: DataTypes.STRING,
@@ -59,7 +59,7 @@ export default function (sequelize: Sequelize): typeof TenantModel {
 			},
 			gstNumber: {
 				type: DataTypes.STRING,
-				allowNull: false,
+				allowNull: true,
 			},
 			currencyCode: {
 				type: DataTypes.STRING,

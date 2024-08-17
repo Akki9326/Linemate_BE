@@ -54,6 +54,10 @@ export const assessmentMessage = {
 	scoreIsRequiredInPerQuestion: 'score is required in Per question type scoring',
 	scoreIsRequiredInMaxScoreTypeQuestion: 'score is required in Max question type scoring',
 };
+
+export const CohortMessage = {
+	cohortNotFound: 'cohort not found',
+};
 export const FilterMessage = {
 	filterForNotFound: 'filterFor is required in query params',
 };

@@ -1411,7 +1411,25 @@ paths:
         '401':
           description: Unauthorized if the token is invalid or expired
         '500':
-          description: Internal server error       
+          description: Internal server error      
+  /cohort/v1/rule-options:
+    get:
+      summary: Retrieve rule options
+      tags:
+        - Cohort
+      operationId: getRuleOptions
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: header
+          name: tenantId
+          required: true
+          schema:
+            type: integer
+          description: 'Example : 1'
+      responses:
+        '200':
+          description: Success
 
   /assessment/v1/add:
     post:
@@ -1669,4 +1687,9 @@ tags:
   - name: Assessment
     description: Endpoints for creating and managing assessment.
   - name: Filter
+  - name: Filters
     description: Endpoints for get dynamic filters .
+  - name: File
+    description: Endpoints for upload file .
+  - name: Cohort
+    description: Endpoints for creating cohort and managing users  .

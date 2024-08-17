@@ -22,6 +22,7 @@ import VariableRoute from './routes/variable.route';
 import ContentRoute from './routes/content.route';
 import AssessmentRoute from './routes/assessment.route';
 import FiltersRoute from './routes/filters.route';
+import CohortRoute from './routes/cohort.route';
 
 validateEnv();
 
@@ -37,6 +38,7 @@ const app = new App([
 	new ContentRoute(),
 	new AssessmentRoute(),
 	new FiltersRoute(),
+	new CohortRoute(),
 ]);
 
 app.init();
