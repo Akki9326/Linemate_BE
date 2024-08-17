@@ -11,7 +11,7 @@ import { ConteTypes } from '@/models/enums/contentType.enum';
 
 class AssessmentServices {
 	private assessmentMaster = DB.AssessmentMaster;
-	private assessmentMatrix = DB.AssessmentMatrix;
+	private assessmentQuestionMatrix = DB.AssessmentQuestionMatrix;
 	private assessmentOption = DB.AssessmentOption;
 	private assessmentSkill = DB.AssessmentSkillMatrix;
 	private content = DB.Content;
@@ -56,7 +56,7 @@ class AssessmentServices {
 			questionObj['type'] = questionElement.type;
 			questionObj['assessmentId'] = assessmentId;
 
-			const createQuestion = await this.assessmentMatrix.create(questionObj);
+			const createQuestion = await this.assessmentQuestionMatrix.create(questionObj);
 			let currectAnswerId;
 			const optionsIds = [];
 			for (let i = 0; i < questionElement.options.length; i++) {
@@ -66,7 +66,7 @@ class AssessmentServices {
 					currectAnswerId = option.id;
 				}
 			}
-			await this.assessmentMatrix.update({ correctAnswer: currectAnswerId, optionIds: optionsIds }, { where: { id: createQuestion.id } });
+			await this.assessmentQuestionMatrix.update({ correctAnswer: currectAnswerId, optionIds: optionsIds }, { where: { id: createQuestion.id } });
 		}
 	}
 	public async add(assessmentData: assessmentDto, createdUser: JwtTokenData) {
@@ -187,15 +187,15 @@ class AssessmentServices {
 					attributes: ['firstName', 'lastName'],
 				},
 				{
-					association: new HasMany(this.assessmentMaster, this.assessmentMatrix, { as: 'question', foreignKey: 'assessmentId' }),
+					association: new HasMany(this.assessmentMaster, this.assessmentQuestionMatrix, { as: 'question', foreignKey: 'assessmentId' }),
 					attributes: ['question', 'type', 'score'],
 					include: [
 						{
-							association: new HasMany(this.assessmentMatrix, this.assessmentOption, { as: 'options', foreignKey: 'questionId' }),
+							association: new HasMany(this.assessmentQuestionMatrix, this.assessmentOption, { as: 'options', foreignKey: 'questionId' }),
 							attributes: ['id', 'option'],
 						},
 						{
-							association: new BelongsTo(this.assessmentMatrix, this.assessmentOption, { as: 'answer', foreignKey: 'correctAnswer' }),
+							association: new BelongsTo(this.assessmentQuestionMatrix, this.assessmentOption, { as: 'answer', foreignKey: 'correctAnswer' }),
 							attributes: ['id', 'option'],
 						},
 					],
@@ -223,7 +223,7 @@ class AssessmentServices {
 		assessment.updatedBy = userId;
 
 		await assessment.save();
-		await this.assessmentMatrix.update({ isDeleted: true }, { where: { assessmentId: assessmentId } });
+		await this.assessmentQuestionMatrix.update({ isDeleted: true }, { where: { assessmentId: assessmentId } });
 
 		return { id: assessment.id };
 	}
@@ -267,15 +267,15 @@ class AssessmentServices {
 					attributes: ['firstName', 'lastName'],
 				},
 				{
-					association: new HasMany(this.assessmentMaster, this.assessmentMatrix, { as: 'question', foreignKey: 'assessmentId' }),
+					association: new HasMany(this.assessmentMaster, this.assessmentQuestionMatrix, { as: 'question', foreignKey: 'assessmentId' }),
 					attributes: ['question', 'type', 'score'],
 					include: [
 						{
-							association: new HasMany(this.assessmentMatrix, this.assessmentOption, { as: 'options', foreignKey: 'questionId' }),
+							association: new HasMany(this.assessmentQuestionMatrix, this.assessmentOption, { as: 'options', foreignKey: 'questionId' }),
 							attributes: ['id', 'option'],
 						},
 						{
-							association: new BelongsTo(this.assessmentMatrix, this.assessmentOption, { as: 'answer', foreignKey: 'correctAnswer' }),
+							association: new BelongsTo(this.assessmentQuestionMatrix, this.assessmentOption, { as: 'answer', foreignKey: 'correctAnswer' }),
 							attributes: ['id', 'option'],
 						},
 					],

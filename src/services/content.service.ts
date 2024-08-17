@@ -16,7 +16,7 @@ export class ContentService {
 	private user = DB.Users;
 	private tenant = DB.Tenant;
 	private assessmentMaster = DB.AssessmentMaster;
-	private assessmentMatrix = DB.AssessmentMatrix;
+	private assessmentQuestionMatrix = DB.AssessmentQuestionMatrix;
 	private assessmentOption = DB.AssessmentOption;
 	private uploadedFile = DB.UploadedFile;
 	public s3Service = new S3Services();
@@ -198,15 +198,15 @@ export class ContentService {
 							attributes: ['firstName', 'lastName'],
 						},
 						{
-							association: new HasMany(this.assessmentMaster, this.assessmentMatrix, { as: 'question', foreignKey: 'assessmentId' }),
+							association: new HasMany(this.assessmentMaster, this.assessmentQuestionMatrix, { as: 'question', foreignKey: 'assessmentId' }),
 							attributes: ['question', 'type', 'score'],
 							include: [
 								{
-									association: new HasMany(this.assessmentMatrix, this.assessmentOption, { as: 'options', foreignKey: 'questionId' }),
+									association: new HasMany(this.assessmentQuestionMatrix, this.assessmentOption, { as: 'options', foreignKey: 'questionId' }),
 									attributes: ['id', 'option'],
 								},
 								{
-									association: new BelongsTo(this.assessmentMatrix, this.assessmentOption, { as: 'answer', foreignKey: 'correctAnswer' }),
+									association: new BelongsTo(this.assessmentQuestionMatrix, this.assessmentOption, { as: 'answer', foreignKey: 'correctAnswer' }),
 									attributes: ['id', 'option'],
 								},
 							],

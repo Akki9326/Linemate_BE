@@ -1,7 +1,7 @@
 import { DataTypes, Sequelize } from 'sequelize';
 import { AppDBModel, AppDB_Common_Fields } from './app-db.model';
 
-export class assessmentMatrixModel extends AppDBModel {
+export class assessmentQuestionMatrixModel extends AppDBModel {
 	public id: number;
 	public assessmentId: number;
 	public question: string;
@@ -11,8 +11,8 @@ export class assessmentMatrixModel extends AppDBModel {
 	public type: string;
 }
 
-export default function (sequelize: Sequelize): typeof assessmentMatrixModel {
-	assessmentMatrixModel.init(
+export default function (sequelize: Sequelize): typeof assessmentQuestionMatrixModel {
+	assessmentQuestionMatrixModel.init(
 		{
 			...AppDB_Common_Fields,
 			id: {
@@ -54,10 +54,10 @@ export default function (sequelize: Sequelize): typeof assessmentMatrixModel {
 			},
 		},
 		{
-			tableName: 'assessmentMatrix',
+			tableName: 'assessmentQuestionMatrix',
 			sequelize,
 		},
 	);
 
-	return assessmentMatrixModel;
+	return assessmentQuestionMatrixModel;
 }

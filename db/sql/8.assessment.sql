@@ -15,7 +15,7 @@ CREATE TABLE "assessmentMaster" (
     "pass" INTEGER NOT NULL
 );
 
-CREATE TABLE "assessmentMatrix" (
+CREATE TABLE "assessmentQuestionMatrix" (
     id SERIAL PRIMARY KEY,
     "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP,

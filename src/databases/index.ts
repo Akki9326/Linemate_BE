@@ -12,7 +12,7 @@ import UserVariableMasterModel from '@/models/db/userVariableMaster';
 import UserVariableMatrixModel from '@/models/db/userVariableMatrix';
 import UserModel from '@/models/db/users.model';
 import AssessmentMasterModel from '@/models/db/assessmentMaster';
-import AssessmentMatrixModel from '@/models/db/assessmentMatrix';
+import AssessmentQuestionMatrix from '@/models/db/assessmentQuestionMatrix';
 import AssessmentOptionModel from '@/models/db/assessmentOption';
 import assessmentSkillMatrixModel from '@/models/db/assessmentSkillMatrix';
 import { DB_DATABASE, DB_HOST, DB_PASSWORD, DB_PORT, DB_USER } from '@config';
@@ -51,7 +51,7 @@ const DB = {
 	Content: ContentModel(sequelizeConnect),
 	UploadedFile: UploadedFileModel(sequelizeConnect),
 	AssessmentMaster: AssessmentMasterModel(sequelizeConnect),
-	AssessmentMatrix: AssessmentMatrixModel(sequelizeConnect),
+	AssessmentQuestionMatrix: AssessmentQuestionMatrix(sequelizeConnect),
 	AssessmentOption: AssessmentOptionModel(sequelizeConnect),
 	AssessmentSkillMatrix: assessmentSkillMatrixModel(sequelizeConnect),
 	CohortMaster: CohortMasterModel(sequelizeConnect),
