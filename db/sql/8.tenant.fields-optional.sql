@@ -1,0 +1,3 @@
+ALTER TABLE tenant
+ALTER COLUMN "companyType" DROP NOT NULL,
+ALTER COLUMN "gstNumber" DROP NOT NULL;

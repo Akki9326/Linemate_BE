@@ -1,3 +1,5 @@
+import CohortMasterModel from '@/models/db/cohortMaster.model';
+import CohortMatrixModel from '@/models/db/cohortMatrix.model';
 import ContentModel from '@/models/db/content.model';
 import CountryModel from '@/models/db/country.model';
 import PermissionModel from '@/models/db/permissions.model';
@@ -44,6 +46,8 @@ const DB = {
 	VariableMatrix: UserVariableMatrixModel(sequelizeConnect),
 	Content: ContentModel(sequelizeConnect),
 	UploadedFile: UploadedFileModel(sequelizeConnect),
+	CohortMaster: CohortMasterModel(sequelizeConnect),
+	CohortMatrix: CohortMatrixModel(sequelizeConnect),
 	sequelizeConnect, // connection instance (RAW queries)
 	Sequelize, // library
 };

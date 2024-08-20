@@ -21,6 +21,7 @@ import CountryRoute from './routes/country.route';
 import VariableRoute from './routes/variable.route';
 import ContentRoute from './routes/content.route';
 import FiltersRoute from './routes/filters.route';
+import CohortRoute from './routes/cohort.route';
 
 validateEnv();
 
@@ -35,6 +36,7 @@ const app = new App([
 	new VariableRoute(),
 	new ContentRoute(),
 	new FiltersRoute(),
+	new CohortRoute(),
 ]);
 
 app.init();

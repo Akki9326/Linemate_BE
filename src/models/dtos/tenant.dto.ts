@@ -6,7 +6,7 @@ export class TenantDto {
 	public name: string;
 
 	@IsString()
-	@IsNotEmpty()
+	@IsOptional()
 	public companyType: string;
 
 	@IsString()
@@ -27,7 +27,7 @@ export class TenantDto {
 	public phoneNumber: number;
 
 	@IsString()
-	@IsNotEmpty()
+	@IsOptional()
 	public gstNumber: string;
 
 	@IsString()
