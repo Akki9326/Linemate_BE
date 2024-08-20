@@ -14,7 +14,7 @@ export enum FileMimeType {
 	gif = 'gif',
 	svg = 'svg',
 	webp = 'webp',
-	xlx = 'xlx',
+	xls = 'application/vnd.ms-excel',
 	mp4 = 'mp4',
 	mov = 'mov',
 	zip = 'zip',
@@ -23,4 +23,5 @@ export enum FileMimeType {
 	doc = 'application/msword',
 	xlsx = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 	ppt = 'application/vnd.ms-powerpoint',
+	pptx = 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
 }
