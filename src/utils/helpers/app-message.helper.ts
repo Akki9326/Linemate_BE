@@ -17,7 +17,7 @@ export const AppMessages = {
 	maxAdmin: 'Max admin allowed for admin users.',
 	wrongOldPassword: 'Old password not valid.',
 	invalidPayload: 'Invalid req data from req.',
-	invalidFileType: `Invalid file extension type. type must be valid for : ${[...Object.values(FileMimeType)]}`,
+	invalidFileType: `Invalid file extension type. type must be valid for : ${[...Object.keys(FileMimeType)]}`,
 };
 
 export const RoleMessage = {
