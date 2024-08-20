@@ -3,7 +3,7 @@ import { BadRequestException } from '@/exceptions/BadRequestException';
 import { NotFoundException } from '@/exceptions/NotFoundException';
 import { TenantDto } from '@/models/dtos/tenant.dto';
 import { SortOrder } from '@/models/enums/sort-order.enum';
-import { Op } from 'sequelize';
+import { BelongsTo, Op } from 'sequelize';
 import S3Services from '@/utils/services/s3.services';
 import { TenantListRequestDto } from '@/models/dtos/tenant-list.dto';
 import { insertDefaultRoles } from '@/utils/helpers/default.role.helper';
@@ -121,10 +121,10 @@ export class TenantService {
 	}
 
 	public async list(pageModel: TenantListRequestDto, userId: number) {
-		const page = pageModel.page || 1,
-			limit = pageModel.limit || 10,
-			sortField = pageModel.sortField || 'id',
+		const sortField = pageModel.sortField || 'id',
 			sortOrder = pageModel.sortOrder || SortOrder.ASC;
+
+		const isPaginationEnabled = pageModel.page && pageModel.limit;
 
 		const user = await this.users.findOne({
 			where: {
@@ -159,8 +159,17 @@ export class TenantService {
 					},
 					distinct: true,
 					order: [[sortField, sortOrder]],
-					limit: limit,
-					offset: (page - 1) * limit,
+					...(isPaginationEnabled && { limit: pageModel.limit, offset: (pageModel.page - 1) * pageModel.limit }), // Apply pagination if enabled
+					include: [
+						{
+							association: new BelongsTo(this.users, this.tenantModel, { as: 'Creator', foreignKey: 'createdBy' }),
+							attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
+						},
+						{
+							association: new BelongsTo(this.users, this.tenantModel, { as: 'Updater', foreignKey: 'updatedBy' }),
+							attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
+						},
+					],
 				});
 			}
 		} else {
@@ -172,8 +181,17 @@ export class TenantService {
 				},
 				distinct: true,
 				order: [[sortField, sortOrder]],
-				limit: limit,
-				offset: (page - 1) * limit,
+				...(isPaginationEnabled && { limit: pageModel.limit, offset: (pageModel.page - 1) * pageModel.limit }), // Apply pagination if enabled
+				include: [
+					{
+						association: new BelongsTo(this.users, this.tenantModel, { as: 'Creator', foreignKey: 'createdBy' }),
+						attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
+					},
+					{
+						association: new BelongsTo(this.users, this.tenantModel, { as: 'Updater', foreignKey: 'updatedBy' }),
+						attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
+					},
+				],
 			});
 		}
 
