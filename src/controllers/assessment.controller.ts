@@ -21,10 +21,10 @@ class AssessmentController {
 	};
 	public update = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
-			const contentId = parseInt(req.params.id);
+			const assessmentId = parseInt(req.params.id);
 			const validateData: assessmentDto = req.body;
 			const updatedBy = req.user as JwtTokenData;
-			const assessmentResponse = await this.AssessmentServices.update(validateData, contentId, updatedBy);
+			const assessmentResponse = await this.AssessmentServices.update(validateData, assessmentId, updatedBy);
 			AppResponseHelper.sendSuccess(res, 'Success', assessmentResponse);
 		} catch (ex) {
 			next(ex);

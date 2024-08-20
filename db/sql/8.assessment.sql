@@ -43,7 +43,7 @@ CREATE TABLE "assessmentOption" (
     "option" TEXT NOT NULL
 );
 
-CREATE TABLE "assessmentSkillMatrix" (
+CREATE TABLE "skillMatrix" (
     id SERIAL PRIMARY KEY,
     "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP,
@@ -51,6 +51,6 @@ CREATE TABLE "assessmentSkillMatrix" (
     "updatedBy" INTEGER,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "isDeleted" BOOLEAN NOT NULL DEFAULT false,
-    "assessmentId" INTEGER NOT NULL,
+    "contentId" INTEGER NOT NULL,
     "skill" TEXT NOT NULL
 );

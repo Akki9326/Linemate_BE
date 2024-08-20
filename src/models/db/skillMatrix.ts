@@ -1,14 +1,14 @@
 import { DataTypes, Sequelize } from 'sequelize';
 import { AppDBModel, AppDB_Common_Fields } from './app-db.model';
 
-export class assessmentSkillMatrixModel extends AppDBModel {
+export class skillMatrixModel extends AppDBModel {
 	public id: number;
-	public assessmentId: number;
+	public contentId: number;
 	public skill: string;
 }
 
-export default function (sequelize: Sequelize): typeof assessmentSkillMatrixModel {
-	assessmentSkillMatrixModel.init(
+export default function (sequelize: Sequelize): typeof skillMatrixModel {
+	skillMatrixModel.init(
 		{
 			...AppDB_Common_Fields,
 			id: {
@@ -16,7 +16,7 @@ export default function (sequelize: Sequelize): typeof assessmentSkillMatrixMode
 				primaryKey: true,
 				type: DataTypes.INTEGER,
 			},
-			assessmentId: {
+			contentId: {
 				type: DataTypes.INTEGER,
 				allowNull: false,
 			},
@@ -26,10 +26,10 @@ export default function (sequelize: Sequelize): typeof assessmentSkillMatrixMode
 			},
 		},
 		{
-			tableName: 'assessmentSkillMatrix',
+			tableName: 'skillMatrix',
 			sequelize,
 		},
 	);
 
-	return assessmentSkillMatrixModel;
+	return skillMatrixModel;
 }

@@ -13,7 +13,7 @@ class AssessmentServices {
 	private assessmentMaster = DB.AssessmentMaster;
 	private assessmentQuestionMatrix = DB.AssessmentQuestionMatrix;
 	private assessmentOption = DB.AssessmentOption;
-	private assessmentSkill = DB.AssessmentSkillMatrix;
+	private skillMatrix = DB.SkillMatrix;
 	private content = DB.Content;
 	private tenant = DB.Tenant;
 	private users = DB.Users;
@@ -103,31 +103,31 @@ class AssessmentServices {
 
 			const questionList: questionData[] = assessmentData.questions;
 
-			if (assessmentData.skill.length) {
-				const skills = assessmentData.skill.map(skill => ({
-					skill: skill,
-					assessmentId: assessmentId,
-				}));
-				await this.assessmentSkill.bulkCreate(skills);
-			}
 			/** store assessment question */
 			await this.storeQuestion(questionList, assessmentId);
-			await this.content.create({
+			const content = await this.content.create({
 				name: assessmentData.name,
 				type: ConteTypes.Assessment,
 				description: assessmentData.description,
 				tenantId: assessmentData.tenantId,
 				assessmentId,
 			});
+			if (assessmentData.skill.length) {
+				const skills = assessmentData.skill.map(skill => ({
+					skill: skill,
+					contentId: content.id,
+				}));
+				await this.skillMatrix.bulkCreate(skills);
+			}
 		} catch (error) {
 			throw new BadRequestException(error.message);
 		}
 		return { id: assessmentId };
 	}
-	public async update(assessmentData: assessmentDto, contentId: number, updatedUser: JwtTokenData) {
+	public async update(assessmentData: assessmentDto, assessmentId: number, updatedUser: JwtTokenData) {
 		const content = await this.content.findOne({
 			where: {
-				id: contentId,
+				assessmentId: assessmentId,
 				isDeleted: false,
 				type: ConteTypes.Assessment,
 			},
@@ -138,7 +138,7 @@ class AssessmentServices {
 
 		const assessment = await this.assessmentMaster.findOne({
 			where: {
-				id: content.assessmentId,
+				id: assessmentId,
 				isDeleted: false,
 			},
 		});
@@ -154,9 +154,9 @@ class AssessmentServices {
 		if (assessmentData.skill.length) {
 			const skills = assessmentData.skill.map(skill => ({
 				skill: skill,
-				assessmentId: content.assessmentId,
+				contentId: content.id,
 			}));
-			await this.assessmentSkill.bulkCreate(skills);
+			await this.skillMatrix.bulkCreate(skills);
 		}
 		assessment.name = assessmentData.name;
 		assessment.description = assessmentData.description;
