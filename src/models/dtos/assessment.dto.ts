@@ -4,6 +4,7 @@ import { Type } from 'class-transformer';
 
 export class questionData {
 	@IsString()
+	@IsNotEmpty()
 	public question: string;
 
 	@IsEnum(QuestionType)
@@ -13,7 +14,7 @@ export class questionData {
 	public options: string[];
 
 	@IsString()
-	@IsOptional()
+	@IsNotEmpty()
 	public answer: string;
 
 	@IsNumber()

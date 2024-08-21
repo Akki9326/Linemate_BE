@@ -22,29 +22,39 @@ class AssessmentServices {
 	private async validateQuestion(assessmentData: assessmentDto) {
 		const questions: questionData[] = assessmentData.questions;
 
-		for (const questionElement of questions) {
+		if (assessmentData.totalQuestion !== questions.length) {
+			throw new BadRequestException(assessmentMessage.questionIsMissing);
+		}
+
+		for (let i = 0; i < questions.length; i++) {
+			const questionElement = questions[i];
+
 			if (assessmentData.scoring == ScoringType.PerQuestion) {
 				if (!questionElement.score) {
-					throw new BadRequestException(assessmentMessage.scoreIsRequiredInPerQuestion);
+					throw new BadRequestException(`question.${i}.` + `${assessmentMessage.scoreIsRequiredInPerQuestion}`);
 				}
 			}
 
 			if (assessmentData.scoring == ScoringType.MaxScore) {
 				if (!assessmentData.score) {
-					throw new BadRequestException(assessmentMessage.scoreIsRequiredInMaxScoreTypeQuestion);
+					throw new BadRequestException(`question.${i}.` + `${assessmentMessage.scoreIsRequiredInMaxScoreTypeQuestion}`);
 				}
 			}
 
 			if (questionElement.type == QuestionType.SingleSelect) {
 				if (!questionElement.answer) {
-					throw new BadRequestException(assessmentMessage.correctAnswerIsRequired);
+					throw new BadRequestException(`question.${i}.` + `${assessmentMessage.correctAnswerIsRequired}`);
 				}
 			}
 
 			if (questionElement.answer) {
 				if (!questionElement.options.includes(questionElement.answer)) {
-					throw new BadRequestException(assessmentMessage.correctAnswerIsNotInOptions);
+					throw new BadRequestException(`question.${i}.` + `${assessmentMessage.correctAnswerIsNotInOptions}`);
 				}
+			}
+
+			if (!questionElement.options.length) {
+				throw new BadRequestException(`question.${i}.` + `${assessmentMessage.optiopnIsMissing}`);
 			}
 		}
 	}
@@ -112,7 +122,8 @@ class AssessmentServices {
 				tenantId: assessmentData.tenantId,
 				assessmentId,
 			});
-			if (assessmentData.skill.length) {
+
+			if (assessmentData.skill && assessmentData.skill.length) {
 				const skills = assessmentData.skill.map(skill => ({
 					skill: skill,
 					contentId: content.id,
@@ -174,10 +185,6 @@ class AssessmentServices {
 			where: { id: assessmentId, isDeleted: false },
 			attributes: ['name', 'description', 'totalQuestion', 'scoring', 'id'],
 			include: [
-				{
-					association: new BelongsTo(this.assessmentMaster, this.content, { as: 'content', foreignKey: 'contentId' }),
-					attributes: ['name', 'description', 'type'],
-				},
 				{
 					association: new BelongsTo(this.assessmentMaster, this.users, { as: 'creator', foreignKey: 'createdBy' }),
 					attributes: ['firstName', 'lastName'],
@@ -255,10 +262,6 @@ class AssessmentServices {
 			attributes: ['id', 'name', 'description', 'totalQuestion', 'scoring', 'pass'],
 			include: [
 				{
-					association: new BelongsTo(this.assessmentMaster, this.content, { as: 'content', foreignKey: 'contentId' }),
-					attributes: ['name', 'description', 'type'],
-				},
-				{
 					association: new BelongsTo(this.assessmentMaster, this.users, { as: 'creator', foreignKey: 'createdBy' }),
 					attributes: ['firstName', 'lastName'],
 				},
@@ -281,6 +284,7 @@ class AssessmentServices {
 					],
 				},
 			],
+			distinct: true,
 			order: [[orderByField, sortDirection]],
 		});
 		return assessmentList;

@@ -1,8 +1,8 @@
 export enum ConteTypes {
 	PDF = 'PDF',
-	Video = 'Video',
-	Document = 'Document',
-	PowerPoint = 'PowerPoint',
-	Scorm = 'Scorm',
-	Assessment = 'Assessment',
+	Video = 'video',
+	Document = 'document',
+	PowerPoint = 'powerPoint',
+	Scorm = 'scorm',
+	Assessment = 'assessment',
 }

@@ -5,7 +5,7 @@ DROP CONSTRAINT contents_type_check;  -- Replace with your actual constraint nam
 -- Step 2: Add the new CHECK constraint
 ALTER TABLE "contents"
 ADD CONSTRAINT contents_type_check 
-CHECK (type IN ('PDF', 'Document', 'Video', 'PowerPoint', 'Scorm', 'Assessment'));
+CHECK (type IN ('PDF', 'document', 'video', 'powerPoint', 'scorm', 'assessment'));
 
 -- Step 3: Add the new column assessmentId
 ALTER TABLE "contents" 

@@ -1483,6 +1483,7 @@ paths:
               scoring:
                 type: string
                 example: "max score"
+                enum: [max score, per question, no score]
               totalQuestion:
                 type: integer
                 example: 10
