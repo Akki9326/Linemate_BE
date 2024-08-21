@@ -1213,6 +1213,13 @@ paths:
                 example: Access Portal
               type:
                 type: string
+                enum:
+                  - PDF
+                  - Video
+                  - Document
+                  - PowerPoint
+                  - Scorm
+                  - Assessment
                 example: PDF
               description:
                 type: string

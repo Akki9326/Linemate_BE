@@ -310,6 +310,9 @@ export default class AuthService {
 	public async validateMimeType(mimetype: string) {
 		const allowedExtensions = [...Object.values(FileMimeType)];
 
+		if (allowedExtensions.includes(mimetype as FileMimeType)) {
+			return true;
+		}
 		// Split the MIME type into its components
 		const mimeTypeParts = mimetype.split('/')[1];
 		const subTypeParts = mimeTypeParts.split('.');
