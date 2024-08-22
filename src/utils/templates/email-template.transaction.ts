@@ -5,13 +5,23 @@ export class EmailTemplates extends EmailTemplateBase {
 		return this.template(`Your OTP is ${otp}`);
 	}
 
-	static accountActivationEmail(companyName: string, userName: string, createdBy: string, emailAddress: string, password, loginLink: string) {
+	static accountActivationEmail(companyName: string, userName: string, createdBy: string, emailAddress: string, password: string, loginLink: string) {
 		const email = `<p>Dear ${userName},<br><br>${createdBy} has invited you to join the learning academy at ${companyName}. Your account details are as follows:<br>
     Username: ${emailAddress}<br>
     Password: ${password}<br><br>
     Please click on the button below to log in:</p>
     <p><a href="${loginLink}">Login</a></p>
     <p>Thanks and Regards,<br>${companyName} Team</p>
+`;
+		return this.template(email);
+	}
+	static chiefAdminAccountActivationEmail(userName: string, createdBy: string, emailAddress: string, password: string, loginLink: string) {
+		const email = `<p>Dear ${userName},<br><br>${createdBy} has invited you to join the learning academy. Your account details are as follows:<br>
+    Username: ${emailAddress}<br>
+    Password: ${password}<br><br>
+    Please click on the button below to log in:</p>
+    <p><a href="${loginLink}">Login</a></p>
+    <p>Thanks and Regards,<br>Linemate Team</p>
 `;
 		return this.template(email);
 	}
@@ -30,6 +40,9 @@ export class EmailTemplates extends EmailTemplateBase {
 export class EmailSubjects {
 	static async accountActivationSubject(companyName: string) {
 		return `Welcome to ${companyName}`;
+	}
+	static async chiefAdminAccountActivationSubject() {
+		return `Welcome to Linemate`;
 	}
 	static resetPasswordEmailSubject = `Reset Your Linemate Account Password`;
 }
