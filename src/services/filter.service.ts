@@ -3,6 +3,7 @@ import moment from 'moment';
 import VariableServices from './variable.service';
 import { FilterMessage } from '@/utils/helpers/app-message.helper';
 import { FilterResponse } from '@/models/interfaces/filter.interface';
+import { BadRequestException } from '@/exceptions/BadRequestException';
 
 export class FilterService {
 	private variableServices = new VariableServices();
@@ -32,7 +33,7 @@ export class FilterService {
 
 		const filterConfig = commonFilterConfig.find(config => config.filterFor === filterFor);
 		if (!filterConfig) {
-			throw new Error(`Invalid filterFor value: ${filterFor}`);
+			throw new BadRequestException(`Invalid filterFor value: ${filterFor}`);
 		}
 
 		for (const field of filterConfig.filterFields) {
@@ -63,7 +64,7 @@ export class FilterService {
 
 	public async list(tenantId: number, filterFor: FilterFor) {
 		if (!filterFor) {
-			throw new Error(FilterMessage.filterForNotFound);
+			throw new BadRequestException(FilterMessage.filterForNotFound);
 		}
 		return await this.generateFilterResponse(tenantId, filterFor);
 	}
