@@ -1,5 +1,5 @@
 import { AssessmentListRequestDto } from '@/models/dtos/assessment-list.dto';
-import { assessmentDto } from '@/models/dtos/assessment.dto';
+import { assessmentDto, questionData } from '@/models/dtos/assessment.dto';
 import { RequestWithUser } from '@/models/interfaces/auth.interface';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import AssessmentServices from '@/services/assessment.service';
@@ -53,6 +53,16 @@ class AssessmentController {
 		try {
 			const pageModel = req.body as AssessmentListRequestDto;
 			const assessmentResponse = await this.AssessmentServices.all(pageModel);
+			AppResponseHelper.sendSuccess(res, 'Success', assessmentResponse);
+		} catch (ex) {
+			next(ex);
+		}
+	};
+	public uploadQuestion = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const assessmentId = parseInt(req.params.id);
+			const questionData: questionData[] = req.body.questions;
+			const assessmentResponse = await this.AssessmentServices.uploadQuestion(assessmentId, questionData);
 			AppResponseHelper.sendSuccess(res, 'Success', assessmentResponse);
 		} catch (ex) {
 			next(ex);

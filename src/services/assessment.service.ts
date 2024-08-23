@@ -21,7 +21,6 @@ class AssessmentServices {
 
 	private async validateQuestion(assessmentData: assessmentDto) {
 		const questions: questionData[] = assessmentData.questions;
-
 		if (assessmentData.totalQuestion !== questions.length) {
 			throw new BadRequestException(assessmentMessage.questionIsMissing);
 		}
@@ -288,6 +287,24 @@ class AssessmentServices {
 			order: [[orderByField, sortDirection]],
 		});
 		return assessmentList;
+	}
+	public async uploadQuestion(assessmentId: number, questionData: questionData[]) {
+		const assessment = await this.assessmentMaster.findOne({
+			where: {
+				id: assessmentId,
+				isDeleted: false,
+			},
+			raw: true,
+		});
+		if (!assessment) {
+			throw new BadRequestException(assessmentMessage.assessmentNotFound);
+		}
+		const assessmentData = {
+			...assessment,
+			questions: questionData,
+		};
+		await this.validateQuestion(assessmentData);
+		await this.storeQuestion(questionData, assessmentId);
 	}
 }
 

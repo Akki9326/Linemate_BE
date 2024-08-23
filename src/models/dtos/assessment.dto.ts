@@ -58,3 +58,10 @@ export class assessmentDto {
 	@Type(() => questionData)
 	public questions: questionData[];
 }
+
+export class questionsBank {
+	@IsArray()
+	@ValidateNested({ each: true })
+	@Type(() => questionData)
+	public questions: questionData[];
+}

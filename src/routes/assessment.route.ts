@@ -1,7 +1,7 @@
 import AssessmentController from '@/controllers/assessment.controller';
 import authMiddleware from '@/middlewares/auth.middleware';
 import validationMiddleware from '@/middlewares/validation.middleware';
-import { assessmentDto } from '@/models/dtos/assessment.dto';
+import { assessmentDto, questionsBank } from '@/models/dtos/assessment.dto';
 import { Routes } from '@/models/interfaces/routes.interface';
 import { Router } from 'express';
 
@@ -20,6 +20,7 @@ class AssessmentRoute implements Routes {
 		this.router.get(`${this.path}/v1/:id`, authMiddleware, this.assessmentController.one);
 		this.router.delete(`${this.path}/v1/:id`, authMiddleware, this.assessmentController.delete);
 		this.router.post(`${this.path}/v1/list`, authMiddleware, this.assessmentController.list);
+		this.router.post(`${this.path}/v1/upload-question/:id`, validationMiddleware(questionsBank, 'body'), this.assessmentController.uploadQuestion);
 	}
 }
 
