@@ -16,6 +16,10 @@ export class CohortDto {
 	@IsNumber()
 	@IsNotEmpty()
 	public tenantId: number;
+
+	@IsArray()
+	@IsOptional()
+	public rules: object[];
 }
 
 export class AssignCohort {

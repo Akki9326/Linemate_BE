@@ -1437,6 +1437,113 @@ paths:
       responses:
         '200':
           description: Success
+  /cohort/v1/add:
+    post:
+      summary: Create a new cohort
+      tags:
+        - Cohort
+      operationId: addCohort
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              tenantId:
+                type: integer
+                description: ID of the tenant
+                example: 1
+              name:
+                type: string
+                description: Name of the cohort
+                example: "test cohort"
+              userIds:
+                type: array
+                description: List of user IDs to be added to the cohort
+                items:
+                  type: integer
+                example: [2, 3]
+              rules:
+                type: array
+                description: Rules for the cohort
+                items:
+                  type: object
+                  properties:
+                    and:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          or:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                title:
+                                  type: string
+                                  example: "cohort"
+                                operators:
+                                  type: string
+                                  example: "EQUAL"
+                                value:
+                                  type: string
+                                  example: "1"
+                            required:
+                              - title
+                              - operators
+                              - value
+            required:
+              - tenantId
+              - name
+              - userIds
+              - rules
+      responses:
+        '200':
+          description: Cohort added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      name:
+                        type: string
+                        example: "test cohort"
+                      tenantId:
+                        type: integer
+                        example: 1
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: "2024-08-23T11:16:47.590Z"
+                  message:
+                    type: string
+                    example: "Cohort created successfully"
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Invalid input data"
+
 
   /assessment/v1/add:
     post:

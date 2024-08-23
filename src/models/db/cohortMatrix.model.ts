@@ -1,10 +1,12 @@
 import { DataTypes, Sequelize } from 'sequelize';
 import { AppDB_Common_Fields, AppDBModel } from './app-db.model';
+import { UserModel } from './users.model';
+import { CohortMasterModel } from './cohortMaster.model';
 
 export class CohortMatrixModel extends AppDBModel {
 	public id: number;
 	public userId: string;
-	public cohortId: string;
+	public cohortId: number;
 }
 
 export default function (sequelize: Sequelize): typeof CohortMatrixModel {
@@ -40,6 +42,10 @@ export default function (sequelize: Sequelize): typeof CohortMatrixModel {
 			sequelize,
 		},
 	);
+	CohortMatrixModel.belongsTo(UserModel, { foreignKey: 'userId' });
+	UserModel.hasMany(CohortMatrixModel, { foreignKey: 'userId' });
 
+	CohortMatrixModel.belongsTo(CohortMasterModel, { foreignKey: 'cohortId' });
+	CohortMasterModel.hasMany(CohortMatrixModel, { foreignKey: 'cohortId', as: 'userMatrix' });
 	return CohortMatrixModel;
 }
