@@ -12,4 +12,5 @@ export enum RuleOperators {
 	BETWEEN = 'BETWEEN',
 	LESS_THAN = 'LESS_THAN',
 	GREATER_THAN = 'GREATER_THAN',
+	NOTEQUAL = 'NOTEQUAL',
 }

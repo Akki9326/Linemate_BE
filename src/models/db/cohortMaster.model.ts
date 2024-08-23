@@ -5,7 +5,7 @@ export class CohortMasterModel extends AppDBModel {
 	public id: number;
 	public name: string;
 	public description: string;
-	public userIds: number[];
+	public rules: object[];
 	public tenantId: number;
 }
 
@@ -22,11 +22,6 @@ export default function (sequelize: Sequelize): typeof CohortMasterModel {
 				allowNull: false,
 				type: DataTypes.STRING,
 			},
-			userIds: {
-				type: DataTypes.ARRAY(DataTypes.INTEGER),
-				allowNull: false,
-				defaultValue: [],
-			},
 			description: {
 				allowNull: true,
 				type: DataTypes.STRING,
@@ -34,6 +29,10 @@ export default function (sequelize: Sequelize): typeof CohortMasterModel {
 			tenantId: {
 				type: DataTypes.INTEGER,
 				allowNull: false,
+			},
+			rules: {
+				type: DataTypes.JSONB,
+				allowNull: true,
 			},
 		},
 		{
