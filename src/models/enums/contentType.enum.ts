@@ -4,4 +4,5 @@ export enum ConteTypes {
 	Document = 'document',
 	PowerPoint = 'powerPoint',
 	Scorm = 'scorm',
+	Assessment = 'assessment',
 }

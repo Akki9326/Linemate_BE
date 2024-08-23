@@ -20,6 +20,7 @@ import TenantRoute from './routes/tenant.route';
 import CountryRoute from './routes/country.route';
 import VariableRoute from './routes/variable.route';
 import ContentRoute from './routes/content.route';
+import AssessmentRoute from './routes/assessment.route';
 import FiltersRoute from './routes/filters.route';
 import CohortRoute from './routes/cohort.route';
 
@@ -35,6 +36,7 @@ const app = new App([
 	new CountryRoute(),
 	new VariableRoute(),
 	new ContentRoute(),
+	new AssessmentRoute(),
 	new FiltersRoute(),
 	new CohortRoute(),
 ]);

@@ -11,6 +11,10 @@ import UserTokenModel from '@/models/db/userToken.model';
 import UserVariableMasterModel from '@/models/db/userVariableMaster';
 import UserVariableMatrixModel from '@/models/db/userVariableMatrix';
 import UserModel from '@/models/db/users.model';
+import AssessmentMasterModel from '@/models/db/assessmentMaster';
+import AssessmentQuestionMatrix from '@/models/db/assessmentQuestionMatrix';
+import AssessmentOptionModel from '@/models/db/assessmentOption';
+import SkillMatrixModel from '@/models/db/skillMatrix';
 import { DB_DATABASE, DB_HOST, DB_PASSWORD, DB_PORT, DB_USER } from '@config';
 import Sequelize from 'sequelize';
 
@@ -46,6 +50,10 @@ const DB = {
 	VariableMatrix: UserVariableMatrixModel(sequelizeConnect),
 	Content: ContentModel(sequelizeConnect),
 	UploadedFile: UploadedFileModel(sequelizeConnect),
+	AssessmentMaster: AssessmentMasterModel(sequelizeConnect),
+	AssessmentQuestionMatrix: AssessmentQuestionMatrix(sequelizeConnect),
+	AssessmentOption: AssessmentOptionModel(sequelizeConnect),
+	SkillMatrix: SkillMatrixModel(sequelizeConnect),
 	CohortMaster: CohortMasterModel(sequelizeConnect),
 	CohortMatrix: CohortMatrixModel(sequelizeConnect),
 	sequelizeConnect, // connection instance (RAW queries)
