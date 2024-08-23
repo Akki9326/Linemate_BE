@@ -46,6 +46,17 @@ export const CommonMessage = {
 export const ContentMessage = {
 	contentNotFound: 'content not found',
 };
+
+export const assessmentMessage = {
+	assessmentNotFound: 'assessment not found',
+	correctAnswerIsRequired: 'correct answer is required',
+	correctAnswerIsNotInOptions: 'correct answer is should be in options',
+	scoreIsRequiredInPerQuestion: 'score is required in Per question type scoring',
+	scoreIsRequiredInMaxScoreTypeQuestion: 'score is required in Max question type scoring',
+	questionIsMissing: 'question is missing',
+	optiopnIsMissing: 'option is missing',
+};
+
 export const CohortMessage = {
 	cohortNotFound: 'cohort not found',
 };
