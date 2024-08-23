@@ -53,6 +53,17 @@ class UserService {
 			}),
 		);
 	}
+	public async sendChiefAdminAccountActivationEmail(userData, temporaryPassword: string, createdUser: JwtTokenData) {
+		const emailSubject = await EmailSubjects.chiefAdminAccountActivationSubject();
+		const emailBody = EmailTemplates.chiefAdminAccountActivationEmail(
+			userData.firstName,
+			createdUser.firstName,
+			userData.email,
+			temporaryPassword,
+			FRONTEND_URL,
+		);
+		await Email.sendEmail(userData.email, emailSubject, emailBody);
+	}
 	public async addAdmin(userData: User) {
 		let user = await this.users.findOne({
 			where: {
@@ -162,16 +173,18 @@ class UserService {
 		}
 	}
 	private async addTenantVariables(tenantVariables: TenantVariables[], userId: number) {
-		tenantVariables.forEach(async tenant => {
-			tenant.variables.forEach(async variable => {
-				const variableListMatrix = new this.variableMatrix();
-				variableListMatrix.tenantId = tenant.tenantId;
-				(variableListMatrix.userId = userId), (variableListMatrix.variableId = variable.variableId);
-				variableListMatrix.value = variable.value;
-				variableListMatrix.createdBy = userId;
-				await variableListMatrix.save();
+		tenantVariables.length &&
+			tenantVariables.forEach(async tenant => {
+				tenant.variables.length &&
+					tenant.variables.forEach(async variable => {
+						const variableListMatrix = new this.variableMatrix();
+						variableListMatrix.tenantId = tenant.tenantId;
+						(variableListMatrix.userId = userId), (variableListMatrix.variableId = variable.variableId);
+						variableListMatrix.value = variable.value;
+						variableListMatrix.createdBy = userId;
+						await variableListMatrix.save();
+					});
 			});
-		});
 	}
 	private async updateTenantVariables(tenantVariables: TenantVariables[], userId: number) {
 		for (const tenantVar of tenantVariables) {
@@ -230,6 +243,7 @@ class UserService {
 			const existingAdmin = await this.users.findAll({
 				where: {
 					userType: UserType.ChiefAdmin,
+					isDeleted: false,
 				},
 			});
 			if (existingAdmin.length > parseInt(MAX_CHIEF)) {
@@ -270,10 +284,12 @@ class UserService {
 		user.employeeId = userData?.employeeId;
 		user.profilePhoto = userData?.profilePhoto;
 		user = await user.save();
-		this.mapUserTypeToRole(user.dataValues?.userType, user.id, userData.tenantIds);
 		if (userData.userType !== UserType.ChiefAdmin) {
-			this.sendAccountActivationEmail(user, temporaryPassword, createdUser);
+			this.mapUserTypeToRole(user.dataValues?.userType, user.id, userData.tenantIds);
 			this.addTenantVariables(userData.tenantVariables, user.id);
+			this.sendAccountActivationEmail(user, temporaryPassword, createdUser);
+		} else {
+			this.sendChiefAdminAccountActivationEmail(user, temporaryPassword, createdUser);
 		}
 		if (user?.profilePhoto) {
 			const fileDestination = `${FileDestination.User}/${user.id}`;
