@@ -299,11 +299,11 @@ class AssessmentServices {
 		if (!assessment) {
 			throw new BadRequestException(assessmentMessage.assessmentNotFound);
 		}
-		const assessmentData = {
-			...assessment,
-			questions: questionData,
-		};
-		await this.validateQuestion(assessmentData);
+		// const assessmentData = {
+		// 	...assessment,
+		// 	questions: questionData,
+		// };
+		// await this.validateQuestion(assessmentData);
 		await this.storeQuestion(questionData, assessmentId);
 	}
 }
