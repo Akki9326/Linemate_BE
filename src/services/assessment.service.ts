@@ -299,11 +299,32 @@ class AssessmentServices {
 		if (!assessment) {
 			throw new BadRequestException(assessmentMessage.assessmentNotFound);
 		}
-		// const assessmentData = {
-		// 	...assessment,
-		// 	questions: questionData,
-		// };
-		// await this.validateQuestion(assessmentData);
+
+		const content = await this.content.findOne({
+			where: {
+				assessmentId: assessmentId,
+				isDeleted: false,
+				type: ConteTypes.Assessment,
+			},
+		});
+
+		if (!content) {
+			throw new BadRequestException(ContentMessage.contentNotFound);
+		}
+
+		const assessmentData: assessmentDto = {
+			name: assessment.name,
+			description: assessment.description,
+			totalQuestion: assessment.totalQuestion,
+			scoring: assessment.scoring,
+			timed: assessment.timed,
+			pass: assessment.pass,
+			score: assessment.score,
+			tenantId: content.tenantId,
+			questions: questionData,
+			skill: [],
+		};
+		await this.validateQuestion(assessmentData);
 		await this.storeQuestion(questionData, assessmentId);
 	}
 }
