@@ -10,7 +10,7 @@ export class CohortDto {
 	public description: string;
 
 	@IsArray()
-	@IsOptional()
+	@IsNotEmpty()
 	public userIds: number[];
 
 	@IsNumber()
@@ -24,10 +24,10 @@ export class CohortDto {
 
 export class AssignCohort {
 	@IsArray()
-	@IsOptional()
+	@IsNotEmpty()
 	public userIds: number[];
 
 	@IsArray()
-	@IsOptional()
+	@IsNotEmpty()
 	public cohortIds: number[];
 }

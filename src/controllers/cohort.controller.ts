@@ -1,5 +1,5 @@
 import { CohortListDto } from '@/models/dtos/cohort-list.dto';
-import { CohortDto } from '@/models/dtos/cohort.dto';
+import { AssignCohort, CohortDto } from '@/models/dtos/cohort.dto';
 import { RequestWithUser } from '@/models/interfaces/auth.interface';
 import { CohortService } from '@/services/cohort.service';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
@@ -61,6 +61,16 @@ class CohortController {
 			const pageModel = req.body as CohortListDto; // Provide the missing type argument
 			const tenantId = req.tenantId as number;
 			const cohortResponse = await this.cohortService.all(pageModel, tenantId);
+			AppResponseHelper.sendSuccess(res, 'Success', cohortResponse);
+		} catch (ex) {
+			next(ex);
+		}
+	};
+	public assignMultiCohort = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const assignCohortBody = req.body as AssignCohort;
+			const userId = req.user.id as number;
+			const cohortResponse = await this.cohortService.assignMultiCohort(assignCohortBody, userId);
 			AppResponseHelper.sendSuccess(res, 'Success', cohortResponse);
 		} catch (ex) {
 			next(ex);

@@ -18,6 +18,7 @@ export const AppMessages = {
 	wrongOldPassword: 'Old password not valid.',
 	invalidPayload: 'Invalid req data from req.',
 	invalidFileType: `Invalid file extension type. type must be valid for : ${[...Object.keys(FileMimeType)]}`,
+	headerTenantId: 'tenantId not found in header',
 };
 
 export const RoleMessage = {
@@ -59,6 +60,7 @@ export const assessmentMessage = {
 
 export const CohortMessage = {
 	cohortNotFound: 'cohort not found',
+	userIdsRequired: 'userIds required',
 };
 export const FilterMessage = {
 	filterForNotFound: 'filterFor is required in query params',
