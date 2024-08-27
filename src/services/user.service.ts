@@ -475,15 +475,13 @@ class UserService {
 	}
 
 	public async all(pageModel: UserListDto, tenantId: number) {
-		const page = pageModel.page || 1,
-			limit = pageModel.limit || 10,
-			orderByField = pageModel.sortField || 'id',
+		const orderByField = pageModel.sortField || 'id',
 			sortDirection = pageModel.sortOrder || 'ASC';
-		const offset = (page - 1) * limit;
 		const condition = {
 			isDeleted: false,
 			isActive: true,
 		};
+		const isPaginationEnabled = pageModel.page && pageModel.limit;
 		if (pageModel?.search) {
 			condition[Op.or] = [
 				{ firstName: { [Op.iLike]: `%${pageModel.search}%` } },
@@ -507,10 +505,9 @@ class UserService {
 		}
 		const userList = await this.users.findAndCountAll({
 			where: condition,
-			offset,
-			limit,
 			attributes: ['id', 'firstName', 'lastName', 'email', 'userType', 'mobileNumber', 'createdAt', 'tenantIds', 'employeeId', 'profilePhoto'],
 			order: [[orderByField, sortDirection]],
+			...(isPaginationEnabled && { limit: pageModel.limit, offset: (pageModel.page - 1) * pageModel.limit }), // Apply pagination if enabled
 		});
 		if (userList.count) {
 			const userRows = await Promise.all(
