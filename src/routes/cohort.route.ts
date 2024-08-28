@@ -28,6 +28,7 @@ class CohortRoute implements Routes {
 		this.router.get(`${this.path}/v1/:id`, authMiddleware, this.cohortController.getById);
 		this.router.post(`${this.path}/v1/list`, authMiddleware, headerMiddleware, this.cohortController.list);
 		this.router.delete(`${this.path}/v1/:id`, authMiddleware, this.cohortController.delete);
+		this.router.post(`${this.path}/v1/get-cohort-by-user`, authMiddleware, this.cohortController.getCohortByUserId);
 	}
 }
 

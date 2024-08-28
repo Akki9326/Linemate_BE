@@ -1638,7 +1638,7 @@ paths:
                   message:
                     type: string
                     example: "Cohort deleted successfully"  
- 
+
   /cohort/v1/list:
     post:
       summary: List cohort
@@ -1675,6 +1675,30 @@ paths:
       responses:
         '200':
           description: Success  
+
+  /cohort/v1/get-cohort-by-user:
+    post:
+      summary: List cohort By User
+      tags:
+        - Cohort
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              userId:
+                type: array
+                items:
+                  type: integer
+                example: [2]
+      responses:
+        '200':
+          description: Success  
+
 
   /cohort/v1/assign-cohort:
     post:

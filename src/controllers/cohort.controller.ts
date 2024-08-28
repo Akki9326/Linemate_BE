@@ -76,6 +76,15 @@ class CohortController {
 			next(ex);
 		}
 	};
+	public getCohortByUserId = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const userId = req.body.userId as number[];
+			const cohortResponse = await this.cohortService.getCohortByUserId(userId);
+			AppResponseHelper.sendSuccess(res, 'Success', cohortResponse);
+		} catch (ex) {
+			next(ex);
+		}
+	};
 }
 
 export default CohortController;
