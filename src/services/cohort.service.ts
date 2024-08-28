@@ -145,8 +145,6 @@ export class CohortService {
 		cohort = await cohort.save();
 		if (cohortDetails?.userIds?.length) {
 			await this.assignCohort(cohort.id, cohortDetails, userId);
-		} else {
-			throw new BadRequestException(CohortMessage.userIdsRequired);
 		}
 
 		return { id: cohort.id };
@@ -165,8 +163,6 @@ export class CohortService {
 		cohort.updatedBy = userId;
 		if (cohortDetails?.userIds?.length) {
 			await this.assignCohort(cohort.id, cohortDetails, userId);
-		} else {
-			throw new BadRequestException(CohortMessage.userIdsRequired);
 		}
 		await cohort.save();
 		return cohort.id;
@@ -188,6 +184,7 @@ export class CohortService {
 							attributes: ['firstName', 'lastName'],
 						},
 					],
+					required: false,
 				},
 				{
 					association: new BelongsTo(this.users, this.cohortMaster, { as: 'Creator', foreignKey: 'createdBy' }),
@@ -271,6 +268,7 @@ export class CohortService {
 					where: { isDeleted: false },
 					as: 'userMatrix',
 					attributes: [],
+					required: false,
 				},
 				{
 					association: new BelongsTo(this.users, this.cohortMaster, { as: 'Creator', foreignKey: 'createdBy' }),
