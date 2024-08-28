@@ -1,7 +1,7 @@
 import { commonFilterConfig, FilterFor, FiltersEnum } from '@/models/enums/filter.enum';
 import moment from 'moment';
 import VariableServices from './variable.service';
-import { FilterMessage } from '@/utils/helpers/app-message.helper';
+import { AppMessages, FilterMessage } from '@/utils/helpers/app-message.helper';
 import { FilterResponse } from '@/models/interfaces/filter.interface';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 
@@ -65,6 +65,9 @@ export class FilterService {
 	public async list(tenantId: number, filterFor: FilterFor) {
 		if (!filterFor) {
 			throw new BadRequestException(FilterMessage.filterForNotFound);
+		}
+		if (!tenantId) {
+			throw new BadRequestException(AppMessages.headerTenantId);
 		}
 		return await this.generateFilterResponse(tenantId, filterFor);
 	}

@@ -4,7 +4,7 @@ import { BadRequestException } from '@/exceptions/BadRequestException';
 import { ContentListDto } from '@/models/dtos/content-list.dto';
 import { ContentDto } from '@/models/dtos/content.dto';
 import { FileDestination } from '@/models/enums/file-destination.enum';
-import { ContentMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
+import { AppMessages, ContentMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
 import { FileHelper } from '@/utils/helpers/file.helper';
 import S3Services from '@/utils/services/s3.services';
 import { isValid, parse } from 'date-fns';
@@ -137,6 +137,9 @@ export class ContentService {
 	public async all(pageModel: ContentListDto, tenantId: number) {
 		const { page = 1, limit = 10, sortField = 'id', sortOrder = 'ASC' } = pageModel;
 		const offset = (page - 1) * limit;
+		if (!tenantId) {
+			throw new BadRequestException(AppMessages.headerTenantId);
+		}
 		let condition: WhereOptions = { isDeleted: false };
 		if (tenantId) {
 			condition.tenantId = tenantId;

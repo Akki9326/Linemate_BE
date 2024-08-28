@@ -656,6 +656,7 @@ paths:
       responses:
         '200':
           description: Success
+          
   /user/v1/delete-users:
     post:
       summary: Delete Bulk Users
@@ -1241,7 +1242,7 @@ paths:
       responses:
         '200':
           description: Success
-
+        
   /content/v1/{id}:
     get:
       summary: Get Content by Id
@@ -1372,6 +1373,7 @@ paths:
       responses:
         '200':
           description: Success
+
   /filters/v1/list:
     get:
       summary: List Filters
@@ -1413,12 +1415,7 @@ paths:
                       type: string
                     description:
                       type: string
-        '400':
-          description: Bad request if the query parameters are missing or invalid
-        '401':
-          description: Unauthorized if the token is invalid or expired
-        '500':
-          description: Internal server error      
+
   /cohort/v1/rule-options:
     get:
       summary: Retrieve rule options
@@ -1437,6 +1434,7 @@ paths:
       responses:
         '200':
           description: Success
+          
   /cohort/v1/add:
     post:
       summary: Create a new cohort
@@ -1530,8 +1528,62 @@ paths:
                   message:
                     type: string
                     example: "Cohort created successfully"
-        '400':
-          description: Invalid input data
+
+  /cohort/v1/{id}:
+    get:
+      summary: Get Cohort by Id
+      tags:
+        - Cohort
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          type: string
+      responses:
+        '200':
+          description: Success
+    put:
+      summary: Update a cohort
+      tags:
+        - Cohort
+      operationId: updateCohort
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true         
+          schema:
+            type: integer
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              tenantId:
+                type: integer
+                description: ID of the tenant
+                example: 1
+              name:
+                type: string
+                description: Name of the cohort
+                example: "test cohort"
+              userIds:
+                type: array
+                description: List of user IDs to be added to the cohort
+                items:
+                  type: integer
+                example: [2, 3]
+            required:
+              - tenantId
+              - name
+              - userIds
+      responses:
+        '200':
+          description: Cohort updated successfully
           content:
             application/json:
               schema:
@@ -1539,11 +1591,118 @@ paths:
                 properties:
                   success:
                     type: boolean
-                    example: false
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      name:
+                        type: string
+                        example: "test cohort"
+                      tenantId:
+                        type: integer
+                        example: 1
+                      updatedAt:
+                        type: string
+                        format: date-time
+                        example: "2024-08-23T11:16:47.590Z"
                   message:
                     type: string
-                    example: "Invalid input data"
+                    example: "Cohort updated successfully"
+    delete:
+      summary: Delete a cohort
+      tags:
+        - Cohort
+      operationId: deleteCohort
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Cohort deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Cohort deleted successfully"  
+ 
+  /cohort/v1/list:
+    post:
+      summary: List cohort
+      tags:
+        - Cohort
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tenantId
+          in: header
+          required: true
+          type: integer
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              page:
+                type: integer
+                example: 1
+              limit:
+                type: integer
+                example: 10
+              sortField:
+                type: string
+                example: id
+              sortOrder:
+                type: string
+                example: ASC
+              search:
+                type: string
+                example: ''
+      responses:
+        '200':
+          description: Success  
 
+  /cohort/v1/assign-cohort:
+    post:
+      summary: Assign users to a specified cohort.
+      tags:
+        - Cohort
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          required: true
+          schema:
+            type: object
+            properties:
+              cohortIds:
+                type: array
+                items:
+                  type: integer
+                example: [2]
+              userIds:
+                type: array
+                items:
+                  type: integer
+                example: [2, 3]
+      responses:
+        '200':
+          description: Success
 
   /assessment/v1/add:
     post:
@@ -1631,7 +1790,6 @@ paths:
           description: Assessment created successfully
         400:
           description: Invalid input
-
 
   /assessment/v1/{id}:
     get:
@@ -1801,7 +1959,6 @@ tags:
     description: Endpoints for creating and managing content.
   - name: Assessment
     description: Endpoints for creating and managing assessment.
-  - name: Filter
   - name: Filters
     description: Endpoints for get dynamic filters .
   - name: File

@@ -1,11 +1,12 @@
 import DB from '@/databases';
 import { BadRequestException } from '@/exceptions/BadRequestException';
-import { CohortDto } from '@/models/dtos/cohort.dto';
+import { AssignCohort, CohortDto } from '@/models/dtos/cohort.dto';
 import { CohortRuleDataTypes, RuleOperators, RuleTypes } from '@/models/enums/cohort.enum';
-import { CohortMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
+import { AppMessages, CohortMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
 import { BelongsTo, Op, Sequelize, WhereOptions } from 'sequelize';
 import VariableServices from './variable.service';
 import { CohortListDto } from '@/models/dtos/cohort-list.dto';
+import { AssignCohortUserId } from '@/models/interfaces/assignCohort';
 
 export class CohortService {
 	private cohortMaster = DB.CohortMaster;
@@ -31,16 +32,20 @@ export class CohortService {
 	}
 
 	public async ruleOptions(tenantId: number) {
-		// const cohortsList = await this.cohort.findAll({
-		// 	where: { tenantId: tenantId, isDeleted: false },
-		// 	attributes: ['id', 'name'],
-		// });
+		if (!tenantId) {
+			throw new BadRequestException(AppMessages.headerTenantId);
+		}
+		const cohortsList = await this.cohortMaster.findAll({
+			where: { tenantId: tenantId, isDeleted: false },
+			attributes: ['id', 'name'],
+		});
+
 		const customVariable = await this.getCustomFields(tenantId);
 		const response = [
 			{
 				title: RuleTypes.Cohort,
 				type: CohortRuleDataTypes.DropDown,
-				options: [],
+				options: cohortsList,
 				operators: [RuleOperators.EQUAL],
 			},
 			{
@@ -53,7 +58,7 @@ export class CohortService {
 		return response;
 	}
 
-	public async assignCohort(cohortId: number, cohortDetails: CohortDto, creatorId: number) {
+	public async assignCohort(cohortId: number, cohortDetails: AssignCohortUserId, creatorId: number) {
 		const existingUsers = await this.users.findAll({
 			where: {
 				id: {
@@ -87,7 +92,7 @@ export class CohortService {
 			const newUserIds = validUserIds.filter(userId => !existingCohortMatrixUserIds.includes(userId.toString()));
 			if (recordsToReactivate.length) {
 				await this.cohortMatrix.update(
-					{ isDeleted: false },
+					{ isDeleted: false, updatedBy: creatorId },
 					{
 						where: {
 							cohortId: cohortId,
@@ -100,7 +105,7 @@ export class CohortService {
 			}
 			if (recordsToDelete.length) {
 				await this.cohortMatrix.update(
-					{ isDeleted: true },
+					{ isDeleted: true, updatedBy: creatorId },
 					{
 						where: {
 							cohortId: cohortId,
@@ -149,8 +154,7 @@ export class CohortService {
 		const cohort = await this.cohortMaster.findOne({
 			where: { isDeleted: false, id: cohortId },
 		});
-
-		if (!cohortId) {
+		if (!cohort) {
 			throw new BadRequestException(CohortMessage.cohortNotFound);
 		}
 		cohort.name = cohortDetails.name;
@@ -180,6 +184,7 @@ export class CohortService {
 							attributes: ['firstName', 'lastName'],
 						},
 					],
+					required: false,
 				},
 				{
 					association: new BelongsTo(this.users, this.cohortMaster, { as: 'Creator', foreignKey: 'createdBy' }),
@@ -230,6 +235,10 @@ export class CohortService {
 		const offset = (page - 1) * limit;
 		let condition: WhereOptions = { isDeleted: false };
 
+		if (!tenantId) {
+			throw new BadRequestException(AppMessages.headerTenantId);
+		}
+
 		if (tenantId) {
 			condition.tenantId = tenantId;
 		}
@@ -240,7 +249,6 @@ export class CohortService {
 				name: { [Op.iLike]: `%${pageModel.search}%` },
 			};
 		}
-
 		const cohortResult = await this.cohortMaster.findAll({
 			where: condition,
 			offset,
@@ -260,6 +268,7 @@ export class CohortService {
 					where: { isDeleted: false },
 					as: 'userMatrix',
 					attributes: [],
+					required: false,
 				},
 				{
 					association: new BelongsTo(this.users, this.cohortMaster, { as: 'Creator', foreignKey: 'createdBy' }),
@@ -270,7 +279,7 @@ export class CohortService {
 					attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
 				},
 			],
-			group: ['CohortMasterModel.id', 'Creator.id', 'Updater.id'], // Group by the cohort's id
+			group: ['CohortMasterModel.id', 'Creator.id', 'Updater.id'],
 			subQuery: false,
 		});
 
@@ -278,5 +287,16 @@ export class CohortService {
 			count: cohortResult?.length,
 			rows: cohortResult,
 		};
+	}
+
+	public async assignMultiCohort(assignCohortBody: AssignCohort, userId: number) {
+		await Promise.all(
+			assignCohortBody?.cohortIds.map(async cohortId => {
+				const cohortDetails = {
+					userIds: assignCohortBody?.userIds,
+				};
+				await this.assignCohort(cohortId, cohortDetails, userId);
+			}),
+		);
 	}
 }

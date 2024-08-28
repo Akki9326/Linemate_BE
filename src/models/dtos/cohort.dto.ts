@@ -28,6 +28,6 @@ export class AssignCohort {
 	public userIds: number[];
 
 	@IsArray()
-	@IsOptional()
+	@IsNotEmpty()
 	public cohortIds: number[];
 }

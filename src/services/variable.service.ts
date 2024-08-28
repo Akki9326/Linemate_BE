@@ -117,6 +117,9 @@ class VariableServices {
 			orderByField = pageModel.sortField || 'id',
 			sortDirection = pageModel.sortOrder || 'ASC';
 		const offset = (page - 1) * limit;
+		if (!tenantId) {
+			throw new BadRequestException(AppMessages.headerTenantId);
+		}
 		let condition = {};
 		if (tenantId) {
 			condition = {
