@@ -47,5 +47,8 @@ export default function (sequelize: Sequelize): typeof CohortMatrixModel {
 
 	CohortMatrixModel.belongsTo(CohortMasterModel, { foreignKey: 'cohortId' });
 	CohortMasterModel.hasMany(CohortMatrixModel, { foreignKey: 'cohortId', as: 'userMatrix' });
+
+	// In CohortMatrixModel
+	CohortMatrixModel.belongsTo(CohortMasterModel, { foreignKey: 'cohortId', as: 'cohortMaster' });
 	return CohortMatrixModel;
 }

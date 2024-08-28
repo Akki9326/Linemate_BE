@@ -299,4 +299,43 @@ export class CohortService {
 			}),
 		);
 	}
+	public async getCohortByUserId(userId: number[]) {
+		const condition = {
+			userId: {
+				[Op.in]: userId,
+			},
+		};
+
+		const cohortResult = await this.cohortMaster.findAll({
+			attributes: [
+				'id',
+				'name',
+				'createdAt',
+				'tenantId',
+				'description',
+				[Sequelize.fn('COUNT', Sequelize.col('userMatrix.userId')), 'EnrolledUserCount'],
+			],
+			include: [
+				{
+					model: this.cohortMatrix,
+					where: { isDeleted: false, ...condition },
+					as: 'userMatrix',
+					attributes: [],
+					required: true,
+				},
+				{
+					association: new BelongsTo(this.users, this.cohortMaster, { as: 'Creator', foreignKey: 'createdBy' }),
+					attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
+				},
+				{
+					association: new BelongsTo(this.users, this.cohortMaster, { as: 'Updater', foreignKey: 'updatedBy' }),
+					attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
+				},
+			],
+			group: ['CohortMasterModel.id', 'Creator.id', 'Updater.id'],
+			subQuery: false,
+		});
+
+		return cohortResult;
+	}
 }
