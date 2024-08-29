@@ -26,6 +26,7 @@ export class CohortService {
 				type: CohortRuleDataTypes.DropDown,
 				options: variable.options || [],
 				operators: [RuleOperators.EQUAL],
+				variableId: variable.id,
 			}));
 		} catch (error) {
 			return [];
