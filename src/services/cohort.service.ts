@@ -171,7 +171,7 @@ export class CohortService {
 	public async one(contentId: number) {
 		const cohort = await this.cohortMaster.findOne({
 			where: { id: contentId, isDeleted: false },
-			attributes: ['id', 'name', 'description', 'tenantId', 'createdAt'],
+			attributes: ['id', 'name', 'description', 'rules', 'tenantId', 'createdAt'],
 			include: [
 				{
 					model: this.cohortMatrix,
