@@ -1464,6 +1464,10 @@ paths:
                 items:
                   type: integer
                 example: [2, 3]
+              isExistingRuleProcess:
+                type: boolean
+                description: process rule for existing users
+                example: true
               rules:
                 type: array
                 description: Rules for the cohort
@@ -1577,6 +1581,10 @@ paths:
                 items:
                   type: integer
                 example: [2, 3]
+              isExistingRuleProcess:
+                type: boolean
+                description: process rule for existing users
+                example: true
             required:
               - tenantId
               - name
