@@ -7,6 +7,7 @@ import { BelongsTo, Op, Sequelize, WhereOptions } from 'sequelize';
 import VariableServices from './variable.service';
 import { CohortListDto } from '@/models/dtos/cohort-list.dto';
 import { AssignCohortUserId } from '@/models/interfaces/assignCohort';
+import { applyingCohort } from '@/utils/helpers/cohort.helper';
 
 export class CohortService {
 	private cohortMaster = DB.CohortMaster;
@@ -136,6 +137,10 @@ export class CohortService {
 		if (!tenant) {
 			throw new BadRequestException(TenantMessage.tenantNotFound);
 		}
+		if (cohortDetails?.rules?.length && cohortDetails.isExistingRuleProcess) {
+			cohortDetails['userIds'] = (await applyingCohort(cohortDetails?.rules)) || [];
+		}
+
 		let cohort = new this.cohortMaster();
 		cohort.name = cohortDetails.name;
 		cohort.description = cohortDetails.description;
@@ -147,7 +152,6 @@ export class CohortService {
 		if (cohortDetails?.userIds?.length) {
 			await this.assignCohort(cohort.id, cohortDetails, userId);
 		}
-
 		return { id: cohort.id };
 	}
 
@@ -157,6 +161,9 @@ export class CohortService {
 		});
 		if (!cohort) {
 			throw new BadRequestException(CohortMessage.cohortNotFound);
+		}
+		if (cohortDetails?.rules?.length && cohortDetails.isExistingRuleProcess) {
+			cohortDetails['userIds'] = (await applyingCohort(cohortDetails?.rules)) || [];
 		}
 		cohort.name = cohortDetails.name;
 		cohort.description = cohortDetails.description;
