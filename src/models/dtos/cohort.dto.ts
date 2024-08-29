@@ -1,4 +1,4 @@
-import { IsArray, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CohortDto {
 	@IsString()
@@ -20,6 +20,10 @@ export class CohortDto {
 	@IsArray()
 	@IsOptional()
 	public rules: object[];
+
+	@IsOptional()
+	@IsBoolean()
+	isExistingRuleProcess: boolean;
 }
 
 export class AssignCohort {

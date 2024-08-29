@@ -142,6 +142,7 @@ export class CohortService {
 		cohort.rules = cohortDetails.rules;
 		cohort.tenantId = cohortDetails.tenantId;
 		cohort.createdBy = userId;
+		cohort.isExistingRuleProcess = cohortDetails.isExistingRuleProcess;
 		cohort = await cohort.save();
 		if (cohortDetails?.userIds?.length) {
 			await this.assignCohort(cohort.id, cohortDetails, userId);
@@ -161,6 +162,7 @@ export class CohortService {
 		cohort.description = cohortDetails.description;
 		cohort.tenantId = cohortDetails.tenantId;
 		cohort.updatedBy = userId;
+		cohort.isExistingRuleProcess = cohortDetails.isExistingRuleProcess;
 		if (cohortDetails?.userIds?.length) {
 			await this.assignCohort(cohort.id, cohortDetails, userId);
 		}
@@ -171,7 +173,7 @@ export class CohortService {
 	public async one(contentId: number) {
 		const cohort = await this.cohortMaster.findOne({
 			where: { id: contentId, isDeleted: false },
-			attributes: ['id', 'name', 'description', 'tenantId', 'createdAt'],
+			attributes: ['id', 'name', 'description', 'rules', 'isExistingRuleProcess', 'tenantId', 'createdAt'],
 			include: [
 				{
 					model: this.cohortMatrix,

@@ -6,6 +6,7 @@ export class CohortMasterModel extends AppDBModel {
 	public name: string;
 	public description: string;
 	public rules: object[];
+	isExistingRuleProcess: boolean;
 	public tenantId: number;
 }
 
@@ -33,6 +34,11 @@ export default function (sequelize: Sequelize): typeof CohortMasterModel {
 			rules: {
 				type: DataTypes.JSONB,
 				allowNull: true,
+			},
+			isExistingRuleProcess: {
+				type: DataTypes.BOOLEAN,
+				allowNull: true,
+				defaultValue: false,
 			},
 		},
 		{
