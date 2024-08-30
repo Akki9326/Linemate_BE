@@ -60,9 +60,9 @@ class AssessmentController {
 	};
 	public uploadQuestion = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
-			const assessmentId = parseInt(req.params.id);
+			const contentId = parseInt(req.params.id);
 			const questionData: questionData[] = req.body.questions;
-			const assessmentResponse = await this.AssessmentServices.uploadQuestion(assessmentId, questionData);
+			const assessmentResponse = await this.AssessmentServices.uploadQuestion(contentId, questionData);
 			AppResponseHelper.sendSuccess(res, 'Success', assessmentResponse);
 		} catch (ex) {
 			next(ex);
