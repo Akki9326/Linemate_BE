@@ -1239,6 +1239,19 @@ paths:
               isArchive:
                 type: boolean
                 example: false
+              scoring:
+                type: string
+                example: "max score"
+                enum: [max score, per question, no score]
+              score:
+                type: integer
+                example: 50
+              pass:
+                type: integer
+                example: 50
+              timed:
+                type: integer
+                example: 10
       responses:
         '200':
           description: Success
@@ -1973,7 +1986,54 @@ paths:
         '200':
           description: Success
 
-  
+  /assessment/v1/upload-question/{id}:
+    post:
+      summary: "upload a assessment question"
+      tags:
+        - Assessment
+      description: "upload a assessment question."
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: body
+          name: body
+          description: question array that needs to be added
+          required: true
+          schema:
+            type: object
+            required:
+              - questions
+            properties:
+              questions:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - question
+                    - type
+                    - options
+                    - answer
+                  properties:
+                    question:
+                      type: string
+                      example: "what is your age range?"
+                    type:
+                      type: string
+                      example: "single select"
+                    options:
+                      type: array
+                      items:
+                        type: string
+                        example: "0-15,15-20,20-30,30-60"
+                    answer:
+                      type: string
+                      example: "20-30"
+      responses:
+        201:
+          description: Question upload successfully
+        400:
+          description: Invalid input
+
 tags:
   - name: Permission
     description: Endpoints for creating and managing permissions.

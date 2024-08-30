@@ -4,12 +4,14 @@ import { BadRequestException } from '@/exceptions/BadRequestException';
 import { ContentListDto } from '@/models/dtos/content-list.dto';
 import { ContentDto } from '@/models/dtos/content.dto';
 import { FileDestination } from '@/models/enums/file-destination.enum';
-import { AppMessages, ContentMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
+import { AppMessages, assessmentMessage, ContentMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
 import { FileHelper } from '@/utils/helpers/file.helper';
 import S3Services from '@/utils/services/s3.services';
 import { isValid, parse } from 'date-fns';
 import { BelongsTo, HasMany, Op, WhereOptions } from 'sequelize';
 import UserService from './user.service';
+import { ConteTypes } from '@/models/enums/contentType.enum';
+import { ScoringType } from '@/models/enums/assessment.enum';
 
 export class ContentService {
 	private content = DB.Content;
@@ -66,6 +68,57 @@ export class ContentService {
 		if (!tenant) {
 			throw new BadRequestException(TenantMessage.tenantNotFound);
 		}
+
+		if (contentDetails.type == ConteTypes.Assessment) {
+			const requiredAssessmentFields = ['name', 'description', 'type', 'timed', 'scoring'];
+			for (const element of requiredAssessmentFields) {
+				if (!(element in contentDetails)) {
+					throw new BadRequestException(`${element} ${AppMessages.isRequired}`);
+				}
+			}
+			if (contentDetails.scoring == ScoringType.PerQuestion) {
+				if (!contentDetails.score) {
+					throw new BadRequestException(assessmentMessage.scoreIsRequiredInPerQuestion);
+				}
+				if (!contentDetails.pass) {
+					throw new BadRequestException(assessmentMessage.passIsMissing);
+				}
+			}
+			if (contentDetails.scoring == ScoringType.MaxScore) {
+				if (!contentDetails.score) {
+					throw new BadRequestException(assessmentMessage.scoreIsRequiredInMaxScoreTypeQuestion);
+				}
+				if (!contentDetails.pass) {
+					throw new BadRequestException(assessmentMessage.passIsMissing);
+				}
+			}
+
+			/** first create assessment on assessmentMaster table */
+			let assessment = new this.assessmentMaster();
+			assessment.name = contentDetails.name;
+			assessment.description = contentDetails.description;
+			assessment.scoring = contentDetails.scoring;
+			assessment.timed = contentDetails.timed;
+			assessment.pass = contentDetails.pass;
+			assessment.score = contentDetails.score;
+			assessment.createdBy = userId;
+			assessment = await assessment.save();
+
+			/** after create assessment create a content in content table */
+			let assessmentContent = new this.content();
+			assessmentContent.name = contentDetails.name;
+			assessmentContent.type = contentDetails.type;
+			assessmentContent.description = contentDetails.description;
+			assessmentContent.tenantId = contentDetails.tenantId;
+			assessmentContent.assessmentId = assessment.id;
+			assessmentContent.createdBy = userId;
+			assessmentContent.isPublish = contentDetails.isPublish;
+			assessmentContent.isArchive = contentDetails.isArchive;
+			assessmentContent = await assessmentContent.save();
+
+			return { id: assessmentContent.id };
+		}
+
 		let content = new this.content();
 		content.name = contentDetails.name;
 		content.type = contentDetails.type;
@@ -83,13 +136,48 @@ export class ContentService {
 	}
 
 	public async update(contentDetails: ContentDto, contentId: number, userId: number) {
-		const content = await this.content.findOne({
+		let content = await this.content.findOne({
 			where: { isDeleted: false, id: contentId },
 		});
 
 		if (!content) {
 			throw new BadRequestException(ContentMessage.contentNotFound);
 		}
+
+		if (content.type == ConteTypes.Assessment) {
+			let assessment = await this.assessmentMaster.findOne({
+				where: {
+					id: content.assessmentId,
+					isDeleted: false,
+				},
+			});
+			if (!assessment) {
+				throw new BadRequestException(assessmentMessage.assessmentNotFound);
+			}
+
+			assessment.name = contentDetails.name;
+			assessment.description = contentDetails.description;
+			assessment.scoring = contentDetails.scoring;
+			assessment.timed = contentDetails.timed;
+			assessment.pass = contentDetails.pass;
+			assessment.score = contentDetails.score;
+			assessment.createdBy = userId;
+			assessment = await assessment.save();
+
+			/** after update assessment create a content in content table */
+			content.name = contentDetails.name;
+			content.type = contentDetails.type;
+			content.description = contentDetails.description;
+			content.tenantId = contentDetails.tenantId;
+			content.assessmentId = assessment.id;
+			content.createdBy = userId;
+			content.isPublish = contentDetails.isPublish;
+			content.isArchive = contentDetails.isArchive;
+			content = await content.save();
+
+			return { id: content.id };
+		}
+
 		content.name = contentDetails.name;
 		content.type = contentDetails.type;
 		content.description = contentDetails.description;
@@ -107,6 +195,44 @@ export class ContentService {
 	public async one(contentId: number) {
 		const content = await this.content.findOne({
 			where: { id: contentId, isDeleted: false },
+			include: [
+				{
+					association: new BelongsTo(this.user, this.content, { as: 'Creator', foreignKey: 'createdBy' }),
+					attributes: ['id', 'firstName', 'lastName'],
+				},
+				{
+					association: new BelongsTo(this.user, this.content, { as: 'Updater', foreignKey: 'updatedBy' }),
+					attributes: ['id', 'firstName', 'lastName'],
+				},
+				{
+					association: new BelongsTo(this.content, this.assessmentMaster, { as: 'assessment', foreignKey: 'assessmentId' }),
+					attributes: ['id', 'totalQuestion', 'scoring', 'timed', 'pass', 'score'],
+					include: [
+						{
+							association: new BelongsTo(this.assessmentMaster, this.user, { as: 'creator', foreignKey: 'createdBy' }),
+							attributes: ['firstName', 'lastName'],
+						},
+						{
+							association: new BelongsTo(this.assessmentMaster, this.user, { as: 'updater', foreignKey: 'updatedBy' }),
+							attributes: ['firstName', 'lastName'],
+						},
+						{
+							association: new HasMany(this.assessmentMaster, this.assessmentQuestionMatrix, { as: 'question', foreignKey: 'assessmentId' }),
+							attributes: ['question', 'type', 'score'],
+							include: [
+								{
+									association: new HasMany(this.assessmentQuestionMatrix, this.assessmentOption, { as: 'options', foreignKey: 'questionId' }),
+									attributes: ['id', 'option'],
+								},
+								{
+									association: new BelongsTo(this.assessmentQuestionMatrix, this.assessmentOption, { as: 'answer', foreignKey: 'correctAnswer' }),
+									attributes: ['id', 'option'],
+								},
+							],
+						},
+					],
+				},
+			],
 		});
 
 		if (!content) {
@@ -125,13 +251,15 @@ export class ContentService {
 			}
 		}
 
-		return {
-			name: content.name,
-			type: content.type,
-			description: content.description,
-			tenantId: content.tenantId,
-			uploadedFiles: uploadedFiles,
-		};
+		return content;
+
+		// return {
+		// 	name: content.name,
+		// 	type: content.type,
+		// 	description: content.description,
+		// 	tenantId: content.tenantId,
+		// 	uploadedFiles: uploadedFiles,
+		// };
 	}
 
 	public async all(pageModel: ContentListDto, tenantId: number) {
@@ -231,6 +359,22 @@ export class ContentService {
 			throw new BadRequestException(ContentMessage.contentNotFound);
 		}
 
+		if (content.type == ConteTypes.Assessment) {
+			const assessment = await this.assessmentMaster.findOne({
+				where: {
+					id: content.assessmentId,
+					isDeleted: false,
+				},
+			});
+			if (!assessment) {
+				throw new BadRequestException(assessmentMessage.assessmentNotFound);
+			}
+
+			assessment.set({
+				isDeleted: true,
+				updatedBy: userId,
+			});
+		}
 		content.set({
 			isDeleted: true,
 			updatedBy: userId,

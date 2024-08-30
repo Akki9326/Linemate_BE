@@ -21,9 +21,6 @@ class AssessmentServices {
 
 	private async validateQuestion(assessmentData: assessmentDto) {
 		const questions: questionData[] = assessmentData.questions;
-		if (assessmentData.totalQuestion !== questions.length) {
-			throw new BadRequestException(assessmentMessage.questionIsMissing);
-		}
 
 		for (let i = 0; i < questions.length; i++) {
 			const questionElement = questions[i];
@@ -77,6 +74,14 @@ class AssessmentServices {
 			}
 			await this.assessmentQuestionMatrix.update({ correctAnswer: currectAnswerId, optionIds: optionsIds }, { where: { id: createQuestion.id } });
 		}
+		await this.assessmentMaster.update(
+			{
+				totalQuestion: questionList.length,
+			},
+			{
+				where: { id: assessmentId },
+			},
+		);
 	}
 	public async add(assessmentData: assessmentDto, createdUser: JwtTokenData) {
 		const tenant = await this.tenant.findOne({

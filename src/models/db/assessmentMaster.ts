@@ -33,6 +33,7 @@ export default function (sequelize: Sequelize): typeof assessmentMasterModel {
 			totalQuestion: {
 				type: DataTypes.INTEGER,
 				allowNull: false,
+				defaultValue: 0,
 			},
 			scoring: {
 				type: DataTypes.ENUM,
@@ -45,7 +46,7 @@ export default function (sequelize: Sequelize): typeof assessmentMasterModel {
 			},
 			pass: {
 				type: DataTypes.INTEGER,
-				allowNull: false,
+				allowNull: true,
 			},
 			score: {
 				type: DataTypes.INTEGER,
