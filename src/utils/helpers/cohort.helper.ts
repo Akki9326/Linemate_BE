@@ -2,6 +2,7 @@ import DB from '@/databases';
 import { Op } from 'sequelize';
 import { parse, isValid, startOfDay, endOfDay } from 'date-fns';
 import { CohortRuleQuery } from '@/models/interfaces/cohort.interface';
+import { BadRequestException } from '@/exceptions/BadRequestException';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 const queryCohort = async (cohortValue: number, operator: string) => {
@@ -106,6 +107,8 @@ export const applyingCohort = async (cohortRule: CohortRuleQuery[]) => {
 				let subResults;
 				if (subCondition.or) {
 					subResults = await processOrCondition(subCondition);
+				} else if (subCondition.and) {
+					subResults = await processAndCondition(subCondition);
 				} else {
 					subResults = await processCondition(subCondition);
 				}
@@ -123,7 +126,14 @@ export const applyingCohort = async (cohortRule: CohortRuleQuery[]) => {
 	async function processOrCondition(condition: any) {
 		const results = new Set<number>();
 		for (const subCondition of condition.or) {
-			const userIds = await processCondition(subCondition);
+			let userIds;
+			if (subCondition.or) {
+				userIds = await processOrCondition(subCondition);
+			} else if (subCondition.and) {
+				userIds = await processAndCondition(subCondition);
+			} else {
+				userIds = await processAndCondition(subCondition);
+			}
 			userIds.forEach(id => results.add(id));
 		}
 		return Array.from(results);
@@ -131,6 +141,10 @@ export const applyingCohort = async (cohortRule: CohortRuleQuery[]) => {
 
 	async function processCondition(condition: any) {
 		const { title, operators, value, variableId } = condition;
+
+		if (!title || !operators || value === undefined) {
+			throw new BadRequestException(`Invalid condition: ${JSON.stringify(condition)}`);
+		}
 
 		if (title === 'cohort') {
 			return await queryCohort(value, operators);
@@ -149,6 +163,8 @@ export const applyingCohort = async (cohortRule: CohortRuleQuery[]) => {
 			userSets.push(await processAndCondition(rule));
 		} else if (rule.or) {
 			userSets.push(await processOrCondition(rule));
+		} else {
+			throw new BadRequestException(`Invalid rule: ${JSON.stringify(rule)}`);
 		}
 	}
 
