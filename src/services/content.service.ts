@@ -250,16 +250,17 @@ export class ContentService {
 				uploadedFiles.push(...(await Promise.all(filePromises)));
 			}
 		}
-
-		return content;
-
-		// return {
-		// 	name: content.name,
-		// 	type: content.type,
-		// 	description: content.description,
-		// 	tenantId: content.tenantId,
-		// 	uploadedFiles: uploadedFiles,
-		// };
+		const returnObj = {
+			name: content.name,
+			type: content.type,
+			description: content.description,
+			tenantId: content.tenantId,
+			uploadedFiles: uploadedFiles,
+		};
+		if (content.type == ConteTypes.Assessment) {
+			returnObj['assessment'] = content['assessment'];
+		}
+		return returnObj;
 	}
 
 	public async all(pageModel: ContentListDto, tenantId: number) {
