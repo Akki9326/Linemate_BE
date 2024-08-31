@@ -21,9 +21,6 @@ class AssessmentServices {
 
 	private async validateQuestion(assessmentData: assessmentDto) {
 		const questions: questionData[] = assessmentData.questions;
-		if (assessmentData.totalQuestion !== questions.length) {
-			throw new BadRequestException(assessmentMessage.questionIsMissing);
-		}
 
 		for (let i = 0; i < questions.length; i++) {
 			const questionElement = questions[i];
@@ -77,6 +74,14 @@ class AssessmentServices {
 			}
 			await this.assessmentQuestionMatrix.update({ correctAnswer: currectAnswerId, optionIds: optionsIds }, { where: { id: createQuestion.id } });
 		}
+		await this.assessmentMaster.update(
+			{
+				totalQuestion: questionList.length,
+			},
+			{
+				where: { id: assessmentId },
+			},
+		);
 	}
 	public async add(assessmentData: assessmentDto, createdUser: JwtTokenData) {
 		const tenant = await this.tenant.findOne({
@@ -288,21 +293,10 @@ class AssessmentServices {
 		});
 		return assessmentList;
 	}
-	public async uploadQuestion(assessmentId: number, questionData: questionData[]) {
-		const assessment = await this.assessmentMaster.findOne({
-			where: {
-				id: assessmentId,
-				isDeleted: false,
-			},
-			raw: true,
-		});
-		if (!assessment) {
-			throw new BadRequestException(assessmentMessage.assessmentNotFound);
-		}
-
+	public async uploadQuestion(contentId: number, questionData: questionData[]) {
 		const content = await this.content.findOne({
 			where: {
-				assessmentId: assessmentId,
+				id: contentId,
 				isDeleted: false,
 				type: ConteTypes.Assessment,
 			},
@@ -310,6 +304,17 @@ class AssessmentServices {
 
 		if (!content) {
 			throw new BadRequestException(ContentMessage.contentNotFound);
+		}
+
+		const assessment = await this.assessmentMaster.findOne({
+			where: {
+				id: content.assessmentId,
+				isDeleted: false,
+			},
+			raw: true,
+		});
+		if (!assessment) {
+			throw new BadRequestException(assessmentMessage.assessmentNotFound);
 		}
 
 		const assessmentData: assessmentDto = {
@@ -325,7 +330,7 @@ class AssessmentServices {
 			skill: [],
 		};
 		await this.validateQuestion(assessmentData);
-		await this.storeQuestion(questionData, assessmentId);
+		await this.storeQuestion(questionData, assessment.id);
 	}
 }
 

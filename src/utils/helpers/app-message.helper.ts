@@ -19,6 +19,7 @@ export const AppMessages = {
 	invalidPayload: 'Invalid req data from req.',
 	invalidFileType: `Invalid file extension type. type must be valid for : ${[...Object.keys(FileMimeType)]}`,
 	headerTenantId: 'tenantId not found in header',
+	isRequired: 'is required.',
 };
 
 export const RoleMessage = {
@@ -56,6 +57,7 @@ export const assessmentMessage = {
 	scoreIsRequiredInMaxScoreTypeQuestion: 'score is required in Max question type scoring',
 	questionIsMissing: 'question is missing',
 	optiopnIsMissing: 'option is missing',
+	passIsMissing: 'pass is required',
 };
 
 export const CohortMessage = {
