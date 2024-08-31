@@ -81,17 +81,50 @@ class App {
 	private initializeSwagger() {
 		const options = {
 			swaggerDefinition: {
+				openapi: '3.0.1',
 				info: {
 					title: 'REST API',
 					version: '1.0.0',
-					description: ' Api docs',
+					description: 'API docs',
 				},
+				servers: [
+					{
+						url: 'http://localhost:3000',
+						description: 'Local development server',
+					},
+					{
+						url: 'https://api.stg.portal.linemate.ai',
+						description: 'Staging server',
+					},
+				],
+				components: {
+					securitySchemes: {
+						BearerAuth: {
+							type: 'http',
+							scheme: 'bearer',
+							bearerFormat: 'JWT',
+							description: 'Enter your token with "Bearer " prefix. Example: **Bearer <token>**',
+						},
+					},
+				},
+				security: [
+					{
+						BearerAuth: [],
+					},
+				],
 			},
 			apis: ['src/config/swagger/swagger.yaml'],
 		};
 
 		const specs = swaggerJSDoc(options);
+
+		// Serve the Swagger UI
 		this.app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+
+		// Serve the OpenAPI specification file
+		this.app.get('/api-docs/swagger.yaml', (req, res) => {
+			res.sendFile(path.join(__dirname, 'config/swagger/swagger.yaml'));
+		});
 	}
 
 	private initializeErrorHandling() {
