@@ -101,6 +101,7 @@ export class ContentService {
 			assessment.timed = contentDetails.timed;
 			assessment.pass = contentDetails.pass;
 			assessment.score = contentDetails.score;
+			assessment.timeType = contentDetails.timeType;
 			assessment.createdBy = userId;
 			assessment = await assessment.save();
 
@@ -222,11 +223,7 @@ export class ContentService {
 							include: [
 								{
 									association: new HasMany(this.assessmentQuestionMatrix, this.assessmentOption, { as: 'options', foreignKey: 'questionId' }),
-									attributes: ['id', 'option'],
-								},
-								{
-									association: new BelongsTo(this.assessmentQuestionMatrix, this.assessmentOption, { as: 'answer', foreignKey: 'correctAnswer' }),
-									attributes: ['id', 'option'],
+									attributes: ['id', 'option', 'isCorrectAnswer'],
 								},
 							],
 						},
@@ -335,10 +332,6 @@ export class ContentService {
 							include: [
 								{
 									association: new HasMany(this.assessmentQuestionMatrix, this.assessmentOption, { as: 'options', foreignKey: 'questionId' }),
-									attributes: ['id', 'option'],
-								},
-								{
-									association: new BelongsTo(this.assessmentQuestionMatrix, this.assessmentOption, { as: 'answer', foreignKey: 'correctAnswer' }),
 									attributes: ['id', 'option'],
 								},
 							],

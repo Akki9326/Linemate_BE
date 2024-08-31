@@ -9,3 +9,8 @@ export enum QuestionType {
 	SingleSelect = 'single select',
 	Boolean = 'boolean',
 }
+
+export enum timeType {
+	Timed = 'timed',
+	Untimed = 'untimed',
+}

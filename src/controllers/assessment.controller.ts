@@ -68,6 +68,16 @@ class AssessmentController {
 			next(ex);
 		}
 	};
+	public updateQuestion = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const questionId = parseInt(req.params.id);
+			const questionData: questionData[] = req.body.questions;
+			const assessmentResponse = await this.AssessmentServices.updateQuestion(questionId, questionData);
+			AppResponseHelper.sendSuccess(res, 'Success', assessmentResponse);
+		} catch (ex) {
+			next(ex);
+		}
+	};
 }
 
 export default AssessmentController;

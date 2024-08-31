@@ -56,6 +56,7 @@ export const assessmentMessage = {
 	scoreIsRequiredInPerQuestion: 'score is required in Per question type scoring',
 	scoreIsRequiredInMaxScoreTypeQuestion: 'score is required in Max question type scoring',
 	questionIsMissing: 'question is missing',
+	questionNotFound: 'question not found',
 	optiopnIsMissing: 'option is missing',
 	passIsMissing: 'pass is required',
 };

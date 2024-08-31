@@ -1,6 +1,6 @@
 import { DataTypes, Sequelize } from 'sequelize';
 import { AppDBModel, AppDB_Common_Fields } from './app-db.model';
-import { ScoringType } from '../enums/assessment.enum';
+import { ScoringType, timeType } from '../enums/assessment.enum';
 
 export class assessmentMasterModel extends AppDBModel {
 	public id: number;
@@ -11,6 +11,7 @@ export class assessmentMasterModel extends AppDBModel {
 	public timed: number;
 	public pass: number;
 	public score: number;
+	public timeType: timeType;
 }
 
 export default function (sequelize: Sequelize): typeof assessmentMasterModel {
@@ -50,6 +51,10 @@ export default function (sequelize: Sequelize): typeof assessmentMasterModel {
 			},
 			score: {
 				type: DataTypes.INTEGER,
+				allowNull: true,
+			},
+			timeType: {
+				type: DataTypes.STRING,
 				allowNull: true,
 			},
 		},

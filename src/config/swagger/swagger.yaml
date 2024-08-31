@@ -1252,6 +1252,9 @@ paths:
               timed:
                 type: integer
                 example: 10
+              timeType:
+                type: string
+                example: "timed"
       responses:
         '200':
           description: Success

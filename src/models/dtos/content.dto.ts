@@ -1,6 +1,6 @@
 import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { ConteTypes } from '../enums/contentType.enum';
-import { ScoringType } from '../enums/assessment.enum';
+import { ScoringType, timeType } from '../enums/assessment.enum';
 
 export class ContentDto {
 	@IsString()
@@ -44,4 +44,8 @@ export class ContentDto {
 	@IsOptional()
 	@IsNumber()
 	public score: number;
+
+	@IsOptional()
+	@IsEnum(timeType)
+	public timeType: timeType;
 }

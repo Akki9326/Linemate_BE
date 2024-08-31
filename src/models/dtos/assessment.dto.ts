@@ -1,8 +1,25 @@
-import { IsArray, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { QuestionType, ScoringType } from '../enums/assessment.enum';
 import { Type } from 'class-transformer';
 
+export class optionsDto {
+	@IsString()
+	@IsNotEmpty()
+	public option: string;
+
+	@IsBoolean()
+	public isCorrectAnswer: boolean;
+
+	@IsNumber()
+	@IsOptional()
+	public optionId: number;
+}
+
 export class questionData {
+	@IsNumber()
+	@IsOptional()
+	public questionId: number;
+
 	@IsString()
 	@IsNotEmpty()
 	public question: string;
@@ -11,11 +28,9 @@ export class questionData {
 	public type: QuestionType;
 
 	@IsArray()
-	public options: string[];
-
-	@IsString()
-	@IsNotEmpty()
-	public answer: string;
+	@ValidateNested({ each: true })
+	@Type(() => optionsDto)
+	public options: optionsDto[];
 
 	@IsNumber()
 	@IsOptional()

@@ -6,7 +6,6 @@ export class assessmentQuestionMatrixModel extends AppDBModel {
 	public assessmentId: number;
 	public question: string;
 	public optionIds: number[];
-	public correctAnswer: number;
 	public score: number;
 	public type: string;
 }
@@ -43,10 +42,6 @@ export default function (sequelize: Sequelize): typeof assessmentQuestionMatrixM
 					model: 'assessmentOption',
 					key: 'id',
 				},
-			},
-			correctAnswer: {
-				type: DataTypes.INTEGER,
-				allowNull: true,
 			},
 			score: {
 				type: DataTypes.INTEGER,
