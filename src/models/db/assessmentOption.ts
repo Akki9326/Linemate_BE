@@ -5,6 +5,7 @@ export class assessmentOptionModel extends AppDBModel {
 	public id: number;
 	public questionId: number;
 	public option: string;
+	public isCorrectAnswer: boolean;
 }
 
 export default function (sequelize: Sequelize): typeof assessmentOptionModel {
@@ -23,6 +24,11 @@ export default function (sequelize: Sequelize): typeof assessmentOptionModel {
 			option: {
 				type: DataTypes.TEXT,
 				allowNull: false,
+			},
+			isCorrectAnswer: {
+				allowNull: false,
+				type: DataTypes.BOOLEAN,
+				defaultValue: false,
 			},
 		},
 		{

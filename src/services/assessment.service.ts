@@ -6,7 +6,7 @@ import { assessmentDto, questionData } from '@/models/dtos/assessment.dto';
 import { BelongsTo, HasMany } from 'sequelize';
 import { AssessmentListRequestDto } from '@/models/dtos/assessment-list.dto';
 import { Op } from 'sequelize';
-import { QuestionType, ScoringType } from '@/models/enums/assessment.enum';
+import { ScoringType } from '@/models/enums/assessment.enum';
 import { ConteTypes } from '@/models/enums/contentType.enum';
 
 class AssessmentServices {
@@ -37,18 +37,6 @@ class AssessmentServices {
 				}
 			}
 
-			if (questionElement.type == QuestionType.SingleSelect) {
-				if (!questionElement.answer) {
-					throw new BadRequestException(`question.${i}.` + `${assessmentMessage.correctAnswerIsRequired}`);
-				}
-			}
-
-			if (questionElement.answer) {
-				if (!questionElement.options.includes(questionElement.answer)) {
-					throw new BadRequestException(`question.${i}.` + `${assessmentMessage.correctAnswerIsNotInOptions}`);
-				}
-			}
-
 			if (!questionElement.options.length) {
 				throw new BadRequestException(`question.${i}.` + `${assessmentMessage.optiopnIsMissing}`);
 			}
@@ -56,32 +44,53 @@ class AssessmentServices {
 	}
 	private async storeQuestion(questionList: questionData[], assessmentId: number) {
 		for (const questionElement of questionList) {
-			const questionObj = {};
+			let question;
+			if (questionElement.questionId) {
+				question = await this.assessmentQuestionMatrix.findOne({
+					where: {
+						id: questionElement.questionId,
+						isDeleted: false,
+					},
+				});
 
-			questionObj['question'] = questionElement.question;
-			questionObj['type'] = questionElement.type;
-			questionObj['assessmentId'] = assessmentId;
+				if (!question) {
+					throw new BadRequestException(assessmentMessage.questionNotFound);
+				}
 
-			const createQuestion = await this.assessmentQuestionMatrix.create(questionObj);
-			let currectAnswerId;
-			const optionsIds = [];
-			for (let i = 0; i < questionElement.options.length; i++) {
-				const option = await this.assessmentOption.create({ option: questionElement.options[i], questionId: createQuestion.id });
-				optionsIds.push(option.id);
-				if (questionElement.options[i] === questionElement.answer) {
-					currectAnswerId = option.id;
+				question.question = questionElement.question;
+				question.type = questionElement.type;
+
+				question = await question.save();
+			} else {
+				const questionObj = {};
+				questionObj['question'] = questionElement.question;
+				questionObj['type'] = questionElement.type;
+				questionObj['assessmentId'] = assessmentId;
+				question = await this.assessmentQuestionMatrix.create(questionObj);
+			}
+			for (const optionElement of questionElement.options) {
+				if (optionElement.optionId) {
+					let option = await this.assessmentOption.findOne({
+						where: {
+							id: optionElement.optionId,
+						},
+					});
+					option.option = optionElement.option;
+					option.isCorrectAnswer = optionElement.isCorrectAnswer;
+
+					option = await option.save();
+				} else {
+					const optionsIds = [];
+					const option = await this.assessmentOption.create({
+						option: optionElement.option,
+						isCorrectAnswer: optionElement.isCorrectAnswer,
+						questionId: question.id,
+					});
+					optionsIds.push(option.id);
+					await this.assessmentQuestionMatrix.update({ optionIds: optionsIds }, { where: { id: question.id } });
 				}
 			}
-			await this.assessmentQuestionMatrix.update({ correctAnswer: currectAnswerId, optionIds: optionsIds }, { where: { id: createQuestion.id } });
 		}
-		await this.assessmentMaster.update(
-			{
-				totalQuestion: questionList.length,
-			},
-			{
-				where: { id: assessmentId },
-			},
-		);
 	}
 	public async add(assessmentData: assessmentDto, createdUser: JwtTokenData) {
 		const tenant = await this.tenant.findOne({
@@ -331,6 +340,38 @@ class AssessmentServices {
 		};
 		await this.validateQuestion(assessmentData);
 		await this.storeQuestion(questionData, assessment.id);
+	}
+	public async updateQuestion(questionId: number, questionData: questionData[]) {
+		let question = await this.assessmentQuestionMatrix.findOne({
+			where: {
+				id: questionId,
+				isDeleted: false,
+			},
+		});
+
+		if (!question) {
+			throw new BadRequestException(assessmentMessage.questionNotFound);
+		}
+		for (const questionElement of questionData) {
+			question.question = questionElement.question;
+			question.type = questionElement.type;
+
+			question = await question.save();
+
+			/** delete old options */
+			await this.assessmentOption.destroy({ where: { questionId: questionId } });
+
+			const optionsIds = [];
+			for (let i = 0; i < questionElement.options.length; i++) {
+				const option = await this.assessmentOption.create({
+					option: questionElement.options[i].option,
+					isCorrectAnswer: questionElement.options[i].isCorrectAnswer,
+					questionId: questionId,
+				});
+				optionsIds.push(option.id);
+			}
+			await this.assessmentQuestionMatrix.update({ optionIds: optionsIds }, { where: { id: questionId } });
+		}
 	}
 }
 

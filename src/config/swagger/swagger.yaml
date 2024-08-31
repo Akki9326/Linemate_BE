@@ -1718,26 +1718,32 @@ paths:
                   example: []
                 tenantId:
                   type: integer
-                  example: 1
-                isPublish:
-                  type: boolean
-                  example: false
-                isArchive:
-                  type: boolean
-                  example: false
-                scoring:
-                  type: string
-                  example: "max score"
-                  enum: [max score, per question, no score]
-                score:
-                  type: integer
-                  example: 50
-                pass:
-                  type: integer
-                  example: 50
-                timed:
-                  type: integer
-                  example: 10
+                example: []
+              tenantId:
+                type: integer
+                example: 1
+              isPublish:
+                type: boolean
+                example: false
+              isArchive:
+                type: boolean
+                example: false
+              scoring:
+                type: string
+                example: "max score"
+                enum: [max score, per question, no score]
+              score:
+                type: integer
+                example: 50
+              pass:
+                type: integer
+                example: 50
+              timed:
+                type: integer
+                example: 10
+              timeType:
+                type: string
+                example: "timed"
       responses:
         '200':
           description: Success
