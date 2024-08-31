@@ -1,17 +1,496 @@
-swagger: '2.0'
-info:
-  title: Linemate
-  version: 1.0.0
-host: localhost:3000
-schemes:
-  - http
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Enter your token with "Bearer " prefix. Example: **Bearer <token>**'
+  schemas:
+    PermissionType:
+      type: string
+      enum:
+        - tenant
+        - platform
+      description: Type of the permission, either `tenant` or `platform`.
 
-securityDefinitions:
-  BearerAuth:
-    type: apiKey
-    name: Authorization
-    in: header
-    description: 'Enter your token with "Bearer " prefix. Example: **Bearer <token>**'
+    RoleType:
+      type: string
+      enum:
+        - standard
+        - custom
+      description: Type of the role, either `standard` or `custom`.
+
+    UserType:
+      type: string
+      enum:
+        - Chief Admin
+        - Company Admin
+        - Support User
+        - User
+      description: Type of the user, representing their type within the system.
+
+    VariableType:
+      type: string
+      enum:
+        - text
+        - multiSelect
+        - numeric
+        - singleSelect
+      description: The type of the variable, defining the input method.
+
+    VariableCategories:
+      type: string
+      enum:
+        - custom
+        - standard
+      description: The category of the variable, either custom or standard.
+
+    ContentType:
+      type: string
+      enum:
+        - PDF
+        - video
+        - document
+        - powerPoint
+        - scorm
+        - assessment
+      description: Different types of content supported.
+
+    FileType:
+      type: string
+      enum:
+        - tenantLogo
+        - userProfile
+        - content
+      description: Which type of file.
+
+    ScoringType:
+      type: string
+      enum:
+        - max score
+        - per question
+        - no score
+      description: Different scoring types for assessments.
+
+    QuestionType:
+      type: string
+      enum:
+        - multi select
+        - single select
+        - boolean
+      description: Types of questions.
+
+    TokenTypes:
+      type: string
+      enum:
+        - LOGIN_OTP
+        - FORGOT_PASSWORD
+      description: Types of tokens.
+
+    ClientTypes:
+      type: string
+      enum:
+        - Test
+        - POC
+        - Production
+      description: Types of clients.
+
+    FiltersEnum:
+      type: string
+      enum:
+        - DropDown
+        - DateRange
+        - NumberRange
+      description: Filter types.
+
+    FilterFor:
+      type: string
+      enum:
+        - employee
+        - tenant
+        - content
+      description: Entities to which filters can apply.
+
+    CohortRuleDataTypes:
+      type: string
+      enum:
+        - dropDown
+        - date
+      description: Data types used in cohort rules.
+
+    RuleTypes:
+      type: string
+      enum:
+        - cohort
+        - joiningDate
+        - customVariables
+      description: Different types of rules.
+
+    RuleOperators:
+      type: string
+      enum:
+        - EQUAL
+        - BETWEEN
+        - LESS_THAN
+        - GREATER_THAN
+        - NOTEQUAL
+      description: Operators used in rules.
+
+    AppPermission:
+      type: string
+      enum:
+        - USER_READ
+        - USER_WRITE
+        - VARIABLE_READ
+        - VARIABLE_WRITE
+      description: Application permissions.
+
+    SortOrder:
+      type: string
+      enum:
+        - ASC
+        - DESC
+      description: Sort order (ascending or descending).
+
+    HttpStatusCode:
+      type: integer
+      enum:
+        - 200
+        - 400
+        - 500
+        - 401
+        - 201
+        - 409
+        - 404
+        - 403
+      description: HTTP status codes.
+      
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          example: akash@codiot.com
+        password:
+          type: string
+          example: Admin@123
+        countryCode:
+          type: string
+          example: +91
+      required:
+        - username
+        - password
+        - countryCode
+
+    LoginResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            userData:
+              type: object
+              properties:
+                access:
+                  type: array
+                  items:
+                    type: string
+                  example:
+                    - Read Permission
+                    - user
+                    - variable
+                    - user.read
+                    - user.write
+                    - variable.read
+                    - variable.write
+                email:
+                  type: string
+                  example: akash@codiot.com
+                mobileNumber:
+                  type: string
+                  example: 8866104284
+                firstName:
+                  type: string
+                  example: Akash
+                lastName:
+                  type: string
+                  example: Akash
+                countryCode:
+                  type: string
+                  example: +91
+                tenantIds:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 7
+                      name:
+                        type: string
+                        example: new LineeMate1231
+                      trademark:
+                        type: string
+                        example: LineMadte1231@gmail.com
+                      phoneNumber:
+                        type: string
+                        example: 1234567890
+                      createdBy:
+                        type: integer
+                        example: 1
+                      Creator:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          firstName:
+                            type: string
+                            example: Akash
+                          lastName:
+                            type: string
+                            example: Akash
+                      Updater:
+                        type: object
+                        nullable: true
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          firstName:
+                            type: string
+                            example: Akash
+                          lastName:
+                            type: string
+                            example: Akash
+                isTemporaryPassword:
+                  type: boolean
+                  example: false
+            token:
+              type: string
+              example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9....."
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"
+
+    ForgotPasswordRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          example: akash@codiot.com
+      required:
+        - username
+
+    ForgotPasswordResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"
+
+    VerifyOtpRequest:
+      type: object
+      properties:
+        otp:
+          type: string
+          example: 336119
+      required:
+        - otp
+
+    VerifyOtpResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            email:
+              type: string
+              example: akash@codiot.com
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"   
+
+    ResetPasswordRequest:
+      type: object
+      properties:
+        otp:
+          type: string
+          example: 336119
+        password:
+          type: string
+          example: qwe@123
+      required:
+        - otp
+        - password
+
+    ResetPasswordResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            email:
+              type: string
+              example: akash@codiot.com
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"
+
+    CreateUserRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: Nikunj
+        lastName:
+          type: string
+          example: Dhaduk
+        email:
+          type: string
+          example: nikunj.dhaduk33@gmail.com
+        countyCode:
+          type: string
+          example: +91
+        mobileNumber:
+          type: string
+          example: 9912226316
+        userType:
+          type: string
+          example: Company Admin
+        tenantIds:
+          type: array
+          items:
+            type: integer
+          example: [1]
+        employeeId:
+          type: string
+          example: uiui
+        profilePhoto:
+          type: string
+          example: ''
+        tenantVariables:
+          type: array
+          items:
+            type: object
+            properties:
+              tenantId:
+                type: integer
+                example: 1
+              variables:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    variableId:
+                      type: integer
+                      example: 1
+                    value:
+                      type: string
+                      example: managere
+
+    CreateUserResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"   
+
+    GetUserByIdResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            firstName:
+              type: string
+              example: Akash
+            lastName:
+              type: string
+              example: Akash
+            email:
+              type: string
+              example: akash@codiot.com
+            mobileNumber:
+              type: string
+              example: 8866104284
+            tenantIds:
+              type: array
+              items:
+                type: integer
+            isTemporaryPassword:
+              type: boolean
+              example: false
+            userType:
+              type: string
+              example: Chief Admin
+            countryCode:
+              type: string
+              example: +91
+            employeeId:
+              type: string
+              nullable: true
+              example: null
+            profilePhoto:
+              type: string
+              nullable: true
+              example: null
+            tenantDetails:
+              type: array
+              items:
+                type: object
+            tenantVariableDetail:
+              type: array
+              items:
+                type: object
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"    
 
 paths:
   /permission/v1/add:
@@ -21,22 +500,22 @@ paths:
         - Permission
       security:
         - BearerAuth: []
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              name:
-                type: string
-                example: user.write
-              type:
-                type: string
-                example: platform
-              description:
-                type: string
-                example: user can add and edit user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: user.write
+                type:
+                  type: string
+                  example: platform
+                description:
+                  type: string
+                  example: user can add and edit user
       responses:
         '200':
           description: Success
@@ -52,7 +531,8 @@ paths:
         - name: id
           in: path
           required: true
-          type: string
+          schema:
+            type: string
       responses:
         '200':
           description: Success
@@ -66,22 +546,24 @@ paths:
         - name: id
           in: path
           required: true
-          type: string
-        - in: body
-          name: body
-          required: true
           schema:
-            type: object
-            properties:
-              name:
-                type: string
-                example: user.view
-              type:
-                type: string
-                example: platform
-              description:
-                type: string
-                example: user can view user
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: user.view
+                type:
+                  type: string
+                  example: platform
+                description:
+                  type: string
+                  example: user can view user
       responses:
         '200':
           description: Success
@@ -95,7 +577,8 @@ paths:
         - name: id
           in: path
           required: true
-          type: string
+          schema:
+            type: string
       responses:
         '200':
           description: Success
@@ -107,25 +590,25 @@ paths:
         - Permission
       security:
         - BearerAuth: []
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              page:
-                type: integer
-                example: 1
-              limit:
-                type: integer
-                example: 10
-              sortField:
-                type: string
-                example: id
-              sortOrder:
-                type: string
-                example: ASC
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page:
+                  type: integer
+                  example: 1
+                limit:
+                  type: integer
+                  example: 10
+                sortField:
+                  type: string
+                  example: id
+                sortOrder:
+                  type: string
+                  example: ASC
       responses:
         '200':
           description: Success
@@ -137,35 +620,35 @@ paths:
         - Role
       security:
         - BearerAuth: []
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              name:
-                type: string
-                example: Access Portal
-              type:
-                type: string
-                example: custom
-              description:
-                type: string
-                example: have access portal
-              permissionIds:
-                type: array
-                items:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Access Portal
+                type:
+                  type: string
+                  example: custom
+                description:
+                  type: string
+                  example: have access portal
+                permissionIds:
+                  type: array
+                  items:
+                    type: integer
+                  example: []
+                userIds:
+                  type: array
+                  items:
+                    type: integer
+                  example: []
+                tenantId:
                   type: integer
-                example: []
-              userIds:
-                type: array
-                items:
-                  type: integer
-                example: []
-              tenantId:
-                type: integer
-                example: 1
+                  example: 1
       responses:
         '200':
           description: Success
@@ -181,7 +664,8 @@ paths:
         - name: id
           in: path
           required: true
-          type: string
+          schema:
+            type: string
       responses:
         '200':
           description: Success
@@ -195,35 +679,37 @@ paths:
         - name: id
           in: path
           required: true
-          type: string
-        - in: body
-          name: body
-          required: true
           schema:
-            type: object
-            properties:
-              name:
-                type: string
-                example: Access Portal
-              type:
-                type: string
-                example: custom
-              description:
-                type: string
-                example: have access portal
-              permissionIds:
-                type: array
-                items:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Access Portal
+                type:
+                  type: string
+                  example: custom
+                description:
+                  type: string
+                  example: have access portal
+                permissionIds:
+                  type: array
+                  items:
+                    type: integer
+                  example: []
+                userIds:
+                  type: array
+                  items:
+                    type: integer
+                  example: []
+                tenantId:
                   type: integer
-                example: []
-              userIds:
-                type: array
-                items:
-                  type: integer
-                example: []
-              tenantId:
-                type: integer
-                example: 1
+                  example: 1
       responses:
         '200':
           description: Success
@@ -237,7 +723,8 @@ paths:
         - name: id
           in: path
           required: true
-          type: string
+          schema:
+            type: string
       responses:
         '200':
           description: Success
@@ -253,29 +740,31 @@ paths:
         - name: tenantId
           in: header
           required: false
-          type: integer
-          example: 1
-        - in: body
-          name: body
-          required: true
           schema:
-            type: object
-            properties:
-              page:
-                type: integer
-                example: 1
-              limit:
-                type: integer
-                example: 10
-              sortField:
-                type: string
-                example: id
-              sortOrder:
-                type: string
-                example: ASC
-              search:
-                type: string
-                example: ''
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page:
+                  type: integer
+                  example: 1
+                limit:
+                  type: integer
+                  example: 10
+                sortField:
+                  type: string
+                  example: id
+                sortOrder:
+                  type: string
+                  example: ASC
+                search:
+                  type: string
+                  example: ''
       responses:
         '200':
           description: Success
@@ -285,82 +774,104 @@ paths:
       summary: Login User
       tags:
         - Auth
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              username:
-                type: string
-                example: akash@codiot.com
-              password:
-                type: string
-                example: Admin@123
-              countryCode:
-                type: string
-                example: +91
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: akash@codiot.com
+                password:
+                  type: string
+                  example: Admin@123
+                countryCode:
+                  type: string
+                  example: +91
       responses:
         '200':
-          description: Success
+          description: Successful login, returns user data and token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Bad request, invalid credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid password."
 
   /auth/v1/forgot-password:
     post:
       summary: Forgot Password
       tags:
         - Auth
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              username:
-                type: string
-                example: akash@codiot.com
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: akash@codiot.com
       responses:
         '200':
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForgotPasswordResponse'
 
   /auth/v1/verify-otp:
     post:
       summary: Verify OTP
       tags:
         - Auth
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              otp:
-                type: string
-                example: 336119
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                otp:
+                  type: string
+                  example: 336119
       responses:
         '200':
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyOtpResponse'
 
   /auth/v1/reset-password:
     post:
       summary: Reset Password
       tags:
         - Auth
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              otp:
-                type: string
-                example: 336119
-              password:
-                type: string
-                example: qwe@123
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                otp:
+                  type: string
+                  example: 336119
+                password:
+                  type: string
+                  example: qwe@123
       responses:
         '200':
           description: Success
@@ -372,26 +883,26 @@ paths:
         - File
       security:
         - BearerAuth: []
-      parameters:
-        - name: type
-          in: formData
-          required: true
-          type: string
-          enum: [tenantLogo, userProfile, content]
-          description: The type of the file.
-          example: Tenant_Logo
-        - in: formData
-          name: elementId
-          required: false
-          schema:
-            type: string
-            description: The ID related to the content.
-            example: 1
-        - in: formData
-          name: file
-          required: true
-          type: file
-          description: The file to upload.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [tenantLogo, userProfile, content]
+                  description: The type of the file.
+                  example: Tenant_Logo
+                elementId:
+                  type: string
+                  description: The ID related to the content.
+                  example: 1
+                file:
+                  type: string
+                  format: binary
+                  description: The file to upload.
       responses:
         '200':
           description: Success
@@ -407,64 +918,19 @@ paths:
         - User
       security:
         - BearerAuth: []
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              firstName:
-                type: string
-                example: Nikunj
-              lastName:
-                type: string
-                example: Dhaduk
-              email:
-                type: string
-                example: nikunj.dhaduk33@gmail.com
-              countyCode:
-                type: string
-                example: +91
-              mobileNumber:
-                type: string
-                example: 9912226316
-              userType:
-                type: string
-                example: Company Admin
-              tenantIds:
-                type: array
-                items:
-                  type: integer
-                example: [1]
-              employeeId:
-                type: string
-                example: uiui
-              profilePhoto:
-                type: string
-                example: ''
-              tenantVariables:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    tenantId:
-                      type: integer
-                      example: 1
-                    variables:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          variableId:
-                            type: integer
-                            example: 1
-                          value:
-                            type: string
-                            example: managere
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
       responses:
         '200':
           description: Success
+          content:
+           application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserResponse'
 
   /user/v1/{id}:
     get:
@@ -477,10 +943,15 @@ paths:
         - name: id
           in: path
           required: true
-          type: string
+          schema:
+            type: string
       responses:
         '200':
           description: Success
+          content:
+           application/json:
+            schema:
+              $ref: '#/components/schemas/GetUserByIdResponse'
     put:
       summary: Update User
       tags:
@@ -491,61 +962,63 @@ paths:
         - name: id
           in: path
           required: true
-          type: string
-        - in: body
-          name: body
-          required: true
           schema:
-            type: object
-            properties:
-              firstName:
-                type: string
-                example: Nikunj
-              lastName:
-                type: string
-                example: Dhaduk
-              email:
-                type: string
-                example: nikunj.dhaduk1@gmail.com
-              mobileNumber:
-                type: string
-                example: 9912123291
-              userType:
-                type: string
-                example: Company Admin
-              countyCode:
-                type: string
-                example: +91
-              tenantIds:
-                type: array
-                items:
-                  type: integer
-                example: [1]
-              employeeId:
-                type: string
-                example: ''
-              profilePhoto:
-                type: string
-                example: ''
-              tenantVariables:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    tenantId:
-                      type: integer
-                      example: 1
-                    variables:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          variableId:
-                            type: integer
-                            example: 1
-                          value:
-                            type: string
-                            example: managere
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                  example: Nikunj
+                lastName:
+                  type: string
+                  example: Dhaduk
+                email:
+                  type: string
+                  example: nikunj.dhaduk1@gmail.com
+                mobileNumber:
+                  type: string
+                  example: 9912123291
+                userType:
+                  type: string
+                  example: Company Admin
+                countyCode:
+                  type: string
+                  example: +91
+                tenantIds:
+                  type: array
+                  items:
+                    type: integer
+                  example: [1]
+                employeeId:
+                  type: string
+                  example: ''
+                profilePhoto:
+                  type: string
+                  example: ''
+                tenantVariables:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      tenantId:
+                        type: integer
+                        example: 1
+                      variables:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            variableId:
+                              type: integer
+                              example: 1
+                            value:
+                              type: string
+                              example: managere
       responses:
         '200':
           description: Success
@@ -561,102 +1034,104 @@ paths:
         - name: tenantId
           in: header
           required: false
-          type: integer
-          example: 1
-        - in: body
-          name: body
-          required: true
           schema:
-            type: object
-            properties:
-              page:
-                type: integer
-                example: 1
-              limit:
-                type: integer
-                example: 10
-              sortField:
-                type: string
-                example: id
-              sortOrder:
-                type: string
-                example: ASC
-              search:
-                type: string
-                example: '91'
-              filter:
-                type: object
-                properties:
-                  isActive:
-                    type: boolean
-                    example: true
-                  dynamicFilter:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        filterTitle:
-                          type: string
-                          example: "Joining Date"
-                        filterKey:
-                          type: string
-                          example: "joiningDate"
-                        filterType:
-                          type: string
-                          example: "DateRange"
-                        minValue:
-                          type: string | number
-                          format: date
-                          example: "2024-08-01"
-                        maxValue:
-                          type: string | number
-                          format: date
-                          example: "2024-08-31"
-                      required:
-                        - filterTitle
-                        - filterKey
-                        - filterType
-                        - minValue
-                        - maxValue
-                    example:
-                      - filterTitle: "Joining Date"
-                        filterKey: "joiningDate"
-                        filterType: "DateRange"
-                        minValue: "2024-08-01"
-                        maxValue: "2024-08-31"
-                      - filterTitle: "role"
-                        filterKey: "role"
-                        filterType: "DropDown"
-                        selectedValue: "hr"
-                        variableId: 6
-                        options:
-                          - "manager"
-                          - "hr"
-                      - filterTitle: "role"
-                        filterKey: "role"
-                        filterType: "DropDown"
-                        selectedValue: "manager"
-                        variableId: 7
-                        options:
-                          - "manager"
-                          - "hr"
-                      - filterTitle: "role12"
-                        filterKey: "role12"
-                        filterType: "DropDown"
-                        selectedValue: "manager"
-                        variableId: 8
-                        options:
-                          - "manager"
-                          - "hr"
-                      - filterTitle: "Experience"
-                        filterKey: "experience"
-                        filterType: "NumberRange"
-                        maxValue: 2
-                        minValue: 1
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page:
+                  type: integer
+                  example: 1
+                limit:
+                  type: integer
+                  example: 10
+                sortField:
+                  type: string
+                  example: id
+                sortOrder:
+                  type: string
+                  example: ASC
+                search:
+                  type: string
+                  example: '91'
+                filter:
+                  type: object
+                  properties:
+                    isActive:
+                      type: boolean
+                      example: true
+                    dynamicFilter:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          filterTitle:
+                            type: string
+                            example: "Joining Date"
+                          filterKey:
+                            type: string
+                            example: "joiningDate"
+                          filterType:
+                            type: string
+                            example: "DateRange"
+                          minValue:
+                            type: string
+                            format: date
+                            example: "2024-08-01"
+                          maxValue:
+                            type: string
+                            format: date
+                            example: "2024-08-31"
+                        required:
+                          - filterTitle
+                          - filterKey
+                          - filterType
+                          - minValue
+                          - maxValue
+                      example:
+                        - filterTitle: "Joining Date"
+                          filterKey: "joiningDate"
+                          filterType: "DateRange"
+                          minValue: "2024-08-01"
+                          maxValue: "2024-08-31"
+                        - filterTitle: "role"
+                          filterKey: "role"
+                          filterType: "DropDown"
+                          selectedValue: "hr"
+                          variableId: 6
+                          options:
+                            - "manager"
+                            - "hr"
+                        - filterTitle: "role"
+                          filterKey: "role"
+                          filterType: "DropDown"
+                          selectedValue: "manager"
+                          variableId: 7
+                          options:
+                            - "manager"
+                            - "hr"
+                        - filterTitle: "role12"
+                          filterKey: "role12"
+                          filterType: "DropDown"
+                          selectedValue: "manager"
+                          variableId: 8
+                          options:
+                            - "manager"
+                            - "hr"
+                        - filterTitle: "Experience"
+                          filterKey: "experience"
+                          filterType: "NumberRange"
+                          maxValue: 2
+                          minValue: 1
       responses:
         '200':
           description: Success
-          
+
   /user/v1/delete-users:
     post:
       summary: Delete Bulk Users
@@ -664,18 +1139,18 @@ paths:
         - User
       security:
         - BearerAuth: []
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              userIds:
-                type: array
-                items:
-                  type: integer
-                example: [2, 3]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userIds:
+                  type: array
+                  items:
+                    type: integer
+                  example: [2, 3]
       responses:
         '200':
           description: Success
@@ -687,18 +1162,18 @@ paths:
         - User
       security:
         - BearerAuth: []
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              userIds:
-                type: array
-                items:
-                  type: integer
-                example: [2]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userIds:
+                  type: array
+                  items:
+                    type: integer
+                  example: [2]
       responses:
         '200':
           description: Success
@@ -710,18 +1185,18 @@ paths:
         - User
       security:
         - BearerAuth: []
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              userIds:
-                type: array
-                items:
-                  type: integer
-                example: [2]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userIds:
+                  type: array
+                  items:
+                    type: integer
+                  example: [2]
       responses:
         '200':
           description: Success
@@ -733,21 +1208,21 @@ paths:
         - User
       security:
         - BearerAuth: []
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              userIds:
-                type: array
-                items:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userIds:
+                  type: array
+                  items:
+                    type: integer
+                  example: [2, 3]
+                tenantId:
                   type: integer
-                example: [2, 3]
-              tenantId:
-                type: integer
-                example: 3
+                  example: 3
       responses:
         '200':
           description: Success
@@ -759,67 +1234,67 @@ paths:
         - Tenant
       security:
         - BearerAuth: []
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              name:
-                type: string
-                example: Test1
-              companyType:
-                type: string
-                example: partnership
-              trademark:
-                type: string
-                example: admin@gmail.com
-              phoneNumber:
-                type: integer
-                example: 1234567890
-              gstNumber:
-                type: string
-                example: 123456780
-              currencyCode:
-                type: string
-                example: INR
-              isdCode:
-                type: integer
-                example: 91
-              clientType:
-                type: string
-                example: Test
-              authorisedFirstName:
-                type: string
-                example: test
-              authorisedLastName:
-                type: string
-                example: tcd
-              authorisedEmail:
-                type: string
-                example: cdcd
-              authorisedMobileNo:
-                type: integer
-                example: 1234567890
-              companyAddress:
-                type: string
-                example: cdcd
-              companyCountry:
-                type: string
-                example: cdcd
-              companyState:
-                type: string
-                example: cdcad
-              companyCity:
-                type: string
-                example: cdcd
-              companyPinCode:
-                type: integer
-                example: 395006
-              whitelistedIps:
-                type: string
-                example: cdc
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Test1
+                companyType:
+                  type: string
+                  example: partnership
+                trademark:
+                  type: string
+                  example: admin@gmail.com
+                phoneNumber:
+                  type: integer
+                  example: 1234567890
+                gstNumber:
+                  type: string
+                  example: 123456780
+                currencyCode:
+                  type: string
+                  example: INR
+                isdCode:
+                  type: integer
+                  example: 91
+                clientType:
+                  type: string
+                  example: Test
+                authorisedFirstName:
+                  type: string
+                  example: test
+                authorisedLastName:
+                  type: string
+                  example: tcd
+                authorisedEmail:
+                  type: string
+                  example: cdcd
+                authorisedMobileNo:
+                  type: integer
+                  example: 1234567890
+                companyAddress:
+                  type: string
+                  example: cdcd
+                companyCountry:
+                  type: string
+                  example: cdcd
+                companyState:
+                  type: string
+                  example: cdcad
+                companyCity:
+                  type: string
+                  example: cdcd
+                companyPinCode:
+                  type: integer
+                  example: 395006
+                whitelistedIps:
+                  type: string
+                  example: cdc
       responses:
         '200':
           description: Success
@@ -893,67 +1368,69 @@ paths:
         - name: id
           in: path
           required: true
-          type: string
-        - in: body
-          name: body
-          required: true
           schema:
-            type: object
-            properties:
-              name:
-                type: string
-                example: Test1
-              companyType:
-                type: string
-                example: partnership
-              trademark:
-                type: string
-                example: admin@gmail.com
-              phoneNumber:
-                type: integer
-                example: 1234567890
-              gstNumber:
-                type: string
-                example: 123456780
-              currencyCode:
-                type: string
-                example: INR
-              isdCode:
-                type: integer
-                example: 91
-              clientType:
-                type: string
-                example: Test
-              authorisedFirstName:
-                type: string
-                example: test
-              authorisedLastName:
-                type: string
-                example: tcd
-              authorisedEmail:
-                type: string
-                example: cdcd
-              authorisedMobileNo:
-                type: integer
-                example: 1234567890
-              companyAddress:
-                type: string
-                example: cdcd
-              companyCountry:
-                type: string
-                example: cdcd
-              companyState:
-                type: string
-                example: cdcad
-              companyCity:
-                type: string
-                example: cdcd
-              companyPinCode:
-                type: integer
-                example: 395006
-              whitelistedIps:
-                type: string
-                example: cdc
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Test1
+                companyType:
+                  type: string
+                  example: partnership
+                trademark:
+                  type: string
+                  example: admin@gmail.com
+                phoneNumber:
+                  type: integer
+                  example: 1234567890
+                gstNumber:
+                  type: string
+                  example: 123456780
+                currencyCode:
+                  type: string
+                  example: INR
+                isdCode:
+                  type: integer
+                  example: 91
+                clientType:
+                  type: string
+                  example: Test
+                authorisedFirstName:
+                  type: string
+                  example: test
+                authorisedLastName:
+                  type: string
+                  example: tcd
+                authorisedEmail:
+                  type: string
+                  example: cdcd
+                authorisedMobileNo:
+                  type: integer
+                  example: 1234567890
+                companyAddress:
+                  type: string
+                  example: cdcd
+                companyCountry:
+                  type: string
+                  example: cdcd
+                companyState:
+                  type: string
+                  example: cdcad
+                companyCity:
+                  type: string
+                  example: cdcd
+                companyPinCode:
+                  type: integer
+                  example: 395006
+                whitelistedIps:
+                  type: string
+                  example: cdc
       responses:
         '200':
           description: Success
@@ -967,7 +1444,8 @@ paths:
         - name: id
           in: path
           required: true
-          type: string
+          schema:
+            type: string
       responses:
         '200':
           description: Success
@@ -981,25 +1459,25 @@ paths:
         - Tenant
       security:
         - BearerAuth: []
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              page:
-                type: integer
-                example: 1
-              limit:
-                type: integer
-                example: 10
-              sortField:
-                type: string
-                example: id
-              sortOrder:
-                type: string
-                example: ASC
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page:
+                  type: integer
+                  example: 1
+                limit:
+                  type: integer
+                  example: 10
+                sortField:
+                  type: string
+                  example: id
+                sortOrder:
+                  type: string
+                  example: ASC
       responses:
         '200':
           description: Success
@@ -1011,39 +1489,39 @@ paths:
         - Variable
       security:
         - BearerAuth: []
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              name:
-                type: string
-                example: role
-              isMandatory:
-                type: boolean
-                example: true
-              type:
-                type: string
-                example: multiSelect
-              description:
-                type: string
-                example: test description
-              placeHolder:
-                type: string
-                example: role
-              category:
-                type: string
-                example: custom
-              tenantId:
-                type: integer
-                example: 1
-              options:
-                type: array
-                items:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
                   type: string
-                example: ['Role', 'Manager']
+                  example: role
+                isMandatory:
+                  type: boolean
+                  example: true
+                type:
+                  type: string
+                  example: multiSelect
+                description:
+                  type: string
+                  example: test description
+                placeHolder:
+                  type: string
+                  example: role
+                category:
+                  type: string
+                  example: custom
+                tenantId:
+                  type: integer
+                  example: 1
+                options:
+                  type: array
+                  items:
+                    type: string
+                  example: ['Role', 'Manager']
       responses:
         '200':
           description: Success
@@ -1059,7 +1537,8 @@ paths:
         - name: id
           in: path
           required: true
-          type: string
+          schema:
+            type: string
       responses:
         '200':
           description: Success
@@ -1074,44 +1553,46 @@ paths:
         - name: id
           in: path
           required: true
-          type: string
-        - in: body
-          name: body
-          required: true
           schema:
-            type: object
-            properties:
-              name:
-                type: string
-                example: role
-              isMandatory:
-                type: boolean
-                example: true
-              type:
-                type: string
-                example: multiSelect
-              description:
-                type: string
-                example: test description
-              placeHolder:
-                type: string
-                example: role
-              category:
-                type: string
-                example: custom
-              tenantId:
-                type: integer
-                example: 1
-              options:
-                type: array
-                items:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
                   type: string
-                example: ['Role', 'Manager']
+                  example: role
+                isMandatory:
+                  type: boolean
+                  example: true
+                type:
+                  type: string
+                  example: multiSelect
+                description:
+                  type: string
+                  example: test description
+                placeHolder:
+                  type: string
+                  example: role
+                category:
+                  type: string
+                  example: custom
+                tenantId:
+                  type: integer
+                  example: 1
+                options:
+                  type: array
+                  items:
+                    type: string
+                  example: ['Role', 'Manager']
       responses:
         '200':
           description: Success
 
-    post:
+    delete:
       summary: Delete Variable
       tags:
         - Variable
@@ -1121,7 +1602,8 @@ paths:
         - name: id
           in: path
           required: true
-          type: string
+          schema:
+            type: string
       responses:
         '200':
           description: Success
@@ -1137,35 +1619,37 @@ paths:
         - name: tenantId
           in: header
           required: false
-          type: integer
-          example: 2
-        - in: body
-          name: body
-          required: true
           schema:
-            type: object
-            properties:
-              page:
-                type: integer
-                example: 1
-              limit:
-                type: integer
-                example: 10
-              sortField:
-                type: string
-                example: id
-              sortOrder:
-                type: string
-                example: ASC
-              search:
-                type: string
-                example: ''
-              filter:
-                type: object
-                properties:
-                  category:
-                    type: string
-                    example: 'custom'
+            type: integer
+            example: 2
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page:
+                  type: integer
+                  example: 1
+                limit:
+                  type: integer
+                  example: 10
+                sortField:
+                  type: string
+                  example: id
+                sortOrder:
+                  type: string
+                  example: ASC
+                search:
+                  type: string
+                  example: ''
+                filter:
+                  type: object
+                  properties:
+                    category:
+                      type: string
+                      example: 'custom'
       responses:
         '200':
           description: Success
@@ -1181,16 +1665,18 @@ paths:
         - name: userId
           in: path
           required: true
-          type: string
-        - in: body
-          name: body
-          required: true
           schema:
-            type: object
-            properties:
-              tenantId:
-                type: integer
-                example: 3
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tenantId:
+                  type: integer
+                  example: 3
       responses:
         '200':
           description: Success
@@ -1202,32 +1688,35 @@ paths:
         - Content
       security:
         - BearerAuth: []
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              name:
-                type: string
-                example: Access Portal
-              type:
-                type: string
-                enum:
-                  - PDF
-                  - Video
-                  - Document
-                  - PowerPoint
-                  - Scorm
-                  - Assessment
-                example: PDF
-              description:
-                type: string
-                example: have access portal
-              uploadedFileIds:
-                type: array
-                items:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Access Portal
+                type:
+                  type: string
+                  enum:
+                    - PDF
+                    - Video
+                    - Document
+                    - PowerPoint
+                    - Scorm
+                    - Assessment
+                  example: PDF
+                description:
+                  type: string
+                  example: have access portal
+                uploadedFileIds:
+                  type: array
+                  items:
+                    type: integer
+                  example: []
+                tenantId:
                   type: integer
                 example: []
               tenantId:
@@ -1270,7 +1759,8 @@ paths:
         - name: id
           in: path
           required: true
-          type: string
+          schema:
+            type: string
       responses:
         '200':
           description: Success
@@ -1284,36 +1774,38 @@ paths:
         - name: id
           in: path
           required: true
-          type: string
-        - in: body
-          name: body
-          required: true
           schema:
-            type: object
-            properties:
-              name:
-                type: string
-                example: Access Portal
-              type:
-                type: string
-                example: PDF
-              description:
-                type: string
-                example: have access portal
-              uploadedFileIds:
-                type: array
-                items:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Access Portal
+                type:
+                  type: string
+                  example: PDF
+                description:
+                  type: string
+                  example: have access portal
+                uploadedFileIds:
+                  type: array
+                  items:
+                    type: integer
+                  example: []
+                tenantId:
                   type: integer
-                example: []
-              tenantId:
-                type: integer
-                example: 1
-              isPublish:
-                type: boolean
-                example: false
-              isArchive:
-                type: boolean
-                example: false
+                  example: 1
+                isPublish:
+                  type: boolean
+                  example: false
+                isArchive:
+                  type: boolean
+                  example: false
       responses:
         '200':
           description: Success
@@ -1327,7 +1819,8 @@ paths:
         - name: id
           in: path
           required: true
-          type: string
+          schema:
+            type: string
       responses:
         '200':
           description: Success
@@ -1343,49 +1836,51 @@ paths:
         - name: tenantId
           in: header
           required: false
-          type: integer
-          example: 1
-        - in: body
-          name: body
-          required: true
           schema:
-            type: object
-            properties:
-              page:
-                type: integer
-                example: 1
-              limit:
-                type: integer
-                example: 10
-              sortField:
-                type: string
-                example: id
-              sortOrder:
-                type: string
-                example: ASC
-              search:
-                type: string
-                example: ''
-              filter:
-                type: object
-                properties:
-                  archive:
-                    type: boolean
-                    example: true
-                  isPublish:
-                    type: boolean
-                    example: false
-                  updatedBetween:
-                    type: object
-                    properties:
-                      startDate:
-                        type: string
-                        format: date
-                        example: '2024-07-17'
-                      endDate:
-                        type: string
-                        format: date
-                        example: '2024-07-31'
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page:
+                  type: integer
+                  example: 1
+                limit:
+                  type: integer
+                  example: 10
+                sortField:
+                  type: string
+                  example: id
+                sortOrder:
+                  type: string
+                  example: ASC
+                search:
+                  type: string
+                  example: ''
+                filter:
+                  type: object
+                  properties:
+                    archive:
+                      type: boolean
+                      example: true
+                    isPublish:
+                      type: boolean
+                      example: false
+                    updatedBetween:
+                      type: object
+                      properties:
+                        startDate:
+                          type: string
+                          format: date
+                          example: '2024-07-17'
+                        endDate:
+                          type: string
+                          format: date
+                          example: '2024-07-31'
       responses:
         '200':
           description: Success
@@ -1402,35 +1897,39 @@ paths:
         - in: query
           name: filterFor
           required: true
-          type: string
+          schema:
+            type: string
           description: Specify the category for which filters are being requested, e.g., 'employee,tenant,content'.
         - name: tenantId
           in: header
           required: true
-          type: integer
-          example: 1
+          schema:
+            type: integer
+            example: 1
       responses:
         '200':
           description: Successful retrieval of filters
-          schema:
-            type: object
-            properties:
-              status:
-                type: string
-                example: success
-              data:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    id:
-                      type: integer
-                    name:
-                      type: string
-                    type:
-                      type: string
-                    description:
-                      type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        name:
+                          type: string
+                        type:
+                          type: string
+                        description:
+                          type: string
 
   /cohort/v1/rule-options:
     get:
@@ -1459,60 +1958,56 @@ paths:
       operationId: addCohort
       security:
         - BearerAuth: []
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              tenantId:
-                type: integer
-                description: ID of the tenant
-                example: 1
-              name:
-                type: string
-                description: Name of the cohort
-                example: "test cohort"
-              userIds:
-                type: array
-                description: List of user IDs to be added to the cohort
-                items:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tenantId:
                   type: integer
-                example: [2, 3]
-              isExistingRuleProcess:
-                type: boolean
-                description: process rule for existing users
-                example: true
-              rules:
-                type: array
-                description: Rules for the cohort
-                items:
-                  type: object
-                  properties:
-                    and:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          or:
-                            type: array
-                            items:
-                              type: object
-                              properties:
-                                title:
-                                  type: string
-                                  example: "cohort"
-                                operators:
-                                  type: string
-                                  example: "EQUAL"
-                                value:
-                                  type: string
-                                  example: "1"
-                            required:
-                              - title
-                              - operators
-                              - value
+                  description: ID of the tenant
+                  example: 1
+                name:
+                  type: string
+                  description: Name of the cohort
+                  example: "test cohort"
+                userIds:
+                  type: array
+                  description: List of user IDs to be added to the cohort
+                  items:
+                    type: integer
+                  example: [2, 3]
+                rules:
+                  type: array
+                  description: Rules for the cohort
+                  items:
+                    type: object
+                    properties:
+                      and:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            or:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  title:
+                                    type: string
+                                    example: "cohort"
+                                  operators:
+                                    type: string
+                                    example: "EQUAL"
+                                  value:
+                                    type: string
+                                    example: "1"
+                                required:
+                                  - title
+                                  - operators
+                                  - value
             required:
               - tenantId
               - name
@@ -1560,7 +2055,8 @@ paths:
         - name: id
           in: path
           required: true
-          type: string
+          schema:
+            type: string
       responses:
         '200':
           description: Success
@@ -1577,30 +2073,27 @@ paths:
           required: true         
           schema:
             type: integer
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              tenantId:
-                type: integer
-                description: ID of the tenant
-                example: 1
-              name:
-                type: string
-                description: Name of the cohort
-                example: "test cohort"
-              userIds:
-                type: array
-                description: List of user IDs to be added to the cohort
-                items:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tenantId:
                   type: integer
-                example: [2, 3]
-              isExistingRuleProcess:
-                type: boolean
-                description: process rule for existing users
-                example: true
+                  description: ID of the tenant
+                  example: 1
+                name:
+                  type: string
+                  description: Name of the cohort
+                  example: "test cohort"
+                userIds:
+                  type: array
+                  description: List of user IDs to be added to the cohort
+                  items:
+                    type: integer
+                  example: [2, 3]
             required:
               - tenantId
               - name
@@ -1674,28 +2167,30 @@ paths:
         - name: tenantId
           in: header
           required: true
-          type: integer
-        - in: body
-          name: body
-          required: true
           schema:
-            type: object
-            properties:
-              page:
-                type: integer
-                example: 1
-              limit:
-                type: integer
-                example: 10
-              sortField:
-                type: string
-                example: id
-              sortOrder:
-                type: string
-                example: ASC
-              search:
-                type: string
-                example: ''
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page:
+                  type: integer
+                  example: 1
+                limit:
+                  type: integer
+                  example: 10
+                sortField:
+                  type: string
+                  example: id
+                sortOrder:
+                  type: string
+                  example: ASC
+                search:
+                  type: string
+                  example: ''
       responses:
         '200':
           description: Success  
@@ -1707,22 +2202,21 @@ paths:
         - Cohort
       security:
         - BearerAuth: []
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              userId:
-                type: array
-                items:
-                  type: integer
-                example: [2]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: array
+                  items:
+                    type: integer
+                  example: [2]
       responses:
         '200':
           description: Success  
-
 
   /cohort/v1/assign-cohort:
     post:
@@ -1731,23 +2225,23 @@ paths:
         - Cohort
       security:
         - BearerAuth: []
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              cohortIds:
-                type: array
-                items:
-                  type: integer
-                example: [2]
-              userIds:
-                type: array
-                items:
-                  type: integer
-                example: [2, 3]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cohortIds:
+                  type: array
+                  items:
+                    type: integer
+                  example: [2]
+                userIds:
+                  type: array
+                  items:
+                    type: integer
+                  example: [2, 3]
       responses:
         '200':
           description: Success
@@ -1760,79 +2254,78 @@ paths:
       description: "Creates a new assessment with questions."
       security:
         - BearerAuth: []
-      parameters:
-        - in: body
-          name: body
-          description: Assessment object that needs to be added
-          required: true
-          schema:
-            type: object
-            required:
-              - name
-              - description
-              - pass
-              - timed
-              - contentId
-              - scoring
-              - totalQuestion
-              - score
-              - questions
-              - skill
-            properties:
-              name:
-                type: string
-                example: "Test Assessment"
-              description:
-                type: string
-                example: "Test Assessment"
-              pass:
-                type: integer
-                example: 50
-              timed:
-                type: integer
-                example: 10
-              contentId:
-                type: integer
-                example: 1
-              scoring:
-                type: string
-                example: "max score"
-                enum: [max score, per question, no score]
-              totalQuestion:
-                type: integer
-                example: 10
-              score:
-                type: integer
-                example: 50
-              questions:
-                type: array
-                items:
-                  type: object
-                  required:
-                    - question
-                    - type
-                    - options
-                    - answer
-                  properties:
-                    question:
-                      type: string
-                      example: "what is your age range?"
-                    type:
-                      type: string
-                      example: "single select"
-                    options:
-                      type: array
-                      items:
-                        type: string
-                        example: "0-15,15-20,20-30,30-60"
-                    answer:
-                      type: string
-                      example: "20-30"
-              skill:
-                type: array
-                items:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - description
+                - pass
+                - timed
+                - contentId
+                - scoring
+                - totalQuestion
+                - score
+                - questions
+                - skill
+              properties:
+                name:
                   type: string
-                  example: "new Skill"
+                  example: "Test Assessment"
+                description:
+                  type: string
+                  example: "Test Assessment"
+                pass:
+                  type: integer
+                  example: 50
+                timed:
+                  type: integer
+                  example: 10
+                contentId:
+                  type: integer
+                  example: 1
+                scoring:
+                  type: string
+                  example: "max score"
+                  enum: [max score, per question, no score]
+                totalQuestion:
+                  type: integer
+                  example: 10
+                score:
+                  type: integer
+                  example: 50
+                questions:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - question
+                      - type
+                      - options
+                      - answer
+                    properties:
+                      question:
+                        type: string
+                        example: "what is your age range?"
+                      type:
+                        type: string
+                        example: "single select"
+                      options:
+                        type: array
+                        items:
+                          type: string
+                          example: "0-15,15-20,20-30,30-60"
+                      answer:
+                        type: string
+                        example: "20-30"
+                skill:
+                  type: array
+                  items:
+                    type: string
+                    example: "new Skill"
       responses:
         201:
           description: Assessment created successfully
@@ -1841,7 +2334,7 @@ paths:
 
   /assessment/v1/{id}:
     get:
-      summary: Get assement by Id
+      summary: Get assessment by Id
       tags:
         - Assessment
       security:
@@ -1850,7 +2343,8 @@ paths:
         - name: id
           in: path
           required: true
-          type: string
+          schema:
+            type: string
       responses:
         '200':
           description: Success
@@ -1860,78 +2354,77 @@ paths:
         - Assessment
       security:
         - BearerAuth: []
-      parameters:
-        - in: body
-          name: body
-          description: Assessment object that needs to be added
-          required: true
-          schema:
-            type: object
-            required:
-              - name
-              - description
-              - pass
-              - timed
-              - contentId
-              - scoring
-              - totalQuestion
-              - score
-              - questions
-              - skill
-            properties:
-              name:
-                type: string
-                example: "Test Assessment"
-              description:
-                type: string
-                example: "Test Assessment"
-              pass:
-                type: integer
-                example: 50
-              timed:
-                type: integer
-                example: 10
-              contentId:
-                type: integer
-                example: 1
-              scoring:
-                type: string
-                example: "max score"
-              totalQuestion:
-                type: integer
-                example: 10
-              score:
-                type: integer
-                example: 50
-              questions:
-                type: array
-                items:
-                  type: object
-                  required:
-                    - question
-                    - type
-                    - options
-                    - answer
-                  properties:
-                    question:
-                      type: string
-                      example: "what is your age range?"
-                    type:
-                      type: string
-                      example: "single select"
-                    options:
-                      type: array
-                      items:
-                        type: string
-                        example: "0-15,15-20,20-30,30-60"
-                    answer:
-                      type: string
-                      example: "20-30"
-              skill:
-                type: array
-                items:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - description
+                - pass
+                - timed
+                - contentId
+                - scoring
+                - totalQuestion
+                - score
+                - questions
+                - skill
+              properties:
+                name:
                   type: string
-                  example: "new Skill"
+                  example: "Test Assessment"
+                description:
+                  type: string
+                  example: "Test Assessment"
+                pass:
+                  type: integer
+                  example: 50
+                timed:
+                  type: integer
+                  example: 10
+                contentId:
+                  type: integer
+                  example: 1
+                scoring:
+                  type: string
+                  example: "max score"
+                totalQuestion:
+                  type: integer
+                  example: 10
+                score:
+                  type: integer
+                  example: 50
+                questions:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - question
+                      - type
+                      - options
+                      - answer
+                    properties:
+                      question:
+                        type: string
+                        example: "what is your age range?"
+                      type:
+                        type: string
+                        example: "single select"
+                      options:
+                        type: array
+                        items:
+                          type: string
+                          example: "0-15,15-20,20-30,30-60"
+                      answer:
+                        type: string
+                        example: "20-30"
+                skill:
+                  type: array
+                  items:
+                    type: string
+                    example: "new Skill"
       responses:
         '200':
           description: Success
@@ -1945,7 +2438,8 @@ paths:
         - name: id
           in: path
           required: true
-          type: string
+          schema:
+            type: string
       responses:
         '200':
           description: Success
@@ -1957,38 +2451,38 @@ paths:
         - Assessment
       security:
         - BearerAuth: []
-      parameters:
-        - in: body
-          name: body
-          required: true
-          schema:
-            type: object
-            properties:
-              page:
-                type: integer
-                example: 1
-              limit:
-                type: integer
-                example: 10
-              sortField:
-                type: string
-                example: id
-              sortOrder:
-                type: string
-                example: ASC
-              search:
-                type: string
-                example: ''
-              filter:
-                type: object
-                properties:
-                  contentId:
-                    type: integer
-                    example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page:
+                  type: integer
+                  example: 1
+                limit:
+                  type: integer
+                  example: 10
+                sortField:
+                  type: string
+                  example: id
+                sortOrder:
+                  type: string
+                  example: ASC
+                search:
+                  type: string
+                  example: ''
+                filter:
+                  type: object
+                  properties:
+                    contentId:
+                      type: integer
+                      example: 1
       responses:
         '200':
           description: Success
-
+          
   /assessment/v1/upload-question/{id}:
     post:
       summary: "upload a assessment question"

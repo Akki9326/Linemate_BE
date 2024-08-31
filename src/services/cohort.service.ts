@@ -61,6 +61,7 @@ export class CohortService {
 	}
 
 	public async assignCohort(cohortId: number, cohortDetails: AssignCohortUserId, creatorId: number) {
+		cohortDetails.userIds = Array.from(new Set(cohortDetails.userIds));
 		const existingUsers = await this.users.findAll({
 			where: {
 				id: {
