@@ -2509,8 +2509,11 @@ paths:
                     - question
                     - type
                     - options
-                    - answer
+                    - questionId
                   properties:
+                    questionId:
+                      type: integer
+                      example: 1
                     question:
                       type: string
                       example: "what is your age range?"
@@ -2520,11 +2523,21 @@ paths:
                     options:
                       type: array
                       items:
-                        type: string
-                        example: "0-15,15-20,20-30,30-60"
-                    answer:
-                      type: string
-                      example: "20-30"
+                        type: object
+                        required:
+                          - option
+                          - isCorrectAnswer
+                          - optionId
+                        properties:  
+                          option:
+                            type: string
+                            example: "How many city in gujrat?"
+                          isCorrectAnswer:
+                            type: boolean
+                            example: true
+                          optionId:
+                            type: integer
+                            example: 1
       responses:
         201:
           description: Question upload successfully
