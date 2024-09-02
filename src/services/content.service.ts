@@ -336,6 +336,7 @@ export class ContentService {
 					],
 				},
 			],
+			distinct: true,
 		});
 
 		return contentResult;
