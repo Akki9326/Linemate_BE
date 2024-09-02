@@ -159,6 +159,7 @@ export class ContentService {
 			assessment.timed = contentDetails.timed;
 			assessment.pass = contentDetails.pass;
 			assessment.score = contentDetails.score;
+			assessment.timeType = contentDetails.timeType;
 			assessment.createdBy = userId;
 			assessment = await assessment.save();
 
