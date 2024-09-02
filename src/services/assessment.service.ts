@@ -59,6 +59,7 @@ class AssessmentServices {
 				questionObj['question'] = questionElement.question;
 				questionObj['type'] = questionElement.type;
 				questionObj['assessmentId'] = assessmentId;
+				questionObj['score'] = questionElement.score;
 				question = await this.assessmentQuestionMatrix.create(questionObj);
 			}
 			for (const optionElement of questionElement.options) {
