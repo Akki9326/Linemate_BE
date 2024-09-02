@@ -219,7 +219,7 @@ export class ContentService {
 						},
 						{
 							association: new HasMany(this.assessmentMaster, this.assessmentQuestionMatrix, { as: 'question', foreignKey: 'assessmentId' }),
-							attributes: ['question', 'type', 'score'],
+							attributes: ['id', 'question', 'type', 'score'],
 							include: [
 								{
 									association: new HasMany(this.assessmentQuestionMatrix, this.assessmentOption, { as: 'options', foreignKey: 'questionId' }),
@@ -328,7 +328,7 @@ export class ContentService {
 						},
 						{
 							association: new HasMany(this.assessmentMaster, this.assessmentQuestionMatrix, { as: 'question', foreignKey: 'assessmentId' }),
-							attributes: ['question', 'type', 'score'],
+							attributes: ['id', 'question', 'type', 'score'],
 							include: [
 								{
 									association: new HasMany(this.assessmentQuestionMatrix, this.assessmentOption, { as: 'options', foreignKey: 'questionId' }),
