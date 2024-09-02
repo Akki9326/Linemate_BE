@@ -1,6 +1,7 @@
 import DB from '@databases';
 import { PermissionDto } from '@/models/dtos/permissions.dto';
 import { PermissionListRequestDto } from '@/models/dtos/permissions-list.dto';
+import { BadRequestException } from '@/exceptions/BadRequestException';
 
 class PermissionServices {
 	private permissionModel = DB.Permission;
@@ -29,7 +30,7 @@ class PermissionServices {
 		);
 
 		if (numberOfAffectedRows === 0) {
-			throw new Error('Permission not found or no changes made');
+			throw new BadRequestException('Permission not found or no changes made');
 		}
 
 		return permissionId;
@@ -39,7 +40,7 @@ class PermissionServices {
 			where: { id: permissionId, isDeleted: false },
 		});
 		if (!permissionDetails) {
-			throw new Error('Permission not found ');
+			throw new BadRequestException('Permission not found ');
 		}
 		return permissionDetails;
 	}

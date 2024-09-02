@@ -1,8 +1,8 @@
 import DB from '@/databases';
-import { Op } from 'sequelize';
-import { parse, isValid, startOfDay, endOfDay } from 'date-fns';
-import { CohortRuleQuery } from '@/models/interfaces/cohort.interface';
 import { BadRequestException } from '@/exceptions/BadRequestException';
+import { CohortRuleQuery } from '@/models/interfaces/cohort.interface';
+import { endOfDay, isValid, parseISO, startOfDay } from 'date-fns';
+import { Op } from 'sequelize';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 const queryCohort = async (cohortValue: number, operator: string) => {
@@ -15,7 +15,7 @@ const queryCohort = async (cohortValue: number, operator: string) => {
 			query = { cohortId: { [Op.ne]: cohortValue }, isDeleted: false };
 			break;
 		default:
-			throw new Error(`Unsupported operator for cohort: ${operator}`);
+			throw new BadRequestException(`Unsupported operator for cohort: ${operator}`);
 	}
 	const data = await DB.CohortMatrix.findAll({
 		where: query,
@@ -36,7 +36,7 @@ async function queryVariableMatrix(variableId: number, variableValue: string, op
 			query = { variableId: variableId, value: { [Op.ne]: variableValue }, isDeleted: false };
 			break;
 		default:
-			throw new Error(`Unsupported operator for role: ${operator}`);
+			throw new BadRequestException(`Unsupported operator for role: ${operator}`);
 	}
 	const data = await DB.VariableMatrix.findAll({
 		where: query,
@@ -50,9 +50,9 @@ async function queryUserByDate(dateValue: any, operator: string) {
 	let query = {};
 
 	const parseDate = (dateStr: string) => {
-		const parsedDate = parse(dateStr, 'yyyy-MM-dd', new Date());
+		const parsedDate = parseISO(dateStr);
 		if (!isValid(parsedDate)) {
-			throw new Error(`Invalid date format: ${dateStr}`);
+			throw new BadRequestException(`Invalid date format: ${dateStr}`);
 		}
 		return parsedDate;
 	};
@@ -76,7 +76,7 @@ async function queryUserByDate(dateValue: any, operator: string) {
 			break;
 		case 'BETWEEN':
 			if (!dateValue.startDate || !dateValue.endDate) {
-				throw new Error('Both startDate and endDate must be provided for BETWEEN operator');
+				throw new BadRequestException('Both startDate and endDate must be provided for BETWEEN operator');
 			}
 			query = {
 				createdAt: {
@@ -85,7 +85,7 @@ async function queryUserByDate(dateValue: any, operator: string) {
 			};
 			break;
 		default:
-			throw new Error(`Unsupported operator for createdAt: ${operator}`);
+			throw new BadRequestException(`Unsupported operator for createdAt: ${operator}`);
 	}
 
 	const data = await DB.Users.findAll({
@@ -153,7 +153,7 @@ export const applyingCohort = async (cohortRule: CohortRuleQuery[]) => {
 		} else if (title === 'joiningDate') {
 			return await queryUserByDate(value, operators);
 		} else {
-			throw new Error(`Unsupported title: ${title}`);
+			throw new BadRequestException(`Unsupported title: ${title}`);
 		}
 	}
 
