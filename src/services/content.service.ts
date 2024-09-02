@@ -207,7 +207,7 @@ export class ContentService {
 				},
 				{
 					association: new BelongsTo(this.content, this.assessmentMaster, { as: 'assessment', foreignKey: 'assessmentId' }),
-					attributes: ['id', 'totalQuestion', 'scoring', 'timed', 'pass', 'score'],
+					attributes: ['id', 'totalQuestion', 'scoring', 'timed', 'pass', 'score', 'timeType'],
 					include: [
 						{
 							association: new BelongsTo(this.assessmentMaster, this.user, { as: 'creator', foreignKey: 'createdBy' }),
@@ -219,7 +219,7 @@ export class ContentService {
 						},
 						{
 							association: new HasMany(this.assessmentMaster, this.assessmentQuestionMatrix, { as: 'question', foreignKey: 'assessmentId' }),
-							attributes: ['question', 'type', 'score'],
+							attributes: ['id', 'question', 'type', 'score'],
 							include: [
 								{
 									association: new HasMany(this.assessmentQuestionMatrix, this.assessmentOption, { as: 'options', foreignKey: 'questionId' }),
@@ -316,7 +316,7 @@ export class ContentService {
 				},
 				{
 					association: new BelongsTo(this.content, this.assessmentMaster, { as: 'assessment', foreignKey: 'assessmentId' }),
-					attributes: ['id', 'totalQuestion', 'scoring', 'timed', 'pass', 'score'],
+					attributes: ['id', 'totalQuestion', 'scoring', 'timed', 'pass', 'score', 'timeType'],
 					include: [
 						{
 							association: new BelongsTo(this.assessmentMaster, this.user, { as: 'creator', foreignKey: 'createdBy' }),
@@ -328,7 +328,7 @@ export class ContentService {
 						},
 						{
 							association: new HasMany(this.assessmentMaster, this.assessmentQuestionMatrix, { as: 'question', foreignKey: 'assessmentId' }),
-							attributes: ['question', 'type', 'score'],
+							attributes: ['id', 'question', 'type', 'score'],
 							include: [
 								{
 									association: new HasMany(this.assessmentQuestionMatrix, this.assessmentOption, { as: 'options', foreignKey: 'questionId' }),
