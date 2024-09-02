@@ -70,16 +70,13 @@ export class ContentService {
 		}
 
 		if (contentDetails.type == ConteTypes.Assessment) {
-			const requiredAssessmentFields = ['name', 'description', 'type', 'timed', 'scoring'];
+			const requiredAssessmentFields = ['name', 'description', 'type', 'timed', 'scoring', 'timeType'];
 			for (const element of requiredAssessmentFields) {
 				if (!(element in contentDetails)) {
 					throw new BadRequestException(`${element} ${AppMessages.isRequired}`);
 				}
 			}
 			if (contentDetails.scoring == ScoringType.PerQuestion) {
-				if (!contentDetails.score) {
-					throw new BadRequestException(assessmentMessage.scoreIsRequiredInPerQuestion);
-				}
 				if (!contentDetails.pass) {
 					throw new BadRequestException(assessmentMessage.passIsMissing);
 				}
