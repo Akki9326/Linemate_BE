@@ -2510,10 +2510,14 @@ paths:
                     - type
                     - options
                     - questionId
+                    - score
                   properties:
                     questionId:
                       type: integer
                       example: 1
+                    score:
+                      type: integer
+                      example: 10
                     question:
                       type: string
                       example: "what is your age range?"

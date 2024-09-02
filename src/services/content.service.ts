@@ -207,7 +207,7 @@ export class ContentService {
 				},
 				{
 					association: new BelongsTo(this.content, this.assessmentMaster, { as: 'assessment', foreignKey: 'assessmentId' }),
-					attributes: ['id', 'totalQuestion', 'scoring', 'timed', 'pass', 'score'],
+					attributes: ['id', 'totalQuestion', 'scoring', 'timed', 'pass', 'score', 'timeType'],
 					include: [
 						{
 							association: new BelongsTo(this.assessmentMaster, this.user, { as: 'creator', foreignKey: 'createdBy' }),
@@ -316,7 +316,7 @@ export class ContentService {
 				},
 				{
 					association: new BelongsTo(this.content, this.assessmentMaster, { as: 'assessment', foreignKey: 'assessmentId' }),
-					attributes: ['id', 'totalQuestion', 'scoring', 'timed', 'pass', 'score'],
+					attributes: ['id', 'totalQuestion', 'scoring', 'timed', 'pass', 'score', 'timeType'],
 					include: [
 						{
 							association: new BelongsTo(this.assessmentMaster, this.user, { as: 'creator', foreignKey: 'createdBy' }),
