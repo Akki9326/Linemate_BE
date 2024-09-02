@@ -170,6 +170,7 @@ export class CohortService {
 		cohort.name = cohortDetails.name;
 		cohort.description = cohortDetails.description;
 		cohort.tenantId = cohortDetails.tenantId;
+		cohort.rules = cohortDetails.rules;
 		cohort.updatedBy = userId;
 		cohort.isExistingRuleProcess = cohortDetails.isExistingRuleProcess;
 		if (cohortDetails?.userIds?.length) {
