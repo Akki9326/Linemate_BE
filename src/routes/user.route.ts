@@ -31,7 +31,12 @@ class UserRoute implements Routes {
 			this.userController.changePassword,
 		);
 		this.router.post(`${this.path}/v1/download-user/:tenantId`, this.userController.downloadUser);
-		this.router.post(`${this.path}/v1/import-user/:tenantId`, validationMiddleware(ImportUserDto, 'body'), this.userController.importUser);
+		this.router.post(
+			`${this.path}/v1/import-user/:tenantId`,
+			validationMiddleware(ImportUserDto, 'body'),
+			authMiddleware,
+			this.userController.importUser,
+		);
 	}
 }
 

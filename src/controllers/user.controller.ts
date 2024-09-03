@@ -103,7 +103,8 @@ class UserController {
 		try {
 			const tenantId = parseInt(req.params.tenantId) as number;
 			const userData: ImportUserDto[] = req.body.data;
-			const userResponse = await this.userService.importUser(tenantId, userData);
+			const createdBy = req.user as JwtTokenData;
+			const userResponse = await this.userService.importUser(tenantId, userData, createdBy);
 			AppResponseHelper.sendSuccess(res, 'Success', userResponse);
 		} catch (ex) {
 			next(ex);

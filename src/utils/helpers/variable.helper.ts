@@ -14,11 +14,21 @@ export const VariableHelper = {
 			return [];
 		}
 		const attributes = ['name'];
+		const isValidJSON = (str: string) => {
+			try {
+				JSON.parse(str);
+				return true;
+			} catch (e) {
+				return false;
+			}
+		};
 		const responseList = await Promise.all(
 			allVariable.map(async item => {
 				const variableLabelDetails = await VariableHelper.findVariable(item.variableId, attributes);
+
 				return {
 					...item.dataValues,
+					value: isValidJSON(item.value) ? JSON.parse(item.value) : item.value,
 					name: variableLabelDetails?.dataValues?.name,
 				};
 			}),
