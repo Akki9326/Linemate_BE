@@ -217,10 +217,12 @@ export class ContentService {
 						},
 						{
 							association: new HasMany(this.assessmentMaster, this.assessmentQuestionMatrix, { as: 'question', foreignKey: 'assessmentId' }),
+							where: { isDeleted: false },
 							attributes: ['id', 'question', 'type', 'score'],
 							include: [
 								{
 									association: new HasMany(this.assessmentQuestionMatrix, this.assessmentOption, { as: 'options', foreignKey: 'questionId' }),
+									where: { isDeleted: false },
 									attributes: ['id', 'option', 'isCorrectAnswer'],
 								},
 							],
@@ -326,10 +328,12 @@ export class ContentService {
 						},
 						{
 							association: new HasMany(this.assessmentMaster, this.assessmentQuestionMatrix, { as: 'question', foreignKey: 'assessmentId' }),
+							where: { isDeleted: false },
 							attributes: ['id', 'question', 'type', 'score'],
 							include: [
 								{
 									association: new HasMany(this.assessmentQuestionMatrix, this.assessmentOption, { as: 'options', foreignKey: 'questionId' }),
+									where: { isDeleted: false },
 									attributes: ['id', 'option'],
 								},
 							],
@@ -362,6 +366,18 @@ export class ContentService {
 			if (!assessment) {
 				throw new BadRequestException(assessmentMessage.assessmentNotFound);
 			}
+
+			await this.assessmentQuestionMatrix.update(
+				{
+					isDeleted: true,
+					updatedBy: userId,
+				},
+				{
+					where: {
+						assessmentId: assessment.id,
+					},
+				},
+			);
 
 			assessment.set({
 				isDeleted: true,

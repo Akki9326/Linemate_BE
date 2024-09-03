@@ -4,6 +4,7 @@ import DB from '@databases';
 import { assessmentDto, questionData } from '@/models/dtos/assessment.dto';
 import { ScoringType } from '@/models/enums/assessment.enum';
 import { ConteTypes } from '@/models/enums/contentType.enum';
+import { Op } from 'sequelize';
 
 class AssessmentServices {
 	private assessmentMaster = DB.AssessmentMaster;
@@ -36,8 +37,11 @@ class AssessmentServices {
 		}
 	}
 	private async storeQuestion(questionList: questionData[], assessmentId: number) {
+		const questionIds = [];
 		for (const questionElement of questionList) {
 			let question;
+
+			// Handling the question - update if it exists, otherwise create a new one
 			if (questionElement.questionId) {
 				question = await this.assessmentQuestionMatrix.findOne({
 					where: {
@@ -45,47 +49,79 @@ class AssessmentServices {
 						isDeleted: false,
 					},
 				});
-
 				if (!question) {
 					throw new BadRequestException(assessmentMessage.questionNotFound);
 				}
-
 				question.question = questionElement.question;
 				question.type = questionElement.type;
-
-				question = await question.save();
+				question.score = questionElement.score;
+				await question.save();
 			} else {
-				const questionObj = {};
-				questionObj['question'] = questionElement.question;
-				questionObj['type'] = questionElement.type;
-				questionObj['assessmentId'] = assessmentId;
-				questionObj['score'] = questionElement.score;
-				question = await this.assessmentQuestionMatrix.create(questionObj);
+				question = await this.assessmentQuestionMatrix.create({
+					question: questionElement.question,
+					type: questionElement.type,
+					assessmentId: assessmentId,
+					score: questionElement.score,
+				});
 			}
+
+			questionIds.push(question.id);
+
+			const optionIds = [];
 			for (const optionElement of questionElement.options) {
+				let option;
 				if (optionElement.optionId) {
-					let option = await this.assessmentOption.findOne({
+					option = await this.assessmentOption.findOne({
 						where: {
 							id: optionElement.optionId,
 						},
 					});
-					option.option = optionElement.option;
-					option.isCorrectAnswer = optionElement.isCorrectAnswer;
-
-					option = await option.save();
+					if (option) {
+						option.option = optionElement.option;
+						option.isCorrectAnswer = optionElement.isCorrectAnswer;
+						await option.save();
+					}
 				} else {
-					const optionsIds = [];
-					const option = await this.assessmentOption.create({
+					option = await this.assessmentOption.create({
 						option: optionElement.option,
 						isCorrectAnswer: optionElement.isCorrectAnswer,
 						questionId: question.id,
 					});
-					optionsIds.push(option.id);
-					await this.assessmentQuestionMatrix.update({ optionIds: optionsIds }, { where: { id: question.id } });
 				}
+				optionIds.push(option.id);
 			}
+
+			// Update the question to reflect the options
+			await this.assessmentQuestionMatrix.update({ optionIds: optionIds }, { where: { id: question.id } });
+
+			// Delete options that are not in the provided optionIds
+			await this.assessmentOption.update(
+				{ isDeleted: true },
+				{
+					where: {
+						questionId: question.id,
+						id: {
+							[Op.notIn]: optionIds,
+						},
+					},
+				},
+			);
 		}
+
+		// Delete questions that are not in the provided questionIds
+		await this.assessmentQuestionMatrix.update(
+			{ isDeleted: true },
+			{
+				where: {
+					assessmentId: assessmentId,
+					id: {
+						[Op.notIn]: questionIds,
+					},
+				},
+			},
+		);
 	}
+
 	public async uploadQuestion(contentId: number, questionData: questionData[]) {
 		const content = await this.content.findOne({
 			where: {
