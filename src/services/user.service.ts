@@ -15,7 +15,7 @@ import { VariableHelper } from '@/utils/helpers/variable.helper';
 import { Email } from '@/utils/services/email';
 import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.transaction';
 import DB from '@databases';
-import { parse } from 'date-fns';
+import { parseISO } from 'date-fns';
 import { Op } from 'sequelize';
 import { TenantService } from './tenant.service';
 import VariableServices from './variable.service';
@@ -164,7 +164,11 @@ class UserService {
 			const mandatoryVariables = variableMaster.filter(variable => variable.isMandatory);
 			const missingMandatoryVariables = mandatoryVariables.filter(mandatoryVariable => {
 				const value = userVariablesMap.get(mandatoryVariable.id);
-				return value === undefined || value === null || value.trim() === '';
+				if (Array.isArray(value)) {
+					return value.length === 0 || value.every(item => item.trim() === '');
+				} else {
+					return value === undefined || value === null || value.trim() === '';
+				}
 			});
 			if (missingMandatoryVariables.length > 0) {
 				const missingFieldsNames = missingMandatoryVariables.map(variable => variable.name).join(', ');
@@ -172,7 +176,7 @@ class UserService {
 			}
 		}
 	}
-	private async addTenantVariables(tenantVariables: TenantVariables[], userId: number) {
+	private async addTenantVariables(tenantVariables: TenantVariables[], userId: number, creatorId: number) {
 		tenantVariables.length &&
 			tenantVariables.forEach(async tenant => {
 				tenant.variables.length &&
@@ -181,7 +185,7 @@ class UserService {
 						variableListMatrix.tenantId = tenant.tenantId;
 						(variableListMatrix.userId = userId), (variableListMatrix.variableId = variable.variableId);
 						variableListMatrix.value = variable.value;
-						variableListMatrix.createdBy = userId;
+						variableListMatrix.createdBy = creatorId;
 						await variableListMatrix.save();
 					});
 			});
@@ -286,7 +290,7 @@ class UserService {
 		user = await user.save();
 		if (userData.userType !== UserType.ChiefAdmin) {
 			this.mapUserTypeToRole(user.dataValues?.userType, user.id, userData.tenantIds);
-			this.addTenantVariables(userData.tenantVariables, user.id);
+			this.addTenantVariables(userData.tenantVariables, user.id, createdUser.id);
 			this.sendAccountActivationEmail(user, temporaryPassword, createdUser);
 		} else {
 			this.sendChiefAdminAccountActivationEmail(user, temporaryPassword, createdUser);
@@ -438,10 +442,13 @@ class UserService {
 		return usersToDelete.map(user => ({ id: user.id }));
 	}
 	private async getUserIdsFromVariableMatrix(filterCriteria: { variableId: number; value: string }[]) {
-		const whereConditions = filterCriteria.map(criteria => ({
-			variableId: criteria.variableId,
-			value: criteria.value,
-		}));
+		const whereConditions = filterCriteria.map(criteria => {
+			const jsonStringValue = JSON.stringify([criteria.value]);
+			return {
+				variableId: criteria.variableId,
+				[Op.or]: [{ value: { [Op.like]: `%${criteria.value}%` } }, { value: { [Op.like]: `%${jsonStringValue}%` } }],
+			};
+		});
 		const matchingRecords = await this.variableMatrix.findAll({
 			where: {
 				[Op.or]: whereConditions,
@@ -456,8 +463,8 @@ class UserService {
 	private async mappingDynamicFilter(condition: object, dynamicFilter: FilterResponse[]) {
 		dynamicFilter.forEach(filter => {
 			if (filter.filterKey === 'joiningDate') {
-				const parsedStartDate = parse(String(filter.minValue), 'yyyy-MM-dd', new Date());
-				const parsedEndDate = parse(String(filter.maxValue), 'yyyy-MM-dd', new Date());
+				const parsedStartDate = parseISO(String(filter.minValue));
+				const parsedEndDate = parseISO(String(filter.maxValue));
 				condition['createdAt'] = {
 					[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
 				};
@@ -473,7 +480,6 @@ class UserService {
 			[Op.in]: await this.getUserIdsFromVariableMatrix(variableList),
 		};
 	}
-
 	public async all(pageModel: UserListDto, tenantId: number) {
 		const orderByField = pageModel.sortField || 'id',
 			sortDirection = pageModel.sortOrder || 'ASC';
@@ -635,7 +641,7 @@ class UserService {
 
 		return userData;
 	}
-	public async importUser(tenantId: number, userData: ImportUserDto[]) {
+	public async importUser(tenantId: number, userData: ImportUserDto[], createdBy: JwtTokenData) {
 		const tenantExists = await this.tenant.findOne({
 			where: {
 				id: tenantId,
@@ -718,7 +724,7 @@ class UserService {
 
 					if (userEle.tenantVariables && userEle.tenantVariables.length) {
 						await this.validateTenantVariable(userEle.tenantVariables);
-						this.addTenantVariables(userEle.tenantVariables, createUser.id);
+						this.addTenantVariables(userEle.tenantVariables, createUser.id, createdBy.id);
 					}
 
 					const plainPassword = plainPasswords.find(p => p.email === userEle.email).password;
