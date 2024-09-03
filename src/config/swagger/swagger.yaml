@@ -492,6 +492,1237 @@ components:
           type: string
           example: "Success"    
 
+    UpdateUserRequest:
+      type: object
+      properties:
+        firstName:
+          type: string
+          example: Nikunj
+        lastName:
+          type: string
+          example: Dhaduk
+        email:
+          type: string
+          example: nikunj.dhaduk1@gmail.com
+        mobileNumber:
+          type: string
+          example: 9912123291
+        userType:
+          type: string
+          example: Company Admin
+        countyCode:
+          type: string
+          example: +91
+        tenantIds:
+          type: array
+          items:
+            type: integer
+          example: [1]
+        employeeId:
+          type: string
+          example: ''
+        profilePhoto:
+          type: string
+          example: ''
+        tenantVariables:
+          type: array
+          items:
+            type: object
+            properties:
+              tenantId:
+                type: integer
+                example: 1
+              variables:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    variableId:
+                      type: integer
+                      example: 1
+                    value:
+                      type: string
+                      example: managere
+      required:
+        - firstName
+        - lastName
+        - email
+        - mobileNumber
+        - userType
+        - countyCode
+        - tenantIds
+    
+    UpdateUserResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"   
+    
+    ListUsersRequest:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 10
+        sortField:
+          type: string
+          example: id
+        sortOrder:
+          type: string
+          example: ASC
+        search:
+          type: string
+          example: '91'
+        filter:
+          type: object
+          properties:
+            isActive:
+              type: boolean
+              example: true
+            dynamicFilter:
+              type: array
+              items:
+                type: object
+                properties:
+                  filterTitle:
+                    type: string
+                    example: "Joining Date"
+                  filterKey:
+                    type: string
+                    example: "joiningDate"
+                  filterType:
+                    type: string
+                    example: "DateRange"
+                  minValue:
+                    type: string
+                    format: date
+                    example: "2024-08-01"
+                  maxValue:
+                    type: string
+                    format: date
+                    example: "2024-08-31"
+                  selectedValue:
+                    type: string
+                    example: "hr"
+                  variableId:
+                    type: integer
+                    example: 6
+                  options:
+                    type: array
+                    items:
+                      type: string
+                    example:
+                      - "manager"
+                      - "hr"
+                required:
+                  - filterTitle
+                  - filterKey
+                  - filterType
+                  - minValue
+                  - maxValue
+              example:
+                - filterTitle: "Joining Date"
+                  filterKey: "joiningDate"
+                  filterType: "DateRange"
+                  minValue: "2024-08-01"
+                  maxValue: "2024-08-31"
+                - filterTitle: "role"
+                  filterKey: "role"
+                  filterType: "DropDown"
+                  selectedValue: "hr"
+                  variableId: 6
+                  options:
+                    - "manager"
+                    - "hr"
+      required:
+        - page
+        - limit
+
+    ListUsersResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 1
+            rows:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 54
+                  firstName:
+                    type: string
+                    example: test
+                  lastName:
+                    type: string
+                    example: user
+                  email:
+                    type: string
+                    example: test.useri8@gmail.com
+                  userType:
+                    type: string
+                    example: User
+                  mobileNumber:
+                    type: string
+                    example: 98130171108
+                  createdAt:
+                    type: string
+                    format: date-time
+                    example: 2024-08-27T11:11:01.106Z
+                  tenantIds:
+                    type: array
+                    items:
+                      type: integer
+                    example: [1]
+                  employeeId:
+                    type: string
+                    example: uiui
+                  profilePhoto:
+                    type: string
+                    nullable: true
+                    example: null
+                  tenantDetails:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        name:
+                          type: string
+                          example: new LineMate
+                        trademark:
+                          type: string
+                          example: LineMate@gmail.com
+                        phoneNumber:
+                          type: string
+                          example: 1234567890
+                  tenantVariableDetails:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        variableId:
+                          type: integer
+                          example: 1
+                        value:
+                          type: string
+                          example: managere
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: Success
+      required:
+        - data
+        - success
+        - code
+        - message    
+      
+    DeleteUsersRequest:
+      type: object
+      properties:
+        userIds:
+          type: array
+          items:
+            type: integer
+          example: [2, 3]
+      required:
+        - userIds
+
+    DeleteUsersResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                example: 60
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: Success
+      required:
+        - data
+        - success
+        - code
+        - message  
+    
+    DeactivateUsersRequest:
+      type: object
+      properties:
+        userIds:
+          type: array
+          items:
+            type: integer
+          example: [2]
+      required:
+        - userIds
+
+    DeactivateUsersResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                example: 60
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: Success
+      required:
+        - data
+        - success
+        - code
+        - message
+    
+    ActivateUsersRequest:
+      type: object
+      properties:
+        userIds:
+          type: array
+          items:
+            type: integer
+          example: [2]
+      required:
+        - userIds
+
+    ActivateUsersResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                example: 60
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: Success
+      required:
+        - data
+        - success
+        - code
+        - message
+      
+    ChangePasswordRequest:
+      type: object
+      properties:
+        userIds:
+          type: array
+          items:
+            type: integer
+          example: [2, 3]
+        tenantId:
+          type: integer
+          example: 3
+      required:
+        - userIds
+        - tenantId
+
+    ChangePasswordResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                example: 60
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: Success
+      required:
+        - data
+        - success
+        - code
+        - message
+
+    AddVariableRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: role
+        isMandatory:
+          type: boolean
+          example: true
+        type:
+          type: string
+          example: multiSelect
+        description:
+          type: string
+          example: test description
+        placeHolder:
+          type: string
+          example: role
+        category:
+          type: string
+          example: custom
+        tenantId:
+          type: integer
+          example: 1
+        options:
+          type: array
+          items:
+            type: string
+          example: ['Role', 'Manager']
+      required:
+        - name
+        - isMandatory
+        - type
+        - description
+        - placeHolder
+        - category
+        - tenantId
+        - options
+
+    AddVariableResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success" 
+
+    GetVariableRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          example: '1'
+      required:
+        - id
+
+    GetVariableResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            name:
+              type: string
+              example: firstName
+            isMandatory:
+              type: boolean
+              example: true
+            type:
+              type: string
+              example: text
+            options:
+              type: array
+              items:
+                type: string
+              example: null
+            placeHolder:
+              type: string
+              example: Please Enter First Name
+          required:
+            - id
+            - name
+            - isMandatory
+            - type
+            - placeHolder
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: Success
+      required:
+        - data
+        - success
+        - code
+        - message
+
+    UpdateVariableRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: role
+        isMandatory:
+          type: boolean
+          example: true
+        type:
+          type: string
+          example: multiSelect
+        description:
+          type: string
+          example: test description
+        placeHolder:
+          type: string
+          example: role
+        category:
+          type: string
+          example: custom
+        tenantId:
+          type: integer
+          example: 1
+        options:
+          type: array
+          items:
+            type: string
+          example: ['Role', 'Manager']
+      required:
+        - name
+        - isMandatory
+        - type
+        - description
+        - placeHolder
+        - category
+        - tenantId
+        - options    
+
+    UpdateVariableResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success" 
+
+    DeleteVariableRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          example: '1'
+      required:
+        - id
+
+    DeleteVariableResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 9
+          required:
+            - id
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: Success
+      required:
+        - data
+        - success
+        - code
+        - message   
+
+    ListVariablesRequest:
+        type: object
+        properties:
+          page:
+            type: integer
+            example: 1
+          limit:
+            type: integer
+            example: 10
+          sortField:
+            type: string
+            example: id
+          sortOrder:
+            type: string
+            example: ASC
+          search:
+            type: string
+            example: ''
+          filter:
+            type: object
+            properties:
+              category:
+                type: string
+                example: 'custom'
+        required:
+          - page
+          - limit
+          - sortField
+          - sortOrder
+          - search
+          - filter  
+
+    ListVariablesResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 8
+            rows:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  name:
+                    type: string
+                    example: "firstName"
+                  isMandatory:
+                    type: boolean
+                    example: true
+                  type:
+                    type: string
+                    example: "text"
+                  description:
+                    type: string
+                    example: ""
+                  category:
+                    type: string
+                    example: "standard"
+                  options:
+                    type: array
+                    items:
+                      type: string
+                    example: null
+                  tenantId:
+                    type: integer
+                    example: null
+              example:
+                - id: 1
+                  name: "firstName"
+                  isMandatory: true
+                  type: "text"
+                  description: ""
+                  category: "standard"
+                  options: null
+                  tenantId: null
+                - id: 2
+                  name: "lastName"
+                  isMandatory: true
+                  type: "text"
+                  description: ""
+                  category: "standard"
+                  options: null
+                  tenantId: null
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"
+      required:
+        - data
+        - success
+        - code
+        - message   
+
+    GetVariableByUserRequest:
+      type: object
+      properties:
+        tenantId:
+          type: integer
+          example: 3
+      required:
+        - tenantId
+
+    GetVariableByUserResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                example: 4
+              variableId:
+                type: integer
+                example: 6
+              value:
+                type: string
+                example: "managere"
+              name:
+                type: string
+                example: "role"
+          example:
+            - id: 4
+              variableId: 6
+              value: "managere"
+            - id: 5
+              variableId: 7
+              value: "managere"
+              name: "role"
+            - id: 6
+              variableId: 8
+              value: "managere"
+              name: "role12"
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"
+      required:
+        - data
+        - success
+        - code
+        - message
+
+    RuleOptionResponse:
+      type: object
+      properties:
+        filterTitle:
+          type: string
+          description: Title of the filter
+        filterKey:
+          type: string
+          description: Key of the filter
+        filterType:
+          type: string
+          description: Type of the filter
+        minValue:
+          type: string
+          description: Minimum value for DateRange or NumberRange filters
+          example: "2024-09-01"
+        maxValue:
+          type: string
+          description: Maximum value for DateRange or NumberRange filters
+          example: "2024-09-30"
+        selectedValue:
+          type: string
+          description: Selected value for DropDown filters
+          example: ""
+        variableId:
+          type: integer
+          description: Variable ID associated with the filter
+          example: 13
+        options:
+          type: array
+          items:
+            type: string
+          description: Options for DropDown filters
+
+    AddCohortRequest:
+      type: object
+      properties:
+        tenantId:
+          type: integer
+          description: ID of the tenant
+          example: 1
+        name:
+          type: string
+          description: Name of the cohort
+          example: "test cohort"
+        userIds:
+          type: array
+          description: List of user IDs to be added to the cohort
+          items:
+            type: integer
+          example: [2, 3]
+        rules:
+          type: array
+          description: Rules for the cohort
+          items:
+            $ref: '#/components/schemas/CohortRule'
+      required:
+        - tenantId
+        - name
+        - userIds
+        - rules
+        
+    AddCohortResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+        code:
+          type: integer
+          description: HTTP status code
+          example: 200
+        message:
+          type: string
+          example: "Success"    
+
+    GetCohortResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 32
+            name:
+              type: string
+              example: "test"
+            description:
+              type: string
+              example: "test"
+            rules:
+              type: array
+              items:
+                type: object
+                properties:
+                  or:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        or:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              title:
+                                type: string
+                                example: "cohort"
+                              value:
+                                type: integer
+                                example: 6
+                              operators:
+                                type: string
+                                example: "EQUAL"
+            isExistingRuleProcess:
+              type: boolean
+              example: false
+            tenantId:
+              type: integer
+              example: 1
+            createdAt:
+              type: string
+              format: date-time
+              example: "2024-09-02T04:43:51.234Z"
+            userMatrix:
+              type: array
+              items:
+                type: object
+                properties:
+                  userId:
+                    type: integer
+                    example: 4
+                  firstName:
+                    type: string
+                    example: "Nikunj"
+                  lastName:
+                    type: string
+                    example: "user"
+            Creator:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 1
+                firstName:
+                  type: string
+                  example: "Akash"
+                lastName:
+                  type: string
+                  example: "Akash"
+                profilePhoto:
+                  type: string
+                  nullable: true
+                  example: null
+            Updater:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  example: 1
+                firstName:
+                  type: string
+                  example: "Akash"
+                lastName:
+                  type: string
+                  example: "Akash"
+                profilePhoto:
+                  type: string
+                  nullable: true
+                  example: null
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"
+
+    UpdateCohortRequest:
+      type: object
+      properties:
+        tenantId:
+          type: integer
+          description: ID of the tenant
+          example: 1
+        name:
+          type: string
+          description: Name of the cohort
+          example: "test cohort"
+        userIds:
+          type: array
+          description: List of user IDs to be added to the cohort
+          items:
+            type: integer
+          example: [2, 3]
+      required:
+        - tenantId
+        - name
+        - userIds  
+            
+    UpdateCohortResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+        code:
+          type: integer
+          description: HTTP status code
+          example: 200
+        message:
+          type: string
+          example: "Success"  
+
+    deleteCohortResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+        code:
+          type: integer
+          description: HTTP status code
+          example: 200
+        message:
+          type: string
+          example: "Success" 
+
+    ListCohortsRequest:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 10
+        sortField:
+          type: string
+          example: id
+        sortOrder:
+          type: string
+          example: ASC
+        search:
+          type: string
+          example: ''
+
+    ListCohortsResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 10
+            rows:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 34
+                  name:
+                    type: string
+                    example: "test"
+                  createdAt:
+                    type: string
+                    format: date-time
+                    example: "2024-09-03T07:46:25.973Z"
+                  tenantId:
+                    type: integer
+                    example: 1
+                  description:
+                    type: string
+                    nullable: true
+                    example: "test"
+                  EnrolledUserCount:
+                    type: string
+                    example: "5"
+                  Creator:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      firstName:
+                        type: string
+                        example: "Akash"
+                      lastName:
+                        type: string
+                        example: "Akash"
+                      profilePhoto:
+                        type: string
+                        nullable: true
+                        example: null
+                  Updater:
+                    type: object
+                    nullable: true
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      firstName:
+                        type: string
+                        example: "Akash"
+                      lastName:
+                        type: string
+                        example: "Akash"
+                      profilePhoto:
+                        type: string
+                        nullable: true
+                        example: null
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"   
+
+    AssignCohortRequest:
+      type: object
+      properties:
+        cohortIds:
+          type: array
+          description: List of cohort IDs to which users will be assigned
+          items:
+            type: integer
+          example: [2]
+        userIds:
+          type: array
+          description: List of user IDs to be assigned to the cohorts
+          items:
+            type: integer
+          example: [2, 3]
+      required:
+        - cohortIds
+        - userIds
+
+    AssignCohortResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"
+     
+    GetCohortByUserRequest:
+      type: object
+      properties:
+        userId:
+          type: array
+          description: List of user IDs for which cohorts will be retrieved
+          items:
+            type: integer
+          example: [2]
+      required:
+        - userId
+
+    GetCohortByUserResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                example: 21
+              name:
+                type: string
+                example: "test cohort"
+              createdAt:
+                type: string
+                format: date-time
+                example: "2024-08-29T10:00:21.069Z"
+              tenantId:
+                type: integer
+                example: 1
+              description:
+                type: string
+                nullable: true
+                example: "test"
+              EnrolledUserCount:
+                type: string
+                example: "2"
+              Creator:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  firstName:
+                    type: string
+                    example: "Akash"
+                  lastName:
+                    type: string
+                    example: "Akash"
+                  profilePhoto:
+                    type: string
+                    nullable: true
+                    example: null
+              Updater:
+                type: object
+                nullable: true
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  firstName:
+                    type: string
+                    example: "Akash"
+                  lastName:
+                    type: string
+                    example: "Akash"
+                  profilePhoto:
+                    type: string
+                    nullable: true
+                    example: null
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"
 paths:
   /permission/v1/add:
     post:
@@ -777,19 +2008,9 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                username:
-                  type: string
-                  example: akash@codiot.com
-                password:
-                  type: string
-                  example: Admin@123
-                countryCode:
-                  type: string
-                  example: +91
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginRequest'
       responses:
         '200':
           description: Successful login, returns user data and token
@@ -969,59 +2190,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                firstName:
-                  type: string
-                  example: Nikunj
-                lastName:
-                  type: string
-                  example: Dhaduk
-                email:
-                  type: string
-                  example: nikunj.dhaduk1@gmail.com
-                mobileNumber:
-                  type: string
-                  example: 9912123291
-                userType:
-                  type: string
-                  example: Company Admin
-                countyCode:
-                  type: string
-                  example: +91
-                tenantIds:
-                  type: array
-                  items:
-                    type: integer
-                  example: [1]
-                employeeId:
-                  type: string
-                  example: ''
-                profilePhoto:
-                  type: string
-                  example: ''
-                tenantVariables:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      tenantId:
-                        type: integer
-                        example: 1
-                      variables:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            variableId:
-                              type: integer
-                              example: 1
-                            value:
-                              type: string
-                              example: managere
+              $ref: '#/components/schemas/UpdateUserRequest'
       responses:
         '200':
           description: Success
+          content:
+           application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserResponse'
 
   /user/v1/list:
     post:
@@ -1040,97 +2216,16 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                page:
-                  type: integer
-                  example: 1
-                limit:
-                  type: integer
-                  example: 10
-                sortField:
-                  type: string
-                  example: id
-                sortOrder:
-                  type: string
-                  example: ASC
-                search:
-                  type: string
-                  example: '91'
-                filter:
-                  type: object
-                  properties:
-                    isActive:
-                      type: boolean
-                      example: true
-                    dynamicFilter:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          filterTitle:
-                            type: string
-                            example: "Joining Date"
-                          filterKey:
-                            type: string
-                            example: "joiningDate"
-                          filterType:
-                            type: string
-                            example: "DateRange"
-                          minValue:
-                            type: string
-                            format: date
-                            example: "2024-08-01"
-                          maxValue:
-                            type: string
-                            format: date
-                            example: "2024-08-31"
-                        required:
-                          - filterTitle
-                          - filterKey
-                          - filterType
-                          - minValue
-                          - maxValue
-                      example:
-                        - filterTitle: "Joining Date"
-                          filterKey: "joiningDate"
-                          filterType: "DateRange"
-                          minValue: "2024-08-01"
-                          maxValue: "2024-08-31"
-                        - filterTitle: "role"
-                          filterKey: "role"
-                          filterType: "DropDown"
-                          selectedValue: "hr"
-                          variableId: 6
-                          options:
-                            - "manager"
-                            - "hr"
-                        - filterTitle: "role"
-                          filterKey: "role"
-                          filterType: "DropDown"
-                          selectedValue: "manager"
-                          variableId: 7
-                          options:
-                            - "manager"
-                            - "hr"
-                        - filterTitle: "role12"
-                          filterKey: "role12"
-                          filterType: "DropDown"
-                          selectedValue: "manager"
-                          variableId: 8
-                          options:
-                            - "manager"
-                            - "hr"
-                        - filterTitle: "Experience"
-                          filterKey: "experience"
-                          filterType: "NumberRange"
-                          maxValue: 2
-                          minValue: 1
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListUsersRequest'
       responses:
         '200':
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListUsersResponse'
 
   /user/v1/delete-users:
     post:
@@ -1142,18 +2237,16 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                userIds:
-                  type: array
-                  items:
-                    type: integer
-                  example: [2, 3]
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteUsersRequest'
       responses:
         '200':
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteUsersResponse'
 
   /user/v1/de-active:
     post:
@@ -1165,18 +2258,16 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                userIds:
-                  type: array
-                  items:
-                    type: integer
-                  example: [2]
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeactivateUsersRequest'
       responses:
         '200':
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeactivateUsersResponse'
 
   /user/v1/active-users:
     post:
@@ -1188,18 +2279,17 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                userIds:
-                  type: array
-                  items:
-                    type: integer
-                  example: [2]
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivateUsersRequest'
       responses:
         '200':
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivateUsersResponse'
+          
 
   /user/v1/change-password:
     post:
@@ -1211,21 +2301,16 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                userIds:
-                  type: array
-                  items:
-                    type: integer
-                  example: [2, 3]
-                tenantId:
-                  type: integer
-                  example: 3
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangePasswordRequest'
       responses:
         '200':
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChangePasswordResponse'
 
   /tenant/v1/add:
     post:
@@ -1492,39 +2577,16 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  example: role
-                isMandatory:
-                  type: boolean
-                  example: true
-                type:
-                  type: string
-                  example: multiSelect
-                description:
-                  type: string
-                  example: test description
-                placeHolder:
-                  type: string
-                  example: role
-                category:
-                  type: string
-                  example: custom
-                tenantId:
-                  type: integer
-                  example: 1
-                options:
-                  type: array
-                  items:
-                    type: string
-                  example: ['Role', 'Manager']
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddVariableRequest'
       responses:
         '200':
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddVariableResponse'
 
   /variable/v1/{id}:
     get:
@@ -1542,6 +2604,10 @@ paths:
       responses:
         '200':
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetVariableResponse'
 
     put:
       summary: Update Variable
@@ -1558,39 +2624,16 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  example: role
-                isMandatory:
-                  type: boolean
-                  example: true
-                type:
-                  type: string
-                  example: multiSelect
-                description:
-                  type: string
-                  example: test description
-                placeHolder:
-                  type: string
-                  example: role
-                category:
-                  type: string
-                  example: custom
-                tenantId:
-                  type: integer
-                  example: 1
-                options:
-                  type: array
-                  items:
-                    type: string
-                  example: ['Role', 'Manager']
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateVariableRequest'
       responses:
         '200':
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateVariableResponse'
 
     delete:
       summary: Delete Variable
@@ -1607,6 +2650,10 @@ paths:
       responses:
         '200':
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteVariableResponse'
 
   /variable/v1/list:
     post:
@@ -1621,65 +2668,20 @@ paths:
           required: false
           schema:
             type: integer
-            example: 2
+            example: 1
       requestBody:
         required: true
         content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                page:
-                  type: integer
-                  example: 1
-                limit:
-                  type: integer
-                  example: 10
-                sortField:
-                  type: string
-                  example: id
-                sortOrder:
-                  type: string
-                  example: ASC
-                search:
-                  type: string
-                  example: ''
-                filter:
-                  type: object
-                  properties:
-                    category:
-                      type: string
-                      example: 'custom'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListVariablesRequest'
       responses:
         '200':
           description: Success
-
-  /variable/v1/{userId}:
-    post:
-      summary: Get Variable by userId
-      tags:
-        - Variable
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                tenantId:
-                  type: integer
-                  example: 3
-      responses:
-        '200':
-          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListVariablesResponse'
 
   /content/v1/add:
     post:
@@ -1962,6 +2964,10 @@ paths:
       responses:
         '200':
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleOptionResponse'
           
   /cohort/v1/add:
     post:
@@ -1974,88 +2980,16 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                tenantId:
-                  type: integer
-                  description: ID of the tenant
-                  example: 1
-                name:
-                  type: string
-                  description: Name of the cohort
-                  example: "test cohort"
-                userIds:
-                  type: array
-                  description: List of user IDs to be added to the cohort
-                  items:
-                    type: integer
-                  example: [2, 3]
-                rules:
-                  type: array
-                  description: Rules for the cohort
-                  items:
-                    type: object
-                    properties:
-                      and:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            or:
-                              type: array
-                              items:
-                                type: object
-                                properties:
-                                  title:
-                                    type: string
-                                    example: "cohort"
-                                  operators:
-                                    type: string
-                                    example: "EQUAL"
-                                  value:
-                                    type: string
-                                    example: "1"
-                                required:
-                                  - title
-                                  - operators
-                                  - value
-            required:
-              - tenantId
-              - name
-              - userIds
-              - rules
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddCohortRequest'
       responses:
         '200':
-          description: Cohort added successfully
+          description: Success
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                        example: 1
-                      name:
-                        type: string
-                        example: "test cohort"
-                      tenantId:
-                        type: integer
-                        example: 1
-                      createdAt:
-                        type: string
-                        format: date-time
-                        example: "2024-08-23T11:16:47.590Z"
-                  message:
-                    type: string
-                    example: "Cohort created successfully"
+                $ref: '#/components/schemas/AddCohortResponse'
 
   /cohort/v1/{id}:
     get:
@@ -2073,74 +3007,36 @@ paths:
       responses:
         '200':
           description: Success
-    put:
-      summary: Update a cohort
-      tags:
-        - Cohort
-      operationId: updateCohort
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true         
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                tenantId:
-                  type: integer
-                  description: ID of the tenant
-                  example: 1
-                name:
-                  type: string
-                  description: Name of the cohort
-                  example: "test cohort"
-                userIds:
-                  type: array
-                  description: List of user IDs to be added to the cohort
-                  items:
-                    type: integer
-                  example: [2, 3]
-            required:
-              - tenantId
-              - name
-              - userIds
-      responses:
-        '200':
-          description: Cohort updated successfully
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                        example: 1
-                      name:
-                        type: string
-                        example: "test cohort"
-                      tenantId:
-                        type: integer
-                        example: 1
-                      updatedAt:
-                        type: string
-                        format: date-time
-                        example: "2024-08-23T11:16:47.590Z"
-                  message:
-                    type: string
-                    example: "Cohort updated successfully"
+                $ref: '#/components/schemas/GetCohortResponse'
+      put:
+        summary: Update a cohort
+        tags:
+          - Cohort
+        operationId: updateCohort
+        security:
+          - BearerAuth: []
+        parameters:
+          - name: id
+            in: path
+            required: true         
+            schema:
+              type: integer
+        requestBody:
+          required: true
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/UpdateCohortRequest'
+        responses:
+          '200':
+            description: Success
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/UpdateCohortResponse'
     delete:
       summary: Delete a cohort
       tags:
@@ -2158,16 +3054,9 @@ paths:
         '200':
           description: Cohort deleted successfully
           content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: "Cohort deleted successfully"  
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/deleteCohortResponse'
 
   /cohort/v1/list:
     post:
@@ -2185,28 +3074,16 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                page:
-                  type: integer
-                  example: 1
-                limit:
-                  type: integer
-                  example: 10
-                sortField:
-                  type: string
-                  example: id
-                sortOrder:
-                  type: string
-                  example: ASC
-                search:
-                  type: string
-                  example: ''
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ListCohortsRequest'
       responses:
         '200':
           description: Success  
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/ListCohortsResponse'
 
   /cohort/v1/get-cohort-by-user:
     post:
@@ -2219,17 +3096,15 @@ paths:
         required: true
         content:
           application/json:
-            schema:
-              type: object
-              properties:
-                userId:
-                  type: array
-                  items:
-                    type: integer
-                  example: [2]
+                schema:
+                  $ref: '#/components/schemas/GetCohortByUserRequest'
       responses:
         '200':
           description: Success  
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/GetCohortByUserResponse'
 
   /cohort/v1/assign-cohort:
     post:
@@ -2243,21 +3118,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                cohortIds:
-                  type: array
-                  items:
-                    type: integer
-                  example: [2]
-                userIds:
-                  type: array
-                  items:
-                    type: integer
-                  example: [2, 3]
+              $ref: '#/components/schemas/AssignCohortRequest'
       responses:
         '200':
-          description: Success
+          description: Success  
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/AssignCohortResponse'
   
   /assessment/v1/upload-question/{id}:
     post:
