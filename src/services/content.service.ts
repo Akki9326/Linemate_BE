@@ -210,11 +210,13 @@ export class ContentService {
 						{
 							association: new HasMany(this.assessmentMaster, this.assessmentQuestionMatrix, { as: 'question', foreignKey: 'assessmentId' }),
 							where: { isDeleted: false },
+							required: false,
 							attributes: ['id', 'question', 'type', 'score'],
 							include: [
 								{
 									association: new HasMany(this.assessmentQuestionMatrix, this.assessmentOption, { as: 'options', foreignKey: 'questionId' }),
 									where: { isDeleted: false },
+									required: false,
 									attributes: ['id', 'option', 'isCorrectAnswer'],
 								},
 							],
