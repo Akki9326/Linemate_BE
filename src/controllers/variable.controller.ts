@@ -59,16 +59,6 @@ class VariableController {
 			next(ex);
 		}
 	};
-	public getUserVariable = async (req: Request, res: Response, next: NextFunction) => {
-		try {
-			const userId = parseInt(req.params.userId);
-			const tenantId = req.body.tenantId as number;
-			const userResponse = await this.variableServices.getVariableDetails(userId, tenantId);
-			AppResponseHelper.sendSuccess(res, 'Success', userResponse);
-		} catch (ex) {
-			next(ex);
-		}
-	};
 }
 
 export default VariableController;

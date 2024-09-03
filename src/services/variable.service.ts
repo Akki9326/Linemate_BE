@@ -147,20 +147,6 @@ class VariableServices {
 		});
 		return validateList;
 	}
-	public async getVariableDetails(userId: number, tenantId: number) {
-		const user = await this.users.findOne({
-			where: {
-				id: userId,
-				isDeleted: false,
-			},
-		});
-		if (!user) {
-			throw new BadRequestException(AppMessages.userNotFound);
-		}
-
-		const responseList = VariableHelper.findTenantVariableDetails(userId, tenantId);
-		return responseList;
-	}
 	// without pagination variable list
 	public async getVariableByTenantId(tenantId: number) {
 		const validateList = await this.variableMaster.findAll({
