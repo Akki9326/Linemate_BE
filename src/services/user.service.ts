@@ -517,7 +517,6 @@ class UserService {
 				[Op.contains]: [tenantId],
 			};
 		}
-		console.log('condition', condition);
 		const userList = await this.users.findAndCountAll({
 			where: condition,
 			attributes: ['id', 'firstName', 'lastName', 'email', 'userType', 'mobileNumber', 'createdAt', 'tenantIds', 'employeeId', 'profilePhoto'],
