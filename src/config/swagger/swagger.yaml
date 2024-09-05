@@ -72,6 +72,13 @@ components:
         - no score
       description: Different scoring types for assessments.
 
+    TimeType:
+      type: string
+      enum:
+        - timed
+        - untimed
+      description: Different timeType  for assessments.
+
     QuestionType:
       type: string
       enum:
@@ -1640,7 +1647,7 @@ components:
         message:
           type: string
           example: "Success"
-     
+
     GetCohortByUserRequest:
       type: object
       properties:
@@ -1723,6 +1730,630 @@ components:
         message:
           type: string
           example: "Success"
+
+    AddContentRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the content
+          example: Access Portal
+        type:
+          $ref: '#/components/schemas/ContentType'
+          description: Type of the content
+        description:
+          type: string
+          description: Description of the content
+          example: Have access portal
+        uploadedFileIds:
+          type: array
+          description: List of uploaded file IDs associated with the content
+          items:
+            type: integer
+          example: []
+        tenantId:
+          type: integer
+          description: ID of the tenant
+          example: 1
+        isPublish:
+          type: boolean
+          description: Whether the content is published
+          example: false
+        isArchive:
+          type: boolean
+          description: Whether the content is archived
+          example: false
+        scoring:
+          $ref: '#/components/schemas/ScoringType'
+          description: Scoring method for the content
+        score:
+          type: integer
+          description: Maximum score for the content
+          example: 50
+        pass:
+          type: integer
+          description: Pass mark for the content
+          example: 50
+        timed:
+          type: integer
+          description: Time limit for the content in minutes
+          example: 10
+        timeType:
+          $ref: '#/components/schemas/TimeType'
+          description: Type of timing (e.g., timed, untimed)
+      required:
+        - name
+        - type
+        - tenantId
+
+    AddContentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indicates if the content was successfully added
+          example: true
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: ID of the added content
+              example: 1
+        code:
+          type: integer
+          description: HTTP status code
+          example: 200
+        message:
+          type: string
+          description: Response message
+          example: "Success"
+
+    UpdateContentRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the content
+          example: Access Portal
+        type:
+          $ref: '#/components/schemas/ContentType'
+        description:
+          type: string
+          description: Description of the content
+          example: Have access portal
+        uploadedFileIds:
+          type: array
+          items:
+            type: integer
+          description: List of uploaded file IDs associated with the content
+          example: []
+        tenantId:
+          type: integer
+          description: ID of the tenant
+          example: 1
+        isPublish:
+          type: boolean
+          description: Whether the content is published
+          example: false
+        isArchive:
+          type: boolean
+          description: Whether the content is archived
+          example: false
+        scoring:
+          $ref: '#/components/schemas/ScoringType'
+        score:
+          type: integer
+          description: Maximum score for the content
+          example: 50
+        pass:
+          type: integer
+          description: Pass mark for the content
+          example: 50
+        timed:
+          type: integer
+          description: Time limit for the content in minutes
+          example: 10
+        timeType:
+          $ref: '#/components/schemas/TimeType'
+      required:
+        - name
+        - type
+        - tenantId
+
+    GetContentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the operation was successful
+          example: true
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: ID of the content
+              example: 1
+            name:
+              type: string
+              description: Name of the content
+              example: Access Portal
+            type:
+              $ref: '#/components/schemas/ContentType'
+            description:
+              type: string
+              description: Description of the content
+              example: Have access portal
+            uploadedFileIds:
+              type: array
+              items:
+                type: integer
+              description: List of uploaded file IDs associated with the content
+              example: []
+            tenantId:
+              type: integer
+              description: ID of the tenant
+              example: 1
+            isPublish:
+              type: boolean
+              description: Whether the content is published
+              example: false
+            isArchive:
+              type: boolean
+              description: Whether the content is archived
+              example: false
+            scoring:
+              $ref: '#/components/schemas/ScoringType'
+            score:
+              type: integer
+              description: Maximum score for the content
+              example: 50
+            pass:
+              type: integer
+              description: Pass mark for the content
+              example: 50
+            timed:
+              type: integer
+              description: Time limit for the content in minutes
+              example: 10
+            timeType:
+              $ref: '#/components/schemas/TimeType'
+        code:
+          type: integer
+          description: HTTP status code
+          example: 200
+        message:
+          type: string
+          description: Response message
+          example: "Success"
+
+    UpdateContentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the update was successful
+          example: true
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: ID of the content
+              example: 1
+            name:
+              type: string
+              description: Updated name of the content
+              example: Access Portal
+            type:
+              $ref: '#/components/schemas/ContentType'
+            description:
+              type: string
+              description: Updated description of the content
+              example: Have access portal
+            uploadedFileIds:
+              type: array
+              items:
+                type: integer
+              description: Updated list of uploaded file IDs associated with the content
+              example: []
+            tenantId:
+              type: integer
+              description: ID of the tenant
+              example: 1
+            isPublish:
+              type: boolean
+              description: Whether the content is published
+              example: false
+            isArchive:
+              type: boolean
+              description: Whether the content is archived
+              example: false
+            scoring:
+              $ref: '#/components/schemas/ScoringType'
+            score:
+              type: integer
+              description: Maximum score for the content
+              example: 50
+            pass:
+              type: integer
+              description: Pass mark for the content
+              example: 50
+            timed:
+              type: integer
+              description: Time limit for the content in minutes
+              example: 10
+            timeType:
+              $ref: '#/components/schemas/TimeType'
+        code:
+          type: integer
+          description: HTTP status code
+          example: 200
+        message:
+          type: string
+          description: Response message
+          example: "Content updated successfully"
+        
+    DeleteContentResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the deletion was successful
+          example: true
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              description: ID of the deleted content
+              example: 1
+        code:
+          type: integer
+          description: HTTP status code
+          example: 200
+        message:
+          type: string
+          description: Response message
+          example: "Content deleted successfully"
+        
+    ListContentsRequest:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: The page number for pagination
+          example: 1
+        limit:
+          type: integer
+          description: The number of items per page
+          example: 10
+        sortField:
+          type: string
+          description: The field to sort by
+          example: id
+        sortOrder:
+          type: string
+          description: The order of sorting (ASC for ascending, DESC for descending)
+          example: ASC
+        search:
+          type: string
+          description: Search term to filter results
+          example: ''
+        filter:
+          type: object
+          description: Filters to apply to the list of contents
+          properties:
+            archive:
+              type: boolean
+              description: Filter by archived content
+              example: true
+            isPublish:
+              type: boolean
+              description: Filter by published content
+              example: false
+            updatedBetween:
+              type: object
+              description: Filter by content updated between specific dates
+              properties:
+                startDate:
+                  type: string
+                  format: date
+                  description: The start date for filtering
+                  example: '2024-07-17'
+                endDate:
+                  type: string
+                  format: date
+                  description: The end date for filtering
+                  example: '2024-07-31'
+      required:
+        - page
+        - limit
+
+    ListContentsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Whether the operation was successful
+          example: true
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              description: The list of content items
+              items:
+                $ref: '#/components/schemas/ContentItem'
+            total:
+              type: integer
+              description: The total number of content items available
+              example: 100
+            page:
+              type: integer
+              description: The current page number
+              example: 1
+            limit:
+              type: integer
+              description: The number of items per page
+              example: 10
+        code:
+          type: integer
+          description: HTTP status code
+          example: 200
+        message:
+          type: string
+          description: Response message
+          example: "Contents retrieved successfully"
+
+    ContentItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID of the content item
+          example: 1
+        name:
+          type: string
+          description: Name of the content item
+          example: Access Portal
+        type:
+          $ref: '#/components/schemas/ContentType'
+        description:
+          type: string
+          description: Description of the content item
+          example: Have access portal
+        tenantId:
+          type: integer
+          description: ID of the tenant
+          example: 1
+        isPublish:
+          type: boolean
+          description: Whether the content item is published
+          example: false
+        isArchive:
+          type: boolean
+          description: Whether the content item is archived
+          example: false
+        scoring:
+          $ref: '#/components/schemas/ScoringType'
+        score:
+          type: integer
+          description: Maximum score for the content
+          example: 50
+        pass:
+          type: integer
+          description: Pass mark for the content
+          example: 50
+        timed:
+          type: integer
+          description: Time limit for the content in minutes
+          example: 10
+        timeType:
+          $ref: '#/components/schemas/TimeType'
+        createdAt:
+          type: string
+          format: date-time
+          description: Date and time when the content item was created
+          example: '2024-07-17T10:00:00Z'
+        updatedAt:
+          type: string
+          format: date-time
+          description: Date and time when the content item was last updated
+          example: '2024-07-31T15:00:00Z'
+
+    CreateTenantRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Test1
+        companyType:
+          type: string
+          example: partnership
+        trademark:
+          type: string
+          example: admin@gmail.com
+        phoneNumber:
+          type: integer
+          example: 1234567890
+        gstNumber:
+          type: string
+          example: 123456780
+        currencyCode:
+          type: string
+          example: INR
+        isdCode:
+          type: integer
+          example: 91
+        clientType:
+          type: string
+          example: Test
+        authorisedFirstName:
+          type: string
+          example: test
+        authorisedLastName:
+          type: string
+          example: tcd
+        authorisedEmail:
+          type: string
+          example: cdcd
+        authorisedMobileNo:
+          type: integer
+          example: 1234567890
+        companyAddress:
+          type: string
+          example: cdcd
+        companyCountry:
+          type: string
+          example: cdcd
+        companyState:
+          type: string
+          example: cdcad
+        companyCity:
+          type: string
+          example: cdcd
+        companyPinCode:
+          type: integer
+          example: 395006
+        whitelistedIps:
+          type: string
+          example: cdc
+      required:
+        - name
+        - companyType
+        - trademark
+        - phoneNumber
+
+    CreateTenantResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Tenant created successfully"
+        
+    GetTenantResponse:
+      type: object
+      properties:
+        name:
+          type: string
+        companyType:
+          type: string
+        trademark:
+          type: string
+        phoneNumber:
+          type: integer
+        gstNumber:
+          type: string
+        currencyCode:
+          type: string
+        isdCode:
+          type: integer
+        clientType:
+          type: string
+        authorisedFirstName:
+          type: string
+        authorisedLastName:
+          type: string
+        authorisedEmail:
+          type: string
+        authorisedMobileNo:
+          type: integer
+        companyAddress:
+          type: string
+        companyCountry:
+          type: string
+        companyState:
+          type: string
+        companyCity:
+          type: string
+        companyPinCode:
+          type: integer
+        whitelistedIps:
+          type: string
+    
+    UpdateTenantRequest:
+      $ref: '#/components/schemas/CreateTenantRequest'
+
+    UpdateTenantResponse:
+      $ref: '#/components/schemas/CreateTenantResponse'
+
+    DeleteTenantResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Tenant deleted successfully"
+      
+    ListTenantRequest:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        limit:
+          type: integer
+          example: 10
+        sortField:
+          type: string
+          example: id
+        sortOrder:
+          type: string
+          example: ASC
+      required:
+        - page
+        - limit
+
+    ListTenantResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+                example: 1
+              name:
+                type: string
+                example: Test1
+              companyType:
+                type: string
+                example: partnership
+              trademark:
+                type: string
+                example: admin@gmail.com
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Tenant list fetched successfully"
+
+
+
+
+
 paths:
   /permission/v1/add:
     post:
@@ -2324,65 +2955,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  example: Test1
-                companyType:
-                  type: string
-                  example: partnership
-                trademark:
-                  type: string
-                  example: admin@gmail.com
-                phoneNumber:
-                  type: integer
-                  example: 1234567890
-                gstNumber:
-                  type: string
-                  example: 123456780
-                currencyCode:
-                  type: string
-                  example: INR
-                isdCode:
-                  type: integer
-                  example: 91
-                clientType:
-                  type: string
-                  example: Test
-                authorisedFirstName:
-                  type: string
-                  example: test
-                authorisedLastName:
-                  type: string
-                  example: tcd
-                authorisedEmail:
-                  type: string
-                  example: cdcd
-                authorisedMobileNo:
-                  type: integer
-                  example: 1234567890
-                companyAddress:
-                  type: string
-                  example: cdcd
-                companyCountry:
-                  type: string
-                  example: cdcd
-                companyState:
-                  type: string
-                  example: cdcad
-                companyCity:
-                  type: string
-                  example: cdcd
-                companyPinCode:
-                  type: integer
-                  example: 395006
-                whitelistedIps:
-                  type: string
-                  example: cdc
+              $ref: '#/components/schemas/CreateTenantRequest'
       responses:
         '200':
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateTenantResponse'
 
   /tenant/v1/{id}:
     get:
@@ -2403,46 +2983,8 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  name:
-                    type: string
-                  companyType:
-                    type: string
-                  trademark:
-                    type: string
-                  phoneNumber:
-                    type: integer
-                  gstNumber:
-                    type: string
-                  currencyCode:
-                    type: string
-                  isdCode:
-                    type: integer
-                  clientType:
-                    type: string
-                  authorisedFirstName:
-                    type: string
-                  authorisedLastName:
-                    type: string
-                  authorisedEmail:
-                    type: string
-                  authorisedMobileNo:
-                    type: integer
-                  companyAddress:
-                    type: string
-                  companyCountry:
-                    type: string
-                  companyState:
-                    type: string
-                  companyCity:
-                    type: string
-                  companyPinCode:
-                    type: integer
-                  whitelistedIps:
-                    type: string
-        '404':
-          description: Tenant not found
+                $ref: '#/components/schemas/GetTenantResponse'
+
     put:
       summary: Update Tenant
       tags:
@@ -2460,65 +3002,15 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  example: Test1
-                companyType:
-                  type: string
-                  example: partnership
-                trademark:
-                  type: string
-                  example: admin@gmail.com
-                phoneNumber:
-                  type: integer
-                  example: 1234567890
-                gstNumber:
-                  type: string
-                  example: 123456780
-                currencyCode:
-                  type: string
-                  example: INR
-                isdCode:
-                  type: integer
-                  example: 91
-                clientType:
-                  type: string
-                  example: Test
-                authorisedFirstName:
-                  type: string
-                  example: test
-                authorisedLastName:
-                  type: string
-                  example: tcd
-                authorisedEmail:
-                  type: string
-                  example: cdcd
-                authorisedMobileNo:
-                  type: integer
-                  example: 1234567890
-                companyAddress:
-                  type: string
-                  example: cdcd
-                companyCountry:
-                  type: string
-                  example: cdcd
-                companyState:
-                  type: string
-                  example: cdcad
-                companyCity:
-                  type: string
-                  example: cdcd
-                companyPinCode:
-                  type: integer
-                  example: 395006
-                whitelistedIps:
-                  type: string
-                  example: cdc
+              $ref: '#/components/schemas/UpdateTenantRequest'
       responses:
         '200':
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateTenantResponse'
+
     delete:
       summary: Delete Tenant
       tags:
@@ -2534,12 +3026,14 @@ paths:
       responses:
         '200':
           description: Success
-        '404':
-          description: Tenant Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteTenantResponse'
 
   /tenant/v1/list:
     post:
-      summary: List Tenant
+      summary: List Tenants
       tags:
         - Tenant
       security:
@@ -2549,23 +3043,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                page:
-                  type: integer
-                  example: 1
-                limit:
-                  type: integer
-                  example: 10
-                sortField:
-                  type: string
-                  example: id
-                sortOrder:
-                  type: string
-                  example: ASC
+              $ref: '#/components/schemas/ListTenantRequest'
       responses:
         '200':
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListTenantResponse'
 
   /variable/v1/add:
     post:
@@ -2682,7 +3167,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListVariablesResponse'
-
+    
   /content/v1/add:
     post:
       summary: Add Content
@@ -2695,57 +3180,15 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  example: Access Portal
-                type:
-                  type: string
-                  enum:
-                    - PDF
-                    - Video
-                    - Document
-                    - PowerPoint
-                    - Scorm
-                    - Assessment
-                  example: PDF
-                description:
-                  type: string
-                  example: have access portal
-                uploadedFileIds:
-                  type: array
-                  items:
-                    type: integer
-                  example: []
-                tenantId:
-                  type: integer
-                  example: 1
-                isPublish:
-                  type: boolean
-                  example: false
-                isArchive:
-                  type: boolean
-                  example: false
-                scoring:
-                  type: string
-                  example: "max score"
-                  enum: [max score, per question, no score]
-                score:
-                  type: integer
-                  example: 50
-                pass:
-                  type: integer
-                  example: 50
-                timed:
-                  type: integer
-                  example: 10
-                timeType:
-                  type: string
-                  example: "timed"
+              $ref: '#/components/schemas/AddContentRequest'
       responses:
         '200':
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddContentResponse'
+
         
   /content/v1/{id}:
     get:
@@ -2763,6 +3206,10 @@ paths:
       responses:
         '200':
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetContentResponse'
     put:
       summary: Update Content
       tags:
@@ -2780,50 +3227,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  example: Access Portal
-                type:
-                  type: string
-                  example: PDF
-                description:
-                  type: string
-                  example: have access portal
-                uploadedFileIds:
-                  type: array
-                  items:
-                    type: integer
-                  example: []
-                tenantId:
-                  type: integer
-                  example: 1
-                isPublish:
-                  type: boolean
-                  example: false
-                isArchive:
-                  type: boolean
-                  example: false
-                scoring:
-                  type: string
-                  example: "max score"
-                  enum: [max score, per question, no score]
-                score:
-                  type: integer
-                  example: 50
-                pass:
-                  type: integer
-                  example: 50
-                timed:
-                  type: integer
-                  example: 10
-                timeType:
-                  type: string
-                  example: "timed"
+              $ref: '#/components/schemas/UpdateContentRequest'
       responses:
         '200':
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateContentResponse'
     delete:
       summary: Delete Content
       tags:
@@ -2839,6 +3250,10 @@ paths:
       responses:
         '200':
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteContentResponse'
 
   /content/v1/list:
     post:
@@ -2859,46 +3274,14 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                page:
-                  type: integer
-                  example: 1
-                limit:
-                  type: integer
-                  example: 10
-                sortField:
-                  type: string
-                  example: id
-                sortOrder:
-                  type: string
-                  example: ASC
-                search:
-                  type: string
-                  example: ''
-                filter:
-                  type: object
-                  properties:
-                    archive:
-                      type: boolean
-                      example: true
-                    isPublish:
-                      type: boolean
-                      example: false
-                    updatedBetween:
-                      type: object
-                      properties:
-                        startDate:
-                          type: string
-                          format: date
-                          example: '2024-07-17'
-                        endDate:
-                          type: string
-                          format: date
-                          example: '2024-07-31'
+              $ref: '#/components/schemas/ListContentsRequest'
       responses:
         '200':
           description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListContentsResponse'
 
   /filters/v1/list:
     get:
