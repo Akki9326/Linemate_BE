@@ -1,12 +1,14 @@
-import { commonFilterConfig, FilterFor, FiltersEnum } from '@/models/enums/filter.enum';
-import moment from 'moment';
-import VariableServices from './variable.service';
-import { AppMessages, FilterMessage } from '@/utils/helpers/app-message.helper';
-import { FilterResponse } from '@/models/interfaces/filter.interface';
 import { BadRequestException } from '@/exceptions/BadRequestException';
+import { commonFilterConfig, FilterFor, FiltersEnum } from '@/models/enums/filter.enum';
+import { FilterResponse } from '@/models/interfaces/filter.interface';
+import { AppMessages, FilterMessage } from '@/utils/helpers/app-message.helper';
+import moment from 'moment';
+import { CohortService } from './cohort.service';
+import VariableServices from './variable.service';
 
 export class FilterService {
 	private variableServices = new VariableServices();
+	private cohortService = new CohortService();
 
 	constructor() {}
 
@@ -25,12 +27,22 @@ export class FilterService {
 			return [];
 		}
 	}
+	private async getCohorts(tenantId: number) {
+		try {
+			const customVariables = await this.cohortService.cohortByTenantId(tenantId);
+			return customVariables.map(cohort => ({
+				id: cohort.id,
+				name: cohort.name,
+			}));
+		} catch (error) {
+			return [];
+		}
+	}
 
 	private async generateFilterResponse(tenantId: number, filterFor: string): Promise<FilterResponse[]> {
 		const filterResponse: FilterResponse[] = [];
-		const startOfMonth = moment().startOf('month').format('YYYY-MM-DD');
-		const endOfMonth = moment().endOf('month').format('YYYY-MM-DD');
-
+		const startOfMonth = moment().startOf('month').toISOString();
+		const endOfMonth = moment().endOf('month').toISOString();
 		const filterConfig = commonFilterConfig.find(config => config.filterFor === filterFor);
 		if (!filterConfig) {
 			throw new BadRequestException(`Invalid filterFor value: ${filterFor}`);
@@ -46,8 +58,20 @@ export class FilterService {
 					maxValue: endOfMonth,
 				});
 			} else if (field.filterType === FiltersEnum.DropDown) {
-				const customFields = await this.getCustomFields(tenantId);
-				filterResponse.push(...customFields);
+				if (field.filterKey === 'customFields') {
+					const customFields = await this.getCustomFields(tenantId);
+					filterResponse.push(...customFields);
+				}
+				if (field.filterKey === 'cohort') {
+					const cohorts = await this.getCohorts(tenantId);
+					filterResponse.push({
+						filterTitle: field.filterTitle,
+						filterKey: field.filterKey,
+						filterType: field.filterType,
+						selectedValue: '',
+						options: cohorts,
+					});
+				}
 			} else if (field.filterType === FiltersEnum.NumberRange) {
 				filterResponse.push({
 					filterTitle: field.filterTitle,
