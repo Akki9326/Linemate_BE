@@ -8,5 +8,5 @@ export interface FilterResponse {
 	minValue?: string | number;
 	selectedValue?: string;
 	variableId?: number;
-	options?: string[];
+	options?: string[] | object[];
 }

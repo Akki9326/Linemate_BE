@@ -24,6 +24,7 @@ import { FileDestination } from '@/models/enums/file-destination.enum';
 import S3Services from '@/utils/services/s3.services';
 import 'reflect-metadata';
 import { RoleType } from '@/models/enums/role.enum';
+import { CohortService } from './cohort.service';
 
 class UserService {
 	private users = DB.Users;
@@ -34,6 +35,7 @@ class UserService {
 	private tenantService = new TenantService();
 	private variableServices = new VariableServices();
 	public s3Service = new S3Services();
+	private cohortService = new CohortService();
 
 	constructor() {}
 	public async sendAccountActivationEmail(userData, temporaryPassword: string, createdUser: JwtTokenData) {
@@ -461,7 +463,14 @@ class UserService {
 		return matchingUserIds;
 	}
 	private async mappingDynamicFilter(condition: object, dynamicFilter: FilterResponse[]) {
-		dynamicFilter.forEach(filter => {
+		const cohortUserIds = [];
+		const variableList = dynamicFilter
+			.filter(filter => 'variableId' in filter && 'selectedValue' in filter)
+			.map(filter => ({
+				value: filter.selectedValue,
+				variableId: filter.variableId,
+			}));
+		for (const filter of dynamicFilter) {
 			if (filter.filterKey === 'joiningDate') {
 				const parsedStartDate = parseISO(String(filter.minValue));
 				const parsedEndDate = parseISO(String(filter.maxValue));
@@ -469,15 +478,15 @@ class UserService {
 					[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
 				};
 			}
-		});
-		const variableList = dynamicFilter
-			.filter(filter => 'variableId' in filter && 'selectedValue' in filter)
-			.map(filter => ({
-				value: filter.selectedValue,
-				variableId: filter.variableId,
-			}));
+			if (filter.filterKey === 'cohort') {
+				const userIds = await this.cohortService.getUserByCohortId(Number(filter?.selectedValue));
+				cohortUserIds.push(...userIds);
+			}
+		}
+		const variableMatrixUserIds = await this.getUserIdsFromVariableMatrix(variableList);
+		const combinedUserIds = Array.from(new Set([...cohortUserIds, ...variableMatrixUserIds]));
 		condition['id'] = {
-			[Op.in]: await this.getUserIdsFromVariableMatrix(variableList),
+			[Op.in]: combinedUserIds,
 		};
 	}
 	public async all(pageModel: UserListDto, tenantId: number) {
@@ -498,7 +507,6 @@ class UserService {
 			];
 		}
 		if (pageModel.filter) {
-			// TODO: add cohort filter after done these feature are done
 			condition['isActive'] = pageModel.filter.isActive;
 			if (pageModel.filter.dynamicFilter) {
 				await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter);

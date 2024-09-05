@@ -350,4 +350,21 @@ export class CohortService {
 
 		return cohortResult;
 	}
+
+	public async cohortByTenantId(tenantId: number) {
+		const cohort = await this.cohortMaster.findAll({
+			where: { tenantId, isDeleted: false },
+			attributes: ['id', 'name'],
+		});
+
+		return cohort;
+	}
+
+	public async getUserByCohortId(cohortId: number) {
+		const user = await this.cohortMatrix.findAll({
+			where: { cohortId, isDeleted: false },
+			attributes: ['userId'],
+		});
+		return user.map(user => user.userId);
+	}
 }
