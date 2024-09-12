@@ -23,6 +23,7 @@ import ContentRoute from './routes/content.route';
 import AssessmentRoute from './routes/assessment.route';
 import FiltersRoute from './routes/filters.route';
 import CohortRoute from './routes/cohort.route';
+import ViberRoute from './routes/viber.route';
 
 validateEnv();
 
@@ -39,6 +40,7 @@ const app = new App([
 	new AssessmentRoute(),
 	new FiltersRoute(),
 	new CohortRoute(),
+	new ViberRoute(),
 ]);
 
 app.init();
