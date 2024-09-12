@@ -3575,6 +3575,73 @@ paths:
         400:
           description: Invalid input
 
+  /cb/viber/dlr:
+    post:
+      summary: Viber DLR callback
+      tags:
+        - Viber
+      description: Endpoint to receive Viber DLR callbacks
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Viber DLR callback payload
+          required: true
+          schema:
+            type: object
+            properties:
+              # Define the expected properties of the DLR payload here
+      responses:
+        200:
+          description: Success
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Success
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+
+  /cb/viber/incmng:
+    post:
+      summary: Viber incoming message callback
+      tags:
+        - Viber
+      description: Endpoint to receive Viber incoming messages
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Viber incoming message payload
+          required: true
+          schema:
+            type: object
+            properties:
+              test:
+                type: string
+                example: nikunj
+      responses:
+        200:
+          description: Success
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Success
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
 tags:
   - name: Permission
     description: Endpoints for creating and managing permissions.
@@ -3597,4 +3664,6 @@ tags:
   - name: File
     description: Endpoints for upload file .
   - name: Cohort
-    description: Endpoints for creating cohort and managing users  .
+    description: Endpoints for creating cohort and managing users.
+  - name: Viber
+    description: Endpoints for receiving content from viber.
