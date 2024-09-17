@@ -28,7 +28,6 @@ export class Email {
 						resolve(res);
 					})
 					.catch(error => {
-						console.log('====', error);
 						reject(error);
 					});
 			} else {

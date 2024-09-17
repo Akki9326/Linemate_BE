@@ -17,6 +17,10 @@ import AssessmentOptionModel from '@/models/db/assessmentOption';
 import SkillMatrixModel from '@/models/db/skillMatrix';
 import { DB_DATABASE, DB_HOST, DB_PASSWORD, DB_PORT, DB_USER } from '@config';
 import Sequelize from 'sequelize';
+import TemplateModel from '@/models/db/template.model';
+import TemplateContentModel from '@/models/db/templateContent.model';
+import TemplateContentButtonsModel from '@/models/db/templateContentButton.model';
+import TemplateContentCardsModel from '@/models/db/templateContentCard.model';
 
 export const sequelizeConnect = new Sequelize.Sequelize(DB_DATABASE, DB_USER, DB_PASSWORD, {
 	dialect: 'postgres',
@@ -56,6 +60,10 @@ const DB = {
 	SkillMatrix: SkillMatrixModel(sequelizeConnect),
 	CohortMaster: CohortMasterModel(sequelizeConnect),
 	CohortMatrix: CohortMatrixModel(sequelizeConnect),
+	Template: TemplateModel(sequelizeConnect),
+	TemplateContent: TemplateContentModel(sequelizeConnect),
+	TemplateContentButtons: TemplateContentButtonsModel(sequelizeConnect),
+	TemplateContentCards: TemplateContentCardsModel(sequelizeConnect),
 	sequelizeConnect, // connection instance (RAW queries)
 	Sequelize, // library
 };
