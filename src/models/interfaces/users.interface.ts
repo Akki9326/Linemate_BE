@@ -12,6 +12,7 @@ export interface User {
 	employeeId?: string;
 	mobileNumber: string;
 	failedLoginAttempts: number;
-	countryCode: string;
+	countryCode?: string;
 	tenantIds: string[];
 }
+	

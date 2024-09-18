@@ -86,7 +86,7 @@ export default function (sequelize: Sequelize): typeof UserModel {
 			},
 			countryCode: {
 				type: DataTypes.STRING,
-				allowNull: false,
+				allowNull: true,
 			},
 			employeeId: {
 				type: DataTypes.STRING(26),
