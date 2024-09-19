@@ -233,7 +233,7 @@ class UserService {
 	}
 	public async add(userData: UserDto, createdUser: JwtTokenData) {
 		let user = await this.users.findOne({
-			where: {
+			where: {	
 				[Op.and]: [
 					{ isDeleted: false },
 					{
@@ -286,7 +286,7 @@ class UserService {
 		user.password = PasswordHelper.hashPassword(temporaryPassword);
 		user.tenantIds = userData.userType !== UserType.ChiefAdmin ? userData.tenantIds : [];
 		user.userType = userData.userType;
-		user.countryCode = userData.countyCode;
+		user.countryCode = userData?.countyCode;
 		user.employeeId = userData?.employeeId;
 		user.profilePhoto = userData?.profilePhoto;
 		user = await user.save();
