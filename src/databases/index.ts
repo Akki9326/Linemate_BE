@@ -15,6 +15,8 @@ import AssessmentMasterModel from '@/models/db/assessmentMaster';
 import AssessmentQuestionMatrix from '@/models/db/assessmentQuestionMatrix';
 import AssessmentOptionModel from '@/models/db/assessmentOption';
 import SkillMatrixModel from '@/models/db/skillMatrix';
+import CampaignMasterModel from '@/models/db/campaignMastel';
+import CampaignMatrixModel from '@/models/db/campaignMatrix'
 import { DB_DATABASE, DB_HOST, DB_PASSWORD, DB_PORT, DB_USER } from '@config';
 import Sequelize from 'sequelize';
 
@@ -56,6 +58,8 @@ const DB = {
 	SkillMatrix: SkillMatrixModel(sequelizeConnect),
 	CohortMaster: CohortMasterModel(sequelizeConnect),
 	CohortMatrix: CohortMatrixModel(sequelizeConnect),
+	CampaignMaster: CampaignMasterModel(sequelizeConnect),
+	CampaignMatrix: CampaignMatrixModel(sequelizeConnect),
 	sequelizeConnect, // connection instance (RAW queries)
 	Sequelize, // library
 };
