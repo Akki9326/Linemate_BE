@@ -1,19 +1,53 @@
 import { CampaignMasterDto } from '@/models/dtos/campaign.dto';
+import { CampaignListDto } from '@/models/dtos/campaign-list.dto';
 import { CampaignService } from '@/services/campaign.service';
 import { NextFunction, Response, Request } from 'express-serve-static-core';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
+import { RequestWithUser } from '@/models/interfaces/auth.interface';
 
- class CampaignController {
+class CampaignController {
 	public campaignService = new CampaignService();
-	public add = async (req: Request, res: Response, next: NextFunction) => {
+	public add = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
 			const campaignDetails = req.body as CampaignMasterDto;
-            const userId = req.user.id as number
-			const campaignResponse = await this.campaignService.add(campaignDetails,userId);
+			const userId = req.user.id as number;
+			const campaignResponse = await this.campaignService.add(campaignDetails, userId);
+			AppResponseHelper.sendSuccess(res, 'Success', campaignResponse);
+		} catch (ex) {
+			next(ex);
+		}	
+	};
+
+	public getById = async (req: Request, res: Response, next: NextFunction) => {
+		try {
+			const campaignId = parseInt(req.params.id);
+			const campaignResponse = await this.campaignService.one(campaignId);
 			AppResponseHelper.sendSuccess(res, 'Success', campaignResponse);
 		} catch (ex) {
 			next(ex);
 		}
 	};
+
+	public delete = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const campaignId = parseInt(req.params.id);
+			const userId = req.user.id as number;
+			const campaignResponce = await this.campaignService.remove(campaignId, userId);
+			AppResponseHelper.sendSuccess(res, 'Success', campaignResponce);
+		} catch (ex) {
+			next(ex);
+		}
+	};
+
+	public list = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const pageModel = req.body as CampaignListDto;
+			const tenantId = req.tenantId as number;
+			const campaigntResponse = await this.campaignService.all(pageModel, tenantId);
+			AppResponseHelper.sendSuccess(res, 'Success', campaigntResponse);
+		} catch (ex) {
+			next(ex);
+		}
+	};
 }
-export default CampaignController   
+export default CampaignController;

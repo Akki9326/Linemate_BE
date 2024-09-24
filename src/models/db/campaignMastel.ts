@@ -1,12 +1,12 @@
 import { DataTypes, Sequelize } from 'sequelize';
 import { AppDB_Common_Fields, AppDBModel } from './app-db.model';
-import { CampaignStatusType, ChannelType } from '../enums/campaign.enums';
+import { CampaignStatusType } from '../enums/campaign.enums';
 
 export class CampaignMasterModel extends AppDBModel {
 	public id: number;
 	public name: string;
 	public description: string;
-	public channel: ChannelType;
+	public channel: string[];
 	public whatsappTemplateId: number;
 	public smsTemplateId: number;
 	public viberTemplateId: number;
@@ -14,6 +14,7 @@ export class CampaignMasterModel extends AppDBModel {
 	public tags: string[];
 	public status: CampaignStatusType;
 	public isArchived: boolean;
+	public tenantId: number;
 }
 
 export default function (sequelize: Sequelize) {
@@ -31,10 +32,10 @@ export default function (sequelize: Sequelize) {
 			},
 			description: {
 				type: DataTypes.STRING,
-				allowNull: false,
+				allowNull: true,
 			},
 			channel: {
-				type: DataTypes.STRING,
+				type: DataTypes.ARRAY(DataTypes.TEXT),
 				allowNull: false,
 			},
 			whatsappTemplateId: {
@@ -51,15 +52,21 @@ export default function (sequelize: Sequelize) {
 				allowNull: false,
 			},
 			tags: {
-				type: DataTypes.ARRAY(DataTypes.STRING),
-			},
+				type: DataTypes.ARRAY(DataTypes.TEXT),
+				allowNull:true,
+				defaultValue:[]
+			},	
 			status: {
 				type: DataTypes.STRING,
-				allowNull: false,
+				allowNull: false,				
 			},
 			isArchived: {
 				type: DataTypes.BOOLEAN,
 				defaultValue: false,
+			},
+			tenantId: {
+				type: DataTypes.INTEGER,
+				allowNull: false,
 			},
 		},
 		{

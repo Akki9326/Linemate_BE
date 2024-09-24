@@ -68,3 +68,7 @@ export const CohortMessage = {
 export const FilterMessage = {
 	filterForNotFound: 'filterFor is required in query params',
 };
+
+export const CampaignMessage = {
+	campaignNotFound:"campaign not found"
+}

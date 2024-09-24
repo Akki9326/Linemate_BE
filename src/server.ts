@@ -24,8 +24,10 @@ import AssessmentRoute from './routes/assessment.route';
 import FiltersRoute from './routes/filters.route';
 import CohortRoute from './routes/cohort.route';
 import ViberRoute from './routes/viber.route';
+import CampaignRoute from './routes/campaign.route'
 
 validateEnv();
+
 
 const app = new App([
 	new IndexRoute(),
@@ -41,6 +43,7 @@ const app = new App([
 	new FiltersRoute(),
 	new CohortRoute(),
 	new ViberRoute(),
+	new CampaignRoute()
 ]);
 
 app.init();

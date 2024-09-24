@@ -1,5 +1,5 @@
-import { IsArray, IsBoolean, IsEnum, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
-import { ChannelType, CampaignStatusType } from '../enums/campaign.enums';
+import { IsArray, IsBoolean, IsEnum, IsIn, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
+import { CampaignStatusType } from '../enums/campaign.enums';
 
 export class CampaignMasterDto {
 	@IsString()
@@ -7,16 +7,19 @@ export class CampaignMasterDto {
 	public name: string;
 
 	@IsString()
+	@IsOptional()
 	public description: string;
 
-	@IsEnum(ChannelType)
-	public channel: ChannelType;
+	@IsArray()
+	@IsNotEmpty()
+	@IsIn(['whatsapp', 'viber', 'sms'], { each: true })
+	public channel: string[];
 
 	@IsNumber()
 	public whatsappTemplateId: number;
 
 	@IsNumber()
-	public smsappTemplateId: number;
+	public smsTemplateId: number;
 
 	@IsNumber()
 	public viberTemplateId: number;
@@ -34,4 +37,7 @@ export class CampaignMasterDto {
 	@IsBoolean()
 	@IsOptional()
 	public isArchived: boolean;
+
+	@IsNumber()
+	public tenantId: number;
 }
