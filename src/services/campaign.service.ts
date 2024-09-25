@@ -5,9 +5,11 @@ import { BadRequestException } from '@/exceptions/BadRequestException';
 import { AppMessages, CampaignMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
 import { applyingCampaign } from '@/utils/helpers/cohort.helper';
 import { CampaignListDto } from '@/models/dtos/campaign-list.dto';
+import { CampaignMatrixDto } from '@/models/dtos/campaignMatrix.dto';
 
 export class CampaignService {
 	private campaignMaster = DB.CampaignMaster;
+	private campaignMatrix = DB.CampaignMatrix;
 	private user = DB.Users;
 	private tenant = DB.Tenant;
 	constuructor() {}
@@ -69,7 +71,7 @@ export class CampaignService {
 
 		if (!campaignMaster) {
 			throw new BadRequestException(CampaignMessage.campaignNotFound);
-		}	
+		}
 
 		await this.campaignMaster.update(
 			{
@@ -108,8 +110,6 @@ export class CampaignService {
 			};
 		}
 
-		console.log(pageModel);
-
 		if (pageModel?.filter) {
 			const { tags, channel, status, isArchived } = pageModel.filter;
 
@@ -132,6 +132,28 @@ export class CampaignService {
 		return {
 			count: campaignResule?.length,
 			rows: campaignResule,
+		};
+	}
+
+	public async addTrigger(triggerDetails: CampaignMatrixDto, userId: number) {
+		const campaign = new this.campaignMatrix();
+		if (!triggerDetails.campaignId) {
+			throw new BadRequestException(CampaignMessage.campaignNotFound);
+		}
+
+		campaign.campaignId = triggerDetails.campaignId;
+		campaign.triggerType = triggerDetails.triggerType;
+		campaign.intervalUnit = triggerDetails.intervalUnit;
+		campaign.startDate = triggerDetails.startDate;
+		campaign.endDate = triggerDetails.endDate;
+		campaign.neverEnds = triggerDetails.neverEnds;
+		campaign.endsAfterOccurences = triggerDetails.endsAfterOccurences;
+		campaign.createdBy = userId;
+		campaign.updatedBy = userId;
+		await campaign.save();
+				
+		return {
+			id: campaign.id,
 		};
 	}
 }

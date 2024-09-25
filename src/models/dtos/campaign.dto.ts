@@ -1,4 +1,4 @@
-import { IsArray, IsBoolean, IsEnum, IsIn, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { CampaignStatusType } from '../enums/campaign.enums';
 
 export class CampaignMasterDto {

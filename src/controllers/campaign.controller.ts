@@ -4,6 +4,7 @@ import { CampaignService } from '@/services/campaign.service';
 import { NextFunction, Response, Request } from 'express-serve-static-core';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
 import { RequestWithUser } from '@/models/interfaces/auth.interface';
+import { CampaignMatrixDto } from '@/models/dtos/campaignMatrix.dto';
 
 class CampaignController {
 	public campaignService = new CampaignService();
@@ -15,7 +16,7 @@ class CampaignController {
 			AppResponseHelper.sendSuccess(res, 'Success', campaignResponse);
 		} catch (ex) {
 			next(ex);
-		}	
+		}
 	};
 
 	public getById = async (req: Request, res: Response, next: NextFunction) => {
@@ -45,6 +46,17 @@ class CampaignController {
 			const tenantId = req.tenantId as number;
 			const campaigntResponse = await this.campaignService.all(pageModel, tenantId);
 			AppResponseHelper.sendSuccess(res, 'Success', campaigntResponse);
+		} catch (ex) {
+			next(ex);
+		}
+	};
+
+	public addTrigger = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const triggerDetails = req.body as CampaignMatrixDto
+			const userId = req.user.id as number;
+			const campaignResponce = await this.campaignService.addTrigger(triggerDetails, userId);
+			AppResponseHelper.sendSuccess(res, 'Success', campaignResponce);	
 		} catch (ex) {
 			next(ex);
 		}

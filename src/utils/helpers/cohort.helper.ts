@@ -1,6 +1,7 @@
 import DB from '@/databases';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { CohortRuleQuery } from '@/models/interfaces/cohort.interface';
+import { CampaignRuleQuery } from '@models/interfaces/campaignMaster.interface';
 import { endOfDay, isValid, parseISO, startOfDay } from 'date-fns';
 import { Op } from 'sequelize';
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -96,66 +97,123 @@ async function queryUserByDate(dateValue: any, operator: string) {
 	return userIds;
 }
 
-export const applyingCohort = async (cohortRule: CohortRuleQuery[]) => {
-	const userSets = [];
-
-	async function processAndCondition(condition: any) {
-		let results: number[] = [];
-		if (condition.and) {
-			for (const subCondition of condition.and) {
-				// Check if subCondition has an 'or' clause or is a direct condition
-				let subResults;
-				if (subCondition.or) {
-					subResults = await processOrCondition(subCondition);
-				} else if (subCondition.and) {
-					subResults = await processAndCondition(subCondition);
-				} else {
-					subResults = await processCondition(subCondition);
-				}
-
-				if (results.length === 0) {
-					results = subResults;
-				} else {
-					results = results.filter(id => subResults.includes(id));
-				}
-			}
-		}
-		return results;
-	}
-
-	async function processOrCondition(condition: any) {
-		const results = new Set<number>();
-		for (const subCondition of condition.or) {
-			let userIds;
+async function processAndCondition(condition: any) {
+	let results: number[] = [];
+	if (condition.and) {
+		for (const subCondition of condition.and) {
+			// Check if subCondition has an 'or' clause or is a direct condition
+			let subResults;
 			if (subCondition.or) {
-				userIds = await processOrCondition(subCondition);
+				subResults = await processOrCondition(subCondition);
 			} else if (subCondition.and) {
-				userIds = await processAndCondition(subCondition);
+				subResults = await processAndCondition(subCondition);
 			} else {
-				userIds = await processAndCondition(subCondition);
+				subResults = await processCondition(subCondition);
 			}
-			userIds.forEach(id => results.add(id));
+
+			if (results.length === 0) {
+				results = subResults;
+			} else {
+				results = results.filter(id => subResults.includes(id));
+			}
 		}
-		return Array.from(results);
 	}
+	return results;
+}
 
-	async function processCondition(condition: any) {
-		const { title, operators, value, variableId } = condition;
-
-		if (!title || !operators || value === undefined) {
-			throw new BadRequestException(`Invalid condition: ${JSON.stringify(condition)}`);
-		}
-
-		if (title === 'cohort') {
-			return await queryCohort(value, operators);
-		} else if (variableId) {
-			return await queryVariableMatrix(variableId, value, operators);
-		} else if (title === 'joiningDate') {
-			return await queryUserByDate(value, operators);
+async function processOrCondition(condition: any) {
+	const results = new Set<number>();
+	for (const subCondition of condition.or) {
+		let userIds;
+		if (subCondition.or) {
+			userIds = await processOrCondition(subCondition);
+		} else if (subCondition.and) {
+			userIds = await processAndCondition(subCondition);
 		} else {
-			throw new BadRequestException(`Unsupported title: ${title}`);
+			userIds = await processAndCondition(subCondition);
 		}
+		userIds.forEach(id => results.add(id));
 	}
+	return Array.from(results);
+}
+
+async function processCondition(condition: any) {
+	const { title, operators, value, variableId } = condition;
+
+	if (!title || !operators || value === undefined) {
+		throw new BadRequestException(`Invalid condition: ${JSON.stringify(condition)}`);
+	}
+
+	if (title === 'cohort') {
+		return await queryCohort(value, operators);
+	} else if (variableId) {
+		return await queryVariableMatrix(variableId, value, operators);
+	} else if (title === 'joiningDate') {
+		return await queryUserByDate(value, operators);
+	} else {
+		throw new BadRequestException(`Unsupported title: ${title}`);
+	}
+}
+
+const userSets = [];
+export const applyingCohort = async (cohortRule: CohortRuleQuery[]) => {
+	// async function processAndCondition(condition: any) {
+	// 	let results: number[] = [];
+	// 	if (condition.and) {
+	// 		for (const subCondition of condition.and) {
+	// 			// Check if subCondition has an 'or' clause or is a direct condition
+	// 			let subResults;
+	// 			if (subCondition.or) {
+	// 				subResults = await processOrCondition(subCondition);
+	// 			} else if (subCondition.and) {
+	// 				subResults = await processAndCondition(subCondition);
+	// 			} else {
+	// 				subResults = await processCondition(subCondition);
+	// 			}
+
+	// 			if (results.length === 0) {
+	// 				results = subResults;
+	// 			} else {
+	// 				results = results.filter(id => subResults.includes(id));
+	// 			}
+	// 		}
+	// 	}
+	// 	return results;
+	// }
+
+	// async function processOrCondition(condition: any) {
+	// 	const results = new Set<number>();
+	// 	for (const subCondition of condition.or) {
+	// 		let userIds;
+	// 		if (subCondition.or) {
+	// 			userIds = await processOrCondition(subCondition);
+	// 		} else if (subCondition.and) {
+	// 			userIds = await processAndCondition(subCondition);
+	// 		} else {
+	// 			userIds = await processAndCondition(subCondition);
+	// 		}
+	// 		userIds.forEach(id => results.add(id));
+	// 	}
+	// 	return Array.from(results);
+	// }
+
+	// async function processCondition(condition: any) {
+	// 	const { title, operators, value, variableId } = condition;
+
+	// 	if (!title || !operators || value === undefined) {
+	// 		throw new BadRequestException(`Invalid condition: ${JSON.stringify(condition)}`);
+	// 	}
+
+	// 	if (title === 'cohort') {
+	// 		return await queryCohort(value, operators);
+	// 	} else if (variableId) {
+	// 		return await queryVariableMatrix(variableId, value, operators);
+	// 	} else if (title === 'joiningDate') {
+	// 		return await queryUserByDate(value, operators);
+	// 	} else {
+	// 		throw new BadRequestException(`Unsupported title: ${title}`);
+	// 	}
+	// }
 
 	// Iterate over each rule in cohortRule
 	for (const rule of cohortRule) {
@@ -169,6 +227,21 @@ export const applyingCohort = async (cohortRule: CohortRuleQuery[]) => {
 	}
 
 	// Return the first set of results, or an empty array if no results
-	console.log('userSets', userSets[0]);
+	return userSets.length > 0 ? userSets[0] : [];
+};
+
+export const applyingCampaign = async (campaignRule: CampaignRuleQuery[]) => {
+	// Iterate over each rule in cohortRule
+	for (const rule of campaignRule) {
+		if (rule.and) {
+			userSets.push(await processAndCondition(rule));
+		} else if (rule.or) {
+			userSets.push(await processOrCondition(rule));
+		} else {
+			throw new BadRequestException(`Invalid rule: ${JSON.stringify(rule)}`);
+		}
+	}
+
+	// Return the first set of results, or an empty array if no results
 	return userSets.length > 0 ? userSets[0] : [];
 };

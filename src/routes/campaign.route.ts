@@ -5,6 +5,7 @@ import CampaignController from '@/controllers/campaign.controller';
 import { Routes } from '@/models/interfaces/routes.interface';
 import { Router } from 'express';
 import headerMiddleware from '@/middlewares/header.middleWare';
+import { CampaignMatrixDto } from '@/models/dtos/campaignMatrix.dto';
 
 class CampaignRoute implements Routes {
 	public path = '/campaign';
@@ -20,6 +21,8 @@ class CampaignRoute implements Routes {
 		this.router.get(`${this.path}/v1/:id`, authMiddleware, this.campaignController.getById);
 		this.router.delete(`${this.path}/v1/:id`, authMiddleware, this.campaignController.delete);
 		this.router.post(`${this.path}/v1/list`, authMiddleware, headerMiddleware, this.campaignController.list);
+		this.router.post(`${this.path}/v1/add-trigger`,validationMiddleware(CampaignMatrixDto, 'body'), authMiddleware, this.campaignController.addTrigger);
+
 	}
 }
 
