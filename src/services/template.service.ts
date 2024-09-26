@@ -11,7 +11,7 @@ import { AppMessages, TemplateMessage, TenantMessage } from '@/utils/helpers/app
 import { TemplateGenerator } from '@/utils/helpers/template.helper';
 import S3Services from '@/utils/services/s3.services';
 import { parseISO } from 'date-fns';
-import { BelongsTo, Op, WhereOptions } from 'sequelize';
+import { BelongsTo, Op, Sequelize, Transaction, WhereOptions } from 'sequelize';
 
 export class TemplateService {
 	public users = DB.Users;
@@ -21,23 +21,32 @@ export class TemplateService {
 	public templateContentCards = DB.TemplateContentCards;
 	public templateContentButtons = DB.TemplateContentButtons;
 	public s3Service = new S3Services();
-
-	constructor() {}
-
-	public async add(templateDetails: TemplateDto, userId: number) {
-		const template = await this.createTemplate(templateDetails, userId);
-		const templateContent = await this.createTemplateContent(templateDetails, template.id, userId);
-		await this.addButtonsToTemplateContent(templateDetails, templateContent.id, userId);
-		await this.addContentCards(templateDetails, templateContent.id, userId);
-
-		let payload = {};
-		payload = await this.generateTemplate(templateDetails, template);
-
-		return { id: template.id, payload };
+	private sequelize: Sequelize;
+	constructor() {
+		this.sequelize = DB.sequelizeConnect;
 	}
 
-	private async createTemplate(templateDetails: TemplateDto, userId: number) {
-		const existingTemplate = await this.template.findOne({ where: { name: templateDetails.name } });
+	public async add(templateDetails: TemplateDto, userId: number) {
+		const transaction = await this.sequelize.transaction(); // Start a transaction
+		try {
+			const template = await this.createTemplate(templateDetails, userId, transaction);
+			const templateContent = await this.createTemplateContent(templateDetails, template.id, userId, transaction);
+			await this.addButtonsToTemplateContent(templateDetails, templateContent.id, userId, transaction);
+			await this.addContentCards(templateDetails, templateContent.id, userId, transaction);
+
+			let payload = {};
+			payload = await this.generateTemplate(templateDetails, template);
+
+			await transaction.commit(); // Commit the transaction if all is successful
+			return { id: template.id, payload };
+		} catch (error) {
+			await transaction.rollback(); // Rollback if any error occurs
+			throw error; // Re-throw the error to handle it as needed
+		}
+	}
+
+	private async createTemplate(templateDetails: TemplateDto, userId: number, transaction: Transaction) {
+		const existingTemplate = await this.template.findOne({ where: { name: templateDetails.name }, transaction });
 		if (existingTemplate) {
 			throw new BadRequestException(TemplateMessage.templateAlreadyExists);
 		}
@@ -64,11 +73,11 @@ export class TemplateService {
 			createdBy: userId,
 		});
 
-		await template.save();
+		await template.save({ transaction });
 		return template;
 	}
 
-	private async createTemplateContent(templateDetails: TemplateDto, templateId: number, userId: number) {
+	private async createTemplateContent(templateDetails: TemplateDto, templateId: number, userId: number, transaction: Transaction) {
 		const templateContent = new this.templateContent();
 		Object.assign(templateContent, {
 			headerType: templateDetails.headerType,
@@ -90,11 +99,11 @@ export class TemplateService {
 			createdBy: userId,
 		});
 
-		await templateContent.save();
+		await templateContent.save({ transaction });
 		return templateContent;
 	}
 
-	private async addButtonsToTemplateContent(templateDetails: TemplateDto, templateContentId: number, userId: number) {
+	private async addButtonsToTemplateContent(templateDetails: TemplateDto, templateContentId: number, userId: number, transaction: Transaction) {
 		const buttonIds: number[] = [];
 		const processButton = async (buttonDetail: any, sectionId: number) => {
 			const contentButton = new this.templateContentButtons();
@@ -115,15 +124,18 @@ export class TemplateService {
 				createdBy: userId,
 				sectionId: sectionId,
 			});
-			await contentButton.save();
+			await contentButton.save({ transaction });
 			buttonIds.push(contentButton.id);
 		};
+
 		if (templateDetails.buttons && templateDetails.buttons?.length > 0 && templateDetails.buttons[0].sectionName) {
 			for (const section of templateDetails.buttons) {
-				let sectionRecord = await this.templateContentButtonsSection.findOne({ where: { name: section.sectionName } });
-				sectionRecord = new this.templateContentButtonsSection();
-				sectionRecord.name = section.sectionName;
-				await sectionRecord.save();
+				let sectionRecord = await this.templateContentButtonsSection.findOne({ where: { name: section.sectionName }, transaction });
+				if (!sectionRecord) {
+					sectionRecord = new this.templateContentButtonsSection();
+					sectionRecord.name = section.sectionName;
+					await sectionRecord.save({ transaction });
+				}
 
 				for (const buttonDetail of section.buttons) {
 					await processButton(buttonDetail, sectionRecord.id);
@@ -135,14 +147,14 @@ export class TemplateService {
 			}
 		}
 
-		const templateContent = await this.templateContent.findOne({ where: { id: templateContentId } });
+		const templateContent = await this.templateContent.findOne({ where: { id: templateContentId }, transaction });
 		templateContent.buttonIds = buttonIds;
-		await templateContent.save();
+		await templateContent.save({ transaction });
 	}
 
-	private async addContentCards(templateDetails: TemplateDto, templateContentId: number, userId: number) {
-		if (templateDetails?.contentCards?.length > 1) {
-			throw new BadRequestException('The number of content cards exceeds the maximum allowed limit of 1.');
+	private async addContentCards(templateDetails: TemplateDto, templateContentId: number, userId: number, transaction: Transaction) {
+		if (templateDetails?.contentCards?.length > 10) {
+			throw new BadRequestException('The number of content cards exceeds the maximum allowed limit of 10.');
 		}
 		for (const card of templateDetails?.contentCards || []) {
 			if (card.body?.length > 160) {
@@ -159,13 +171,13 @@ export class TemplateService {
 				templateContentId: templateContentId,
 				createdBy: userId,
 			});
-			await contentCard.save();
+			await contentCard.save({ transaction });
 
-			await this.addButtonsToContentCard(card.buttons, contentCard.id, userId);
+			await this.addButtonsToContentCard(card.buttons, contentCard.id, userId, transaction);
 		}
 	}
 
-	private async addButtonsToContentCard(buttons: TemplateButtonDto[], contentCardId: number, userId: number) {
+	private async addButtonsToContentCard(buttons: TemplateButtonDto[], contentCardId: number, userId: number, transaction: Transaction) {
 		const cardButtonIds: number[] = [];
 
 		for (const buttonDetail of buttons || []) {
@@ -189,13 +201,13 @@ export class TemplateService {
 				isTrackUrl: buttonDetail.isTrackUrl,
 				createdBy: userId,
 			});
-			await cardButton.save();
+			await cardButton.save({ transaction });
 			cardButtonIds.push(cardButton.id);
 		}
 
-		const contentCard = await this.templateContentCards.findOne({ where: { id: contentCardId } });
+		const contentCard = await this.templateContentCards.findOne({ where: { id: contentCardId }, transaction });
 		contentCard.buttonIds = cardButtonIds;
-		await contentCard.save();
+		await contentCard.save({ transaction });
 	}
 
 	private async generateTemplate(templateDetails: TemplateDto, template: TemplateModel) {
