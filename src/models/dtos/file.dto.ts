@@ -1,5 +1,6 @@
-import { IsString, IsNotEmpty, IsNumber, IsOptional, IsBase64 } from 'class-validator';
+import { IsBase64, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { FileType } from '../enums/file-type.enums';
+import { UploadFileMediaType } from '../enums/template.enum';
 
 export class FileDto {
 	@IsString()
@@ -24,4 +25,14 @@ export class FileTypeDto {
 	@IsOptional()
 	@IsString()
 	public elementId: number;
+}
+
+export class FileMediaType {
+	@IsEnum(UploadFileMediaType)
+	@IsNotEmpty()
+	public mediaType: UploadFileMediaType;
+
+	@IsOptional()
+	@IsString()
+	public tenantId: number;
 }

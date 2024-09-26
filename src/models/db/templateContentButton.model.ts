@@ -1,6 +1,6 @@
 import { DataTypes, Sequelize } from 'sequelize';
+import { ButtonType, FlowType } from '../enums/template.enum';
 import { AppDBModel, AppDB_Common_Fields } from './app-db.model';
-import { ActionType, ButtonType, FlowType } from '../enums/template.enum';
 
 export class TemplateContentButtonsModel extends AppDBModel {
 	public id: number;
@@ -11,7 +11,6 @@ export class TemplateContentButtonsModel extends AppDBModel {
 	public isActive: boolean;
 	public isDeleted: boolean;
 	public buttonType: string;
-	public actionType: string;
 	public title: string;
 	public websiteUrl: string;
 	public isDynamicUrl: boolean;
@@ -20,6 +19,10 @@ export class TemplateContentButtonsModel extends AppDBModel {
 	public flowId: string;
 	public flowAction: string;
 	public flowToken: string;
+	public isTrackUrl: boolean;
+	public buttonId: string;
+	public buttonDescription: string;
+	public sectionId: number;
 }
 
 export default function (sequelize: Sequelize): typeof TemplateContentButtonsModel {
@@ -36,11 +39,6 @@ export default function (sequelize: Sequelize): typeof TemplateContentButtonsMod
 				allowNull: true,
 				type: DataTypes.ENUM,
 				values: Object.values(ButtonType),
-			},
-			actionType: {
-				allowNull: true,
-				type: DataTypes.ENUM,
-				values: Object.values(ActionType),
 			},
 			title: {
 				allowNull: true,
@@ -62,9 +60,29 @@ export default function (sequelize: Sequelize): typeof TemplateContentButtonsMod
 				allowNull: true,
 				type: DataTypes.STRING,
 			},
+			isTrackUrl: {
+				allowNull: true,
+				type: DataTypes.BOOLEAN,
+			},
+			sectionId: {
+				allowNull: true,
+				type: DataTypes.INTEGER,
+			},
 			flowId: {
 				allowNull: true,
 				type: DataTypes.STRING,
+			},
+			buttonId: {
+				allowNull: true,
+				type: DataTypes.STRING,
+			},
+			buttonDescription: {
+				allowNull: true,
+				type: DataTypes.STRING,
+			},
+			additionalData: {
+				allowNull: true,
+				type: DataTypes.JSONB,
 			},
 			flowAction: {
 				allowNull: true,

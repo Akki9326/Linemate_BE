@@ -1,6 +1,7 @@
 import { DataTypes, Sequelize } from 'sequelize';
-import { AppDBModel, AppDB_Common_Fields } from './app-db.model';
 import { CardMediaType } from '../enums/template.enum';
+import { AppDBModel, AppDB_Common_Fields } from './app-db.model';
+import { TemplateContentModel } from './templateContent.model';
 
 export class TemplateContentCardsModel extends AppDBModel {
 	public id: number;
@@ -91,6 +92,9 @@ export default function (sequelize: Sequelize): typeof TemplateContentCardsModel
 			sequelize,
 		},
 	);
+
+	TemplateContentCardsModel.belongsTo(TemplateContentModel, { foreignKey: 'templateContentId' });
+	TemplateContentModel.hasMany(TemplateContentCardsModel, { foreignKey: 'templateContentId', as: 'templateContentCards' });
 
 	return TemplateContentCardsModel;
 }

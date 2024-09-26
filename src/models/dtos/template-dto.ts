@@ -15,6 +15,7 @@ import {
 import {
 	ActionType,
 	ButtonType,
+	CardMediaType,
 	Channel,
 	ContentSubType,
 	ContentType,
@@ -26,11 +27,116 @@ import {
 } from '../enums/template.enum';
 import { Type } from 'class-transformer';
 
+export class TemplateButtonDto {
+	@IsEnum(ButtonType)
+	@IsOptional()
+	public buttonType: ButtonType;
+
+	@IsString()
+	@IsOptional()
+	public title: string;
+
+	@IsString()
+	@IsOptional()
+	public buttonId: string;
+
+	@IsString()
+	@IsOptional()
+	public buttonDescription: string;
+
+	@IsString()
+	@IsOptional()
+	public websiteUrl: string;
+
+	@IsBoolean()
+	@IsOptional()
+	public isDynamicUrl: boolean;
+
+	@IsString()
+	@IsOptional()
+	public navigateScreen: string;
+
+	@IsString()
+	@IsOptional()
+	public sample: string;
+
+	@IsString()
+	@IsOptional()
+	public initialScreen: string;
+
+	@IsString()
+	@IsOptional()
+	public flowId: string;
+
+	@IsEnum(FlowType)
+	@IsOptional()
+	public flowAction: FlowType;
+
+	@IsString()
+	@IsOptional()
+	public flowToken: string;
+
+	@IsBoolean()
+	@IsOptional()
+	public isTrackUrl: boolean;
+
+	@IsOptional()
+	public additionalData: object;
+
+	@IsString()
+	@IsOptional()
+	public sectionName: string;
+
+	@IsArray()
+	@ValidateNested({ each: true })
+	@Type(() => TemplateButtonDto)
+	@IsOptional()
+	public buttons: TemplateButtonDto[];
+}
+
+export class TemplateContentCardDto {
+	@IsEnum(CardMediaType)
+	@IsOptional()
+	public mediaType: CardMediaType;
+
+	@IsString()
+	@IsOptional()
+	public contentUrl: string;
+
+	@IsString()
+	@IsOptional()
+	public mediaHandle: string;
+
+	@IsString()
+	@IsOptional()
+	public mediaSample: string;
+
+	@IsBoolean()
+	@IsOptional()
+	public isDynamicUrl: boolean;
+
+	@IsString()
+	@IsOptional()
+	public body: string;
+
+	@IsArray()
+	@ValidateNested({ each: true })
+	@Type(() => TemplateButtonDto)
+	@IsOptional()
+	public buttons: TemplateButtonDto[];
+
+	@IsArray()
+	@IsOptional()
+	public bodyPlaceHolder: number[];
+}
+
 export class TemplateDto {
 	@IsString()
 	@IsNotEmpty()
 	@IsLowercase()
-	@Matches(/^[a-z0-9 ]+$/, { message: 'Name can only contain lowercase letters, numbers, and spaces' })
+	@Matches(/^[a-z0-9]+[a-z0-9._-]*[a-z0-9]+$/, {
+		message: 'Name can only contain lowercase letters, numbers, hyphens, underscores, dots, and should not start or end with special characters.',
+	})
 	public name: string;
 
 	@IsString()
@@ -79,6 +185,18 @@ export class TemplateDto {
 	public headerContent: string;
 
 	@IsString()
+	@IsOptional()
+	public headerMediaUrl: string;
+
+	@IsString()
+	@IsOptional()
+	public headerMediaHandle: string;
+
+	@IsString()
+	@IsOptional()
+	public headerMediaSample: string;
+
+	@IsString()
 	@IsNotEmpty()
 	public language: string;
 
@@ -87,7 +205,7 @@ export class TemplateDto {
 	public headerPlaceHolder: number[];
 
 	@IsString()
-	@IsNotEmpty()
+	@IsOptional()
 	public body: string;
 
 	@IsArray()
@@ -98,22 +216,6 @@ export class TemplateDto {
 	@IsOptional()
 	public footer: string;
 
-	@IsEnum(ButtonType)
-	@IsOptional()
-	public buttonType: ButtonType;
-
-	@IsString()
-	@IsOptional()
-	public buttonContent: string;
-
-	@IsString()
-	@IsOptional()
-	public buttonWebContent: string;
-
-	@IsBoolean()
-	@IsOptional()
-	public isTrackURL: boolean;
-
 	@IsBoolean()
 	@IsOptional()
 	public isPreviewUrl: boolean;
@@ -121,6 +223,10 @@ export class TemplateDto {
 	@IsEnum(MessageType)
 	@IsOptional()
 	public messageType: MessageType;
+
+	@IsString()
+	@IsOptional()
+	public messageText: string;
 
 	@IsString()
 	@IsOptional()
@@ -138,6 +244,14 @@ export class TemplateDto {
 	@IsLongitude()
 	public longitude: number;
 
+	@IsOptional()
+	@IsString()
+	public locationName: string;
+
+	@IsOptional()
+	@IsString()
+	public templateId: string;
+
 	@IsString()
 	@IsOptional()
 	public address: string;
@@ -146,54 +260,23 @@ export class TemplateDto {
 	@IsOptional()
 	public contentSubType: ContentSubType;
 
-	@IsString()
-	@IsOptional()
-	public additionalData: string;
-
-	@IsArray()
-	@ValidateNested({ each: true })
-	@Type(() => TemplateButtonDto)
-	public buttons: TemplateButtonDto[];
-}
-
-export class TemplateButtonDto {
-	@IsEnum(ButtonType)
-	@IsOptional()
-	public buttonType: ButtonType;
-
 	@IsEnum(ActionType)
 	@IsOptional()
 	public actionType: ActionType;
 
 	@IsString()
 	@IsOptional()
-	public title: string;
+	public menuButtonName: string;
 
-	@IsString()
+	@IsArray()
+	@ValidateNested({ each: true })
+	@Type(() => TemplateButtonDto)
 	@IsOptional()
-	public websiteUrl: string;
+	public buttons: TemplateButtonDto[];
 
-	@IsBoolean()
+	@IsArray()
+	@ValidateNested({ each: true })
+	@Type(() => TemplateContentCardDto)
 	@IsOptional()
-	public isDynamicUrl: boolean;
-
-	@IsString()
-	@IsOptional()
-	public navigateScreen: string;
-
-	@IsString()
-	@IsOptional()
-	public initialScreen: string;
-
-	@IsString()
-	@IsOptional()
-	public flowId: string;
-
-	@IsEnum(FlowType)
-	@IsOptional()
-	public flowAction: FlowType;
-
-	@IsString()
-	@IsOptional()
-	public flowToken: string;
+	public contentCards: TemplateContentCardDto[];
 }

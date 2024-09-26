@@ -1,5 +1,5 @@
 import { DataTypes, Sequelize } from 'sequelize';
-import { ContentSubType, ContentType, HeaderType, MediaType, MessageType } from '../enums/template.enum';
+import { ActionType, ContentSubType, ContentType, HeaderType, MediaType, MessageType } from '../enums/template.enum';
 import { AppDBModel, AppDB_Common_Fields } from './app-db.model';
 import { TemplateModel } from './template.model';
 
@@ -25,11 +25,14 @@ export class TemplateContentModel extends AppDBModel {
 	public longitude: number;
 	public address: string;
 	public isPreviewUrl: boolean;
-	public isTrackUrl: boolean;
 	public messageType: string;
 	public buttonIds: number[];
 	public contentSubType: string;
 	public additionalData: string;
+	public locationName: string;
+	public headerMediaUrl: string;
+	public actionType: string;
+	public menuButtonName: string;
 	public templateId: number;
 }
 
@@ -52,7 +55,16 @@ export default function (sequelize: Sequelize): typeof TemplateContentModel {
 				type: DataTypes.ENUM,
 				values: Object.values(HeaderType),
 			},
+			actionType: {
+				allowNull: true,
+				type: DataTypes.ENUM,
+				values: Object.values(ActionType),
+			},
 			headerContent: {
+				allowNull: true,
+				type: DataTypes.STRING,
+			},
+			menuButtonName: {
 				allowNull: true,
 				type: DataTypes.STRING,
 			},
@@ -87,6 +99,10 @@ export default function (sequelize: Sequelize): typeof TemplateContentModel {
 				allowNull: true,
 				type: DataTypes.STRING(200),
 			},
+			headerMediaUrl: {
+				allowNull: true,
+				type: DataTypes.STRING,
+			},
 			latitude: {
 				allowNull: true,
 				type: DataTypes.DECIMAL(9, 6),
@@ -97,13 +113,13 @@ export default function (sequelize: Sequelize): typeof TemplateContentModel {
 			},
 			address: {
 				allowNull: true,
-				type: DataTypes.STRING(255),
+				type: DataTypes.STRING(),
+			},
+			messageText: {
+				allowNull: true,
+				type: DataTypes.STRING(),
 			},
 			isPreviewUrl: {
-				allowNull: true,
-				type: DataTypes.BOOLEAN,
-			},
-			isTrackUrl: {
 				allowNull: true,
 				type: DataTypes.BOOLEAN,
 			},
@@ -121,9 +137,9 @@ export default function (sequelize: Sequelize): typeof TemplateContentModel {
 				type: DataTypes.ENUM,
 				values: Object.values(ContentSubType),
 			},
-			additionalData: {
+			locationName: {
 				allowNull: true,
-				type: DataTypes.TEXT,
+				type: DataTypes.STRING,
 			},
 			templateId: {
 				allowNull: false,

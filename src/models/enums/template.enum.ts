@@ -1,13 +1,19 @@
 export enum TemplateType {
-	ExternalTemplate = 'template',
+	ExternalTemplate = 'external',
 	Simple = 'simple',
-	Interactive = 'Interactive',
+	Interactive = 'interactive',
+}
+export enum TemplateCategory {
+	Utility = 'Utility',
+	Marketing = 'Marketing',
 }
 
 export enum TemplateStatus {
-	Draft = 'draft',
-	Pending = 'pending',
-	Approved = 'approved',
+	DRAFT = 'draft',
+	PENDING = 'pending',
+	APPROVED = 'approved',
+	ERROR = 'error',
+	REJECTED = 'rejected',
 }
 
 export enum Channel {
@@ -15,17 +21,26 @@ export enum Channel {
 	SMS = 'SMS',
 	Viber = 'viber',
 }
+
 export enum HeaderType {
 	Text = 'text',
 	Media = 'media',
 }
+
 export enum MessageType {
+	Text = 'text',
 	Image = 'image',
 	Video = 'video',
 	Audio = 'audio',
 	File = 'file',
 	Location = 'location',
 	Sticker = 'sticker',
+}
+
+export enum UploadFileMediaType {
+	Image = 'image',
+	Video = 'video',
+	Document = 'document',
 }
 
 export enum MediaType {
@@ -42,8 +57,8 @@ export enum ContentType {
 
 export enum ContentSubType {
 	Common = 'common',
-	request = 'request_location',
-	address = 'address_message',
+	Request = 'request',
+	Address = 'address',
 	Flow = 'flow',
 }
 
@@ -66,4 +81,13 @@ export enum ButtonType {
 export enum CardMediaType {
 	Image = 'image',
 	Video = 'video',
+}
+
+export enum FynoWords {
+	quickReply = 'quick_reply',
+	websiteVisit = 'url',
+	common = 'button',
+	external = 'template',
+	request = 'request_location',
+	address = 'address_message',
 }
