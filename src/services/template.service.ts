@@ -34,11 +34,10 @@ export class TemplateService {
 			await this.addButtonsToTemplateContent(templateDetails, templateContent.id, userId, transaction);
 			await this.addContentCards(templateDetails, templateContent.id, userId, transaction);
 
-			let payload = {};
-			payload = await this.generateTemplate(templateDetails, template);
+			await this.generateTemplate(templateDetails, template);
 
 			await transaction.commit(); // Commit the transaction if all is successful
-			return { id: template.id, payload };
+			return { id: template.id };
 		} catch (error) {
 			await transaction.rollback(); // Rollback if any error occurs
 			throw error; // Re-throw the error to handle it as needed
