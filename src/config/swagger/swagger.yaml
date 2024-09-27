@@ -172,6 +172,134 @@ components:
         - 403
       description: HTTP status codes.
       
+    TemplateType:
+      type: string
+      enum:
+        - external
+        - simple
+        - interactive
+      example: external
+      description: "Defines the type of template"
+      
+    TemplateCategory:
+      type: string
+      enum:
+        - Utility
+        - Marketing
+      example: Utility
+      description: "Defines the category of template"
+
+    TemplateStatus:
+      type: string
+      enum:
+        - draft
+        - pending
+        - approved
+        - error
+        - rejected
+      example: draft
+      description: Defines the status of the template
+
+    Channel:
+      type: string
+      enum:
+        - whatsapp
+        - SMS
+        - viber
+      example: whatsapp
+      description: "Defines the communication channel for the template"
+      
+    HeaderType:
+      type: string
+      enum:
+        - text
+        - media
+      example: text
+      description: "Defines the type of header"
+      
+    MessageType:
+      type: string
+      enum:
+        - text
+        - image
+        - video
+        - audio
+        - file
+        - location
+        - sticker
+      example: text
+      description: "Defines the type of message content"
+      
+    UploadFileMediaType:
+      type: string
+      enum:
+        - image
+        - video
+        - document
+      example: image
+      description: "Defines the media type for file uploads"
+      
+    MediaType:
+      type: string
+      enum:
+        - image
+        - video
+        - document
+        - location
+      example: image
+      description: "Defines the media type for a card or content"
+      
+    TemplateContentType:
+      type: string
+      enum:
+        - common
+        - carousel
+      example: carousel
+      description: "Defines the type of content in the template"
+      
+    ContentSubType:
+      type: string
+      enum:
+        - common
+        - request
+        - address
+        - flow
+      example: common
+      description: "Defines the sub-type of content in the template"
+      
+    FlowType:
+      type: string
+      enum:
+        - navigate
+        - data_exchange
+      example: navigate
+      description: "Defines the type of flow interaction in the template"
+      
+    ActionType:
+      type: string
+      enum:
+        - quickReply
+        - menu
+      example: quickReply
+      description: "Defines the action type of a button"
+      
+    ButtonType:
+      type: string
+      enum:
+        - quickReply
+        - websiteVisit
+        - flow
+      example: websiteVisit
+      description: "Defines the type of button in the template"
+      
+    CardMediaType:
+      type: string
+      enum:
+        - image
+        - video
+      example: image
+      description: "Defines the type of media for content cards"
+      
     LoginRequest:
       type: object
       properties:
@@ -2119,7 +2247,7 @@ components:
           description: Name of the content item
           example: Access Portal
         type:
-          $ref: '#/components/schemas/ContentType'
+          $ref: '#/components/schemas/TemplateContentType'
         description:
           type: string
           description: Description of the content item
@@ -2350,10 +2478,326 @@ components:
           type: string
           example: "Tenant list fetched successfully"
 
+    TemplateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "testtemplat945"
+          description: "The name of the template"
+        description:
+          type: string
+          example: "test_description"
+          description: "The description of the template"
+        body:
+          type: string
+          example: "test"
+          description: "The body content of the template"
+        language:
+          type: string
+          example: "en"
+          description: "Language of the template"
+        templateType:
+          type: string
+          enum: [external, internal]
+          example: "external"
+          description: "Type of the template"
+        channel:
+          type: string
+          example: "whatsapp"
+          description: "Channel where the template will be used"
+        businessNumber:
+          type: string
+          example: "9913221018"
+          description: "Business contact number"
+        ISDCode:
+          type: string
+          example: "+91"
+          description: "International Subscriber Dialing (ISD) code"
+        HSMPassword:
+          type: string
+          example: "123456"
+          description: "HSM password"
+        HSMUserId:
+          type: string
+          example: "12"
+          description: "HSM user ID"
+        clientTemplateId:
+          type: string
+          example: "9876"
+          description: "Client's template ID"
+        contentType:
+          type: string
+          example: "carousel"
+          description: "Type of content in the template"
+        bodyPlaceHolder:
+          type: array
+          items:
+            type: string
+          example: []
+          description: "Placeholders for the body content"
+        isPreviewUrl:
+          type: boolean
+          example: false
+          description: "Whether to preview the URL"
+        contentCards:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContentCard'
+          description: "Content cards associated with the template"
+        tenantId:
+          type: integer
+          example: 1
+          description: "Tenant ID"
 
+    ContentCard:
+      type: object
+      properties:
+        mediaType:
+          type: string
+          example: "image"
+          description: "Type of media (image, video, etc.)"
+        contentUrl:
+          type: string
+          example: "https://stg-portal-linemate-data.s3.ap-south-1.amazonaws.com/templates/temp/coverImage-1693871030394-62211 (1).png"
+          description: "URL of the media content"
+        mediaHandle:
+          type: string
+          example: "4::aW1hZ2UvanBlZw==:ARYUsWu90MAp6_amd8lc4hd75i3hKYidfWg6vMyE2ImEV-svNXuQbkJMeC1ZWbpdLAwe1trzR9ffyxR8_rfiVGMEq8BzyjADFKi_crz-C0pxRQ:e:1727641451:332189416110030:100088206755237:ARaVsVhZu7yXhyzfFmw"
+          description: "Handle of the media content"
+        mediaSample:
+          type: string
+          example: "coverImage-1693871030394-62211%20%281%29-1726829596657-998387126.png"
+          description: "Sample of the media content"
+        body:
+          type: string
+          example: "test_body"
+          description: "Body content of the card"
+        bodyPlaceHolder:
+          type: array
+          items:
+            type: string
+          example: []
+          description: "Placeholders for the card body content"
+        buttons:
+          type: array
+          items:
+            $ref: '#/components/schemas/Button'
+          description: "Buttons associated with the content card"
+    
+    Button:
+      type: object
+      properties:
+        buttonType:
+          type: string
+          example: "websiteVisit"
+          enum: [websiteVisit, quickReply, call]
+          description: "Type of the button"
+        isDynamicUrl:
+          type: boolean
+          example: false
+          description: "Whether the URL is dynamic"
+        isTrackUrl:
+          type: boolean
+          example: false
+          description: "Whether the URL should be tracked"
+        title:
+          type: string
+          example: "View Demo"
+          description: "Title of the button"
+        websiteUrl:
+          type: string
+          example: "https://fyno.io/demo/"
+          description: "URL to visit when the button is clicked"
 
+    TemplateResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+          description: "The ID of the created template"
+        payload:
+          type: object
+          description: "Payload of the template, based on the content created"
+        message:
+          type: string
+          example: "Template created successfully"
+          description: "Message describing the result of the operation"
+        success:
+          type: boolean
+          example: true
 
+    TemplateDetailsResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 18
+          description: "The ID of the template"
+        name:
+          type: string
+          example: "testtemplat945"
+          description: "The name of the template"
+        description:
+          type: string
+          example: "test_description"
+          description: "The description of the template"
+        body:
+          type: string
+          example: "test"
+          description: "The body content of the template"
+        language:
+          type: string
+          example: "en"
+          description: "Language of the template"
+        templateType:
+          $ref: '#/components/schemas/TemplateType'
+        channel:
+          $ref: '#/components/schemas/Channel'
+        businessNumber:
+          type: string
+          example: "9913221018"
+          description: "Business contact number"
+        ISDCode:
+          type: string
+          example: "+91"
+          description: "International Subscriber Dialing (ISD) code"
+        HSMPassword:
+          type: string
+          example: "123456"
+          description: "HSM password"
+        HSMUserId:
+          type: string
+          example: "12"
+          description: "HSM user ID"
+        clientTemplateId:
+          type: string
+          example: "9876"
+          description: "Client's template ID"
+        contentType:
+          $ref: '#/components/schemas/ContentType'
+        isPreviewUrl:
+          type: boolean
+          example: false
+          description: "Whether to preview the URL"
+        contentCards:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContentCard'
+          description: "Content cards for the template"
+        tenantId:
+          type: integer
+          example: 1
+          description: "Tenant ID"
 
+    TemplateListRequest:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+          description: "The page number for pagination."
+        limit:
+          type: integer
+          example: 10
+          description: "The number of records per page."
+        sortField:
+          type: string
+          example: "id"
+          description: "Field to sort the results by."
+        sortOrder:
+          type: string
+          enum:
+            - ASC
+            - DESC
+          example: "DESC"
+          description: "Sort order for the results (ascending or descending)."
+        search:
+          type: string
+          example: ""
+          description: "Search term to filter the results."
+        filter:
+          type: object
+          properties:
+            isDeleted:
+              type: boolean
+              example: false
+              description: "Filter for deleted or non-deleted records."
+            language:
+              type: string
+              example: "hin"
+              description: "Filter by language."
+            channel:
+              $ref: '#/components/schemas/Channel'
+            status:
+              $ref: '#/components/schemas/TemplateStatus'
+            startDate:
+              type: string
+              format: date-time
+              example: "2024-09-25T02:57:25.841Z"
+              description: "Start date for filtering the templates."
+            endDate:
+              type: string
+              format: date-time
+              example: "2024-09-26T02:57:25.841Z"
+              description: "End date for filtering the templates."
+            createdBy:
+              type: integer
+              example: 1
+              description: "Filter by creator's user ID."
+            
+    TemplateListResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 100
+          description: "Total number of templates available."
+        templates:
+          type: array
+          items:
+            $ref: '#/components/schemas/TemplateDetailsResponse'
+          description: "List of templates."
+        success:
+          type: boolean
+          example: true
+          description: "Indicates if the request was successful."
+
+    UploadResponse:
+      type: object
+      properties:
+        handler:
+          type: string
+          example: "uploaded_image_12345"
+          description: "The identifier or handler of the uploaded file."
+        file:
+          type: string
+          example: "https://example.com/uploads/pexels-bri-schneiter-28802-346529.jpg"
+          description: "URL to access the uploaded file."
+        sample:
+          type: string
+          example: "pexels-bri-schneiter-28802-346529.jpg"
+          description: "Sample or filename of the uploaded file."
+        success:
+          type: boolean
+          example: true
+          description: "Indicates if the file was uploaded successfully."
+
+    DeleteResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+          description: "The ID of the deleted template."
+        message:
+          type: string
+          example: "Template deleted successfully"
+          description: "Success message indicating the template was deleted."
+        success:
+          type: boolean
+          example: true
 paths:
   /permission/v1/add:
     post:
@@ -3642,6 +4086,135 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
+
+  /template/v1/add:
+    post:
+      summary: "Add a new template"
+      description: "This API allows you to add a new template."
+      tags:
+        - Templates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplateRequest'
+      responses:
+        '200':
+          description: "Template created successfully"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateResponse'    
+
+  /template/v1/{templateId}:
+    get:
+      summary: "Get template by ID"
+      description: "Retrieves details of a specific template by its ID."
+      tags:
+        - Templates
+      parameters:
+        - in: path
+          name: templateId
+          required: true
+          schema:
+            type: integer
+          description: "The ID of the template to retrieve."
+      responses:
+        '200':
+          description: "Template details retrieved successfully"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateDetailsResponse'     
+
+    delete:
+      summary: "Delete a template by ID"
+      description: "Deletes a specific template by its ID."
+      tags:
+        - Templates
+      parameters:
+        - in: path
+          name: templateId
+          required: true
+          schema:
+            type: integer
+            description: "The ID of the template to delete."
+          example: 1
+      responses:
+        '200':
+          description: "Template deleted successfully"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteResponse'
+
+  /template/v1/list:
+    post:
+      summary: "List templates"
+      description: "Retrieves a paginated list of templates with filtering, sorting, and search capabilities."
+      tags:
+        - Templates
+      parameters:
+        - in: header
+          name: tenantId
+          required: true
+          schema:
+            type: integer
+            example: 1
+          description: "The ID of the tenant."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplateListRequest'
+      responses:
+        '200':
+          description: "Templates retrieved successfully"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateListResponse'     
+
+  /template/v1/upload-template-content:
+    post:
+      summary: "Upload template content file"
+      description: "Uploads a template content file (e.g., image or video) and associates it with a tenant."
+      tags:
+        - Templates
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: "The file to upload."
+                mediaType:
+                  type: string
+                  enum:
+                    - image
+                    - video
+                    - document
+                  description: "The type of media being uploaded."
+                  example: "image"
+                tenantId:
+                  type: string
+                  description: "The ID of the tenant."
+                  example: "1"
+      responses:
+        '200':
+          description: "File uploaded successfully"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse' 
+
+  
 tags:
   - name: Permission
     description: Endpoints for creating and managing permissions.

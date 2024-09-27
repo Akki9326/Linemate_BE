@@ -27,6 +27,7 @@ export const RoleMessage = {
 };
 export const TenantMessage = {
 	requiredTenant: 'tenantIds is required',
+	requiredTenantId: 'tenantId is required',
 	requiredTenantFilter: 'tenantId is required in filter',
 	tenantNotFound: 'Tenant not found',
 	tenantVariableNotFound: 'Tenant variable not found',
@@ -67,4 +68,8 @@ export const CohortMessage = {
 };
 export const FilterMessage = {
 	filterForNotFound: 'filterFor is required in query params',
+};
+export const TemplateMessage = {
+	templateNotFound: 'template not found',
+	templateAlreadyExists: 'template already exists',
 };
