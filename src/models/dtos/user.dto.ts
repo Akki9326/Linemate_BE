@@ -24,6 +24,7 @@ export class UserDto {
 	public tenantIds: number[];
 
 	@IsString()
+	@IsOptional()
 	public countyCode: string;
 
 	@IsString()

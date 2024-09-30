@@ -47,7 +47,7 @@ export default function (sequelize: Sequelize): typeof TenantModel {
 			},
 			trademark: {
 				type: DataTypes.STRING,
-				allowNull: false,
+				allowNull: true,
 			},
 			logo: {
 				type: DataTypes.STRING,

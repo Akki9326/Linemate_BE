@@ -27,7 +27,7 @@ export class Email {
 					.then(res => {
 						resolve(res);
 					})
-					.catch(error => {						
+					.catch(error => {
 						reject(error);
 					});
 			} else {

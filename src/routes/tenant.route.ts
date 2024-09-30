@@ -5,7 +5,7 @@ import { Routes } from '@/models/interfaces/routes.interface';
 import validationMiddleware from '@middlewares/validation.middleware';
 import { Router } from 'express';
 
-class RoleRoute implements Routes {
+class TenantRoute implements Routes {
 	public path = '/tenant';
 	public router = Router();
 	public tenantController = new TenantController();
@@ -23,4 +23,4 @@ class RoleRoute implements Routes {
 	}
 }
 
-export default RoleRoute;
+export default TenantRoute;
