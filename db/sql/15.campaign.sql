@@ -22,12 +22,7 @@ CREATE TABLE "campaignMaster" (
 CREATE TABLE "campaignMatrix" (
     id SERIAL PRIMARY KEY,
     "triggerType" VARCHAR(50) NOT NULL CHECK ("triggerType" IN ('Manual', 'Automatic')),
-    "campaignId" INTEGER NOT NULL,
-    "intervalUnit" VARCHAR(50) NOT NULL CHECK ("intervalUnit" IN ('day', 'week', 'month')),
-    "startDate" DATE,
-    "endDate" DATE,
-    "neverEnds" BOOLEAN default false,
-    "endAfterOccurences" INTEGER,
+    "campaignId" INTEGER NOT NULL,    
     "triggered" INTEGER,
     "delivered" INTEGER,
     "read" INTEGER,
@@ -39,4 +34,12 @@ CREATE TABLE "campaignMatrix" (
     "updatedAt" TIMESTAMP,
     "createdBy" VARCHAR(20) NOT NULL DEFAULT '', 
     "updatedBy" VARCHAR(20)
+    CONSTRAINT fk_campaign_id FOREIGN KEY ("campaignId")
+        REFERENCES "campaignMaster" (id)
+        ON DELETE CASCADE
 );   
+
+
+ALTER TABLE "campaignMaster"
+ADD COLUMN "reoccurenceType" VARCHAR(50)
+ADD COLUMN "reoccurentDetails" JSONB

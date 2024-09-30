@@ -1,4 +1,4 @@
-import { IsArray, IsBoolean, IsEnum, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsIn, IsNotEmpty, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
 import { CampaignStatusType } from '../enums/campaign.enums';
 
 export class CampaignMasterDto {
@@ -40,4 +40,10 @@ export class CampaignMasterDto {
 
 	@IsNumber()
 	public tenantId: number;
+
+	@IsString()
+	public reoccurenceType: string;
+
+	@IsObject()
+	public reoccurenceDetails: object;
 }

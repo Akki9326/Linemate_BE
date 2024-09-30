@@ -2,7 +2,7 @@ export enum CampaignStatusType {
 	completed = 'completed',
 	inProgress = 'in-progress',
 	failed = 'failed',
-}	
+}
 export enum TriggerType {
 	manual = 'Manual',
 	automatic = 'Automatic',
@@ -21,5 +21,9 @@ export enum RuleOperators {
 export enum CampaignRuleDataTypes {
 	DropDown = 'dropDown',
 	DateRange = 'DateRange',
-	Cohorts = 'Cohort/Groups'
+	Cohorts = 'Cohort/Groups',
+}
+export enum ReoccurenceType {
+	custom = 'custom',
+	once = 'once',
 }

@@ -19,6 +19,18 @@ class CampaignController {
 		}
 	};
 
+	public update = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const campaignDetails = req.body as CampaignMasterDto;
+			const campaignId = parseInt(req.params.id);
+			const userId = req.user.id as number;
+			const campaignResponse = await this.campaignService.update(campaignDetails, campaignId, userId);
+			AppResponseHelper.sendSuccess(res, 'Success', campaignResponse);
+		} catch (ex) {
+			next(ex);
+		}
+	};
+
 	public getById = async (req: Request, res: Response, next: NextFunction) => {
 		try {
 			const campaignId = parseInt(req.params.id);
@@ -53,10 +65,10 @@ class CampaignController {
 
 	public addTrigger = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
-			const triggerDetails = req.body as CampaignMatrixDto
+			const triggerDetails = req.body as CampaignMatrixDto;
 			const userId = req.user.id as number;
 			const campaignResponce = await this.campaignService.addTrigger(triggerDetails, userId);
-			AppResponseHelper.sendSuccess(res, 'Success', campaignResponce);	
+			AppResponseHelper.sendSuccess(res, 'Success', campaignResponce);
 		} catch (ex) {
 			next(ex);
 		}

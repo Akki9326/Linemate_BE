@@ -1,5 +1,5 @@
 import DB from '@/databases';
-import { BelongsTo, Op, Sequelize, WhereOptions } from 'sequelize';
+import { Op, WhereOptions } from 'sequelize';
 import { CampaignMasterDto } from '@/models/dtos/campaign.dto';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { AppMessages, CampaignMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
@@ -10,7 +10,6 @@ import { CampaignMatrixDto } from '@/models/dtos/campaignMatrix.dto';
 export class CampaignService {
 	private campaignMaster = DB.CampaignMaster;
 	private campaignMatrix = DB.CampaignMatrix;
-	private user = DB.Users;
 	private tenant = DB.Tenant;
 	constuructor() {}
 
@@ -41,9 +40,59 @@ export class CampaignService {
 		campaign.isArchived = campaignDetails.isArchived;
 		campaign.rules = campaignDetails.rules;
 		campaign.tenantId = campaignDetails.tenantId;
+		campaign.createdBy = userId;
+
+		if (campaignDetails?.reoccurenceType === 'custom') {
+			campaign.reoccurenceType = campaignDetails.reoccurenceType;
+			campaign.reoccurenceDetails = campaignDetails.reoccurenceDetails;
+		}
+
+		if (campaignDetails?.reoccurenceType === 'once') {
+			campaign.reoccurenceType = campaignDetails.reoccurenceType;
+			campaign.reoccurenceDetails = campaignDetails.reoccurenceDetails;
+		}
+
 		campaign = await campaign.save();
 
 		return { id: campaign.id };
+	}
+
+	public async update(campaignDetails: CampaignMasterDto, campaignId: number, userId: number) {
+		const campaign = await this.campaignMaster.findOne({
+			where: { isDeleted: false, id: campaignId, status: { [Op.ne]: 'in-progress' } },
+		});
+		if (!campaign) {
+			throw new BadRequestException(CampaignMessage.campaignInProgress);
+		}
+		if (campaignDetails?.rules?.length) {
+			campaignDetails['userIds'] = (await applyingCampaign(campaignDetails?.rules)) || [];
+		}
+
+		campaign.name = campaignDetails.name;
+		campaign.description = campaignDetails.description;
+		campaign.tenantId = campaignDetails.tenantId;
+		campaign.rules = campaignDetails.rules;
+		campaign.updatedBy = userId;
+		campaign.channel = campaignDetails.channel;
+		campaign.whatsappTemplateId = campaignDetails.whatsappTemplateId;
+		campaign.viberTemplateId = campaignDetails.viberTemplateId;
+		campaign.smsTemplateId = campaignDetails.smsTemplateId;
+		campaign.tags = campaignDetails.tags;
+		campaign.status = campaignDetails.status;
+		campaign.isArchived = campaignDetails.isArchived;
+
+		if (campaignDetails?.reoccurenceType === 'custom') {
+			campaign.reoccurenceType = campaignDetails.reoccurenceType;
+			campaign.reoccurenceDetails = campaignDetails.reoccurenceDetails;
+		}
+
+		if (campaignDetails?.reoccurenceType === 'once') {
+			campaign.reoccurenceType = campaignDetails.reoccurenceType;
+			campaign.reoccurenceDetails = campaignDetails.reoccurenceDetails;
+		}
+		const updatedCcampaign = await campaign.update(campaignDetails);
+
+		return { id: updatedCcampaign.id };
 	}
 
 	public async one(campaignId: number) {
@@ -52,7 +101,19 @@ export class CampaignService {
 				id: campaignId,
 				isDeleted: false,
 			},
-			attributes: ['id', 'name', 'description', 'rules', 'tenantId', 'createdAt'],
+			attributes: [
+				'id',
+				'name',
+				'description',
+				'rules',
+				'tenantId',
+				'createdAt',
+				'tags',
+				'status',
+				'channel',
+				'reoccurenceType',
+				'reoccurenceDetails',
+			],
 		});
 
 		if (!campaign) {
@@ -66,11 +127,12 @@ export class CampaignService {
 			where: {
 				isDeleted: false,
 				id: campaignId,
+				status: { [Op.ne]: 'in-progress' },
 			},
 		});
 
 		if (!campaignMaster) {
-			throw new BadRequestException(CampaignMessage.campaignNotFound);
+			throw new BadRequestException(CampaignMessage.campaignInProgress);
 		}
 
 		await this.campaignMaster.update(
@@ -137,23 +199,87 @@ export class CampaignService {
 
 	public async addTrigger(triggerDetails: CampaignMatrixDto, userId: number) {
 		const campaign = new this.campaignMatrix();
+
 		if (!triggerDetails.campaignId) {
 			throw new BadRequestException(CampaignMessage.campaignNotFound);
 		}
 
 		campaign.campaignId = triggerDetails.campaignId;
 		campaign.triggerType = triggerDetails.triggerType;
-		campaign.intervalUnit = triggerDetails.intervalUnit;
-		campaign.startDate = triggerDetails.startDate;
-		campaign.endDate = triggerDetails.endDate;
-		campaign.neverEnds = triggerDetails.neverEnds;
-		campaign.endsAfterOccurences = triggerDetails.endsAfterOccurences;
+		campaign.triggered = triggerDetails.triggered;
+		campaign.delivered = triggerDetails.delivered;
+		campaign.read = triggerDetails.read;
+		campaign.clicked = triggerDetails.clicked;
+		campaign.failed = triggerDetails.failed;
 		campaign.createdBy = userId;
-		campaign.updatedBy = userId;
+
 		await campaign.save();
-				
+
 		return {
 			id: campaign.id,
 		};
+	}
+
+	public async removeTrigger(campaignId: number, userId: number) {
+		const campaignMaster = await this.campaignMatrix.findOne({
+			where: {
+				isDeleted: false,
+				id: campaignId,
+			},
+		});
+
+		if (!campaignMaster) {
+			throw new BadRequestException(CampaignMessage.campaignNotFound);
+		}
+
+		await this.campaignMatrix.update(
+			{
+				isDeleted: true,
+				updatedBy: userId,
+			},
+			{
+				where: {
+					id: campaignId,
+				},
+			},
+		);
+
+		await campaignMaster.save();
+		return campaignMaster.id;
+	}
+
+	public async updateTrigger(campaignId: number, triggerDetails: CampaignMatrixDto, userId: number) {
+		const campaign = await this.campaignMatrix.findOne({
+			where: {
+				isDeleted: false,
+				id: campaignId,
+			},
+		});
+
+		if (!campaign) {
+			throw new BadRequestException(CampaignMessage.campaignNotFound);
+		}
+
+		campaign.triggerType = triggerDetails.triggerType;
+		campaign.triggered = triggerDetails.triggered;
+		campaign.delivered = triggerDetails.delivered;
+		campaign.read = triggerDetails.read;
+		campaign.clicked = triggerDetails.clicked;
+		campaign.failed = triggerDetails.failed;
+		campaign.updatedBy = userId;
+
+		await campaign.save();
+		return {
+			id: campaign.id,
+		};
+	}
+
+	public getTriggers(campaignId: number) {
+		return this.campaignMatrix.findAll({
+			where: {
+				isDeleted: false,
+				campaignId,
+			},
+		});
 	}
 }

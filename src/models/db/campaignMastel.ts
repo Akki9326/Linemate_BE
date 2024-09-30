@@ -15,9 +15,11 @@ export class CampaignMasterModel extends AppDBModel {
 	public status: CampaignStatusType;
 	public isArchived: boolean;
 	public tenantId: number;
+	public reoccurenceType: string;
+	public reoccurenceDetails: object;
 }
 
-export default function (sequelize: Sequelize) {
+export default function (sequelize: Sequelize): typeof CampaignMasterModel {
 	CampaignMasterModel.init(
 		{
 			...AppDB_Common_Fields,
@@ -53,12 +55,12 @@ export default function (sequelize: Sequelize) {
 			},
 			tags: {
 				type: DataTypes.ARRAY(DataTypes.TEXT),
-				allowNull:true,
-				defaultValue:[]
-			},	
+				allowNull: true,
+				defaultValue: [],
+			},
 			status: {
 				type: DataTypes.STRING,
-				allowNull: false,				
+				allowNull: false,
 			},
 			isArchived: {
 				type: DataTypes.BOOLEAN,
@@ -67,6 +69,14 @@ export default function (sequelize: Sequelize) {
 			tenantId: {
 				type: DataTypes.INTEGER,
 				allowNull: false,
+			},
+			reoccurenceType: {
+				type: DataTypes.STRING,
+				allowNull: false,
+			},
+			reoccurenceDetails: {
+				type: DataTypes.JSONB,
+				allowNull: true,
 			},
 		},
 		{

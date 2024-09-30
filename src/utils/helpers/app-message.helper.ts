@@ -70,5 +70,6 @@ export const FilterMessage = {
 };
 
 export const CampaignMessage = {
-	campaignNotFound:"campaign not found",
-}
+	campaignNotFound: 'campaign not found',
+	campaignInProgress: 'campaign not found or in progress',
+};

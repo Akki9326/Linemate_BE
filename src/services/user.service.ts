@@ -462,6 +462,7 @@ class UserService {
 
 		return matchingUserIds;
 	}
+
 	private async mappingDynamicFilter(condition: object, dynamicFilter: FilterResponse[]) {
 		const cohortUserIds = [];
 		const variableList = dynamicFilter
@@ -470,6 +471,7 @@ class UserService {
 				value: filter.selectedValue,
 				variableId: filter.variableId,
 			}));
+
 		for (const filter of dynamicFilter) {
 			if (filter.filterKey === 'joiningDate') {
 				const parsedStartDate = parseISO(String(filter.minValue));
@@ -497,7 +499,7 @@ class UserService {
 			isActive: true,
 		};
 		const isPaginationEnabled = pageModel.page && pageModel.limit;
-		if (pageModel?.search) {
+		if (pageModel?.search && pageModel.search.trim() !== '') {
 			condition[Op.or] = [
 				{ firstName: { [Op.iLike]: `%${pageModel.search}%` } },
 				{ lastName: { [Op.iLike]: `%${pageModel.search}%` } },
@@ -521,8 +523,9 @@ class UserService {
 			where: condition,
 			attributes: ['id', 'firstName', 'lastName', 'email', 'userType', 'mobileNumber', 'createdAt', 'tenantIds', 'employeeId', 'profilePhoto'],
 			order: [[orderByField, sortDirection]],
-			...(isPaginationEnabled && { limit: pageModel.limit, offset: (pageModel.page - 1) * pageModel.limit }), // Apply pagination if enabled
+			...(isPaginationEnabled && { offset: (pageModel.page - 1) * pageModel.limit, limit: pageModel.limit }), // Apply pagination if enabled
 		});
+
 		if (userList.count) {
 			const userRows = await Promise.all(
 				userList.rows.map(async user => {

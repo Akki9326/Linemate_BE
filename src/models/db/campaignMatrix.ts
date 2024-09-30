@@ -18,7 +18,7 @@ export class CampaignMatrixModel extends AppDBModel {
 	public failed: number;
 }
 
-export default function (sequelize: Sequelize) {
+export default function (sequelize: Sequelize): typeof CampaignMatrixModel {
 	CampaignMatrixModel.init(
 		{
 			...AppDB_Common_Fields,
@@ -34,24 +34,10 @@ export default function (sequelize: Sequelize) {
 			campaignId: {
 				type: DataTypes.INTEGER,
 				allowNull: false,
-			},
-			intervalUnit: {
-				type: DataTypes.INTEGER,
-			},
-			startDate: {
-				type: DataTypes.DATE,
-				allowNull: false,
-			},
-			endDate: {
-				type: DataTypes.DATE,
-				allowNull: false,
-			},
-			neverEnds: {
-				type: DataTypes.BOOLEAN,
-				defaultValue: false,
-			},
-			endsAfterOccurence: {
-				type: DataTypes.INTEGER,
+				references: {
+					model: 'campaignMaster',
+					key: 'id',
+				},
 			},
 			triggered: {
 				type: DataTypes.INTEGER,

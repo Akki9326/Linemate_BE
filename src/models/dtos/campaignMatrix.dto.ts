@@ -1,16 +1,16 @@
-import { IsArray, IsBoolean, IsDate, IsEnum, IsIn, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsDate, IsEnum, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
 import { IntervalUnitType, TriggerType } from '../enums/campaign.enums';
 
 export class CampaignMatrixDto {
 	@IsNumber()
-    public campaignId: number;
+	public campaignId: number;
 
-    @IsEnum(TriggerType)
-    public triggerType: TriggerType;
+	@IsEnum(TriggerType)
+	public triggerType: TriggerType;
 
-    @IsEnum(IntervalUnitType)
-    @IsNotEmpty()
-    public intervalUnit: IntervalUnitType;
+	@IsEnum(IntervalUnitType)
+	@IsNotEmpty()
+	public intervalUnit: IntervalUnitType;
 
 	@IsDate()
 	@IsOptional()

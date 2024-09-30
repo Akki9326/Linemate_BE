@@ -159,6 +159,14 @@ components:
         - DESC
       description: Sort order (ascending or descending).
 
+    CampaignStatusType:
+      type: string
+      enum:
+        - completed
+        - in-progress
+        - failed
+      escription: Status of the Campaign( completed, in-progress, failed).
+
     HttpStatusCode:
       type: integer
       enum:
@@ -2349,10 +2357,244 @@ components:
         message:
           type: string
           example: "Tenant list fetched successfully"
+    
+    AddCampaignResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+        code:
+          type: integer
+          description: HTTP status code
+          example: 200
+        message:
+          type: string
+          example: "Success"
 
+    GetCampaignResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+              example: 1
+            name:
+              type: string
+              example: LineMate
+            description:
+              type: string
+              example: LineMate Description
+            rules:
+              type: array
+              items:
+                type: object
+                properties:
+                  or:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        or:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              title:
+                                type: string
+                                example: "cohort"
+                              value:
+                                type: integer
+                                example: 6
+                              operators:
+                                type: string
+                                example: "EQUAL"              
+            tenantId:
+              type: integer
+              example: 1
+            createdAt:
+              type: string
+              example: "2024-09-03T07:46:25.973Z"
+            tags:
+              type: array
+              example: ["test", "test1"]
+            status:
+              type: string
+              example: "completed"
+            channel:
+              type: array
+              example: ["whatsapp","viber","sms"]
+            reoccurenceType:
+              type: string
+              example: "custom"
+            reoccurenceDetails:
+              type: object
+              properties:
+                repeatEvery:
+                  type: integer
+                  example: 1
+                intervalTimeUnit:
+                  type: string
+                  example: "day"  
+                afterOccurences:
+                  type: integer
+                  example: 5
+                startDate:
+                  type: string
+                  example: "2024-09-03T07:46:25.973Z"
+                endDate:
+                  type: string
+                  example: "2024-09-03T07:46:25.973Z"
+                time:  #Time field will only be shoqn if the reoccurenceType is "once"
+                  type: string
+                  example: "14:25"              
+        code:
+          type: integer
+          description: HTTP status code
+          example: 200
+        message:
+          type: string
+          example: "Success"
 
-
-
+    ListCampaignResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            count:
+              type: integer
+              description: Total number of campaigns
+              example: 1
+            rows:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: Campaign ID
+                    example: 1
+                  name:
+                    type: string
+                    description: Name of the campaign
+                    example: "Campaign"
+                  description:
+                    type: string
+                    description: Optional description of the campaign
+                    example: "optional"
+                  channel:
+                    type: array
+                    items:
+                      type: string
+                    description: Communication channels used in the campaign
+                    example: ["sms"]
+                  whatsappTemplateId:
+                    type: integer
+                    description: WhatsApp template ID
+                    example: 1
+                  smsTemplateId:
+                    type: integer
+                    description: SMS template ID
+                    example: 1
+                  viberTemplateId:
+                    type: integer
+                    description: Viber template ID
+                    example: 2
+                  rules:
+                    type: array
+                    description: Campaign rules with nested conditions
+                    items:
+                      type: object
+                      properties:
+                        and:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              or:
+                                type: array
+                                items:
+                                  type: object
+                                  properties:
+                                    title:
+                                      type: string
+                                      description: Rule title
+                                      example: "cohort"
+                                    value:
+                                      type: string
+                                      description: Rule value
+                                      example: 1
+                                    operators:
+                                      type: string
+                                      description: Operator applied in the rule
+                                      example: "EQUAL"
+                  tags:
+                    type: array
+                    description: Tags associated with the campaign
+                    items:
+                      type: string
+                    example: ["tag2"]
+                  status:
+                    type: string
+                    description: Status of the campaign
+                    example: "completed"
+                  isArchived:
+                    type: boolean
+                    description: If the campaign is archived
+                    example: true
+                  tenantId:
+                    type: integer
+                    description: Tenant ID
+                    example: 1
+                  reoccurenceType:
+                    type: string
+                    description: Reoccurrence type (optional)
+                    example: null
+                  reoccurenceDetails:
+                    type: string
+                    description: Details of the reoccurrence (optional)
+                    example: null
+                  createdAt:
+                    type: string
+                    format: date-time
+                    description: Campaign creation timestamp
+                    example: "2024-09-23T11:39:53.456Z"
+                  updatedAt:
+                    type: string
+                    format: date-time
+                    description: Campaign last update timestamp
+                    example: "2024-09-23T11:39:53.456Z"
+                  createdBy:
+                    type: string
+                    description: ID of the user who created the campaign
+                    example: "0"
+                  updatedBy:
+                    type: string
+                    description: ID of the user who last updated the campaign
+                    example: null
+                  isActive:
+                    type: boolean
+                    description: If the campaign is active
+                    example: true
+                  isDeleted:
+                    type: boolean
+                    description: If the campaign is deleted
+                    example: false
 
 paths:
   /permission/v1/add:
@@ -3642,6 +3884,218 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
+
+          
+  /campaign/v1/add:
+    post:
+      summary: Add Campaign
+      tags:
+        - Campaign
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "test"
+                description:
+                  type: string
+                  example: "test"
+                channel:
+                  type: array
+                  example: ["whatsapp"]
+                whatsappTemplateId:
+                  type: integer
+                  example: "1"
+                viberTemplateId:
+                  type: integer
+                  example: "2"
+                smsTemplateId:
+                  type: integer
+                  example: "3"
+                rules:
+                  type: array
+                  example: []
+                tags:
+                  type: array
+                  example: ["week1","packaging"]
+                status:
+                  type: string
+                  example: "completed"
+                tenantId:
+                  type: integer
+                  example: 1
+                isArchived:
+                  type: boolean
+                  example: false
+                reoccurenceType:
+                  type: string
+                  example: "custom"
+                reoccurenceDetails:
+                  type: object
+                  properties:
+                    repeatEvery:
+                      type: integer
+                      example: 1
+                    intervalTimeUnit:
+                      type: string
+                      example: "day"
+                    afterOccurences:
+                      type: integer
+                      example: 5
+                    startDate:
+                      type: string
+                      format: date
+                      example: "2024-09-26"
+                    endDate:
+                      type: string
+                      format: date
+                      example: "2024-09-27"
+                    time:
+                      type: string
+                      format: time
+                      example: "14:25"                                                    
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddCohortResponse'            
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error      
+
+  /campaign/v1/{id}:
+    get:
+      summary: Get Campaign By Id
+      tags:
+        - Campaign
+      security:
+        - BearerAuth: []      
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetCampaignResponse'            
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+    delete:
+      summary: Delete Campaign By Id
+      tags:
+        - Campaign
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Success
+              success:  
+                type: boolean
+                example: true
+              code:
+                type: string
+                example: "200"
+              data: 
+                type: integer
+                example: 10
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+        
+  /campaign/v1/list:
+    post:
+      summary: List Campaign with filters
+      tags:
+        - Campaign
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tenantId
+          in: header
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page: 
+                  type: integer
+                  example: 1
+                limit:
+                  type: integer
+                  example: 10
+                sortField:
+                  type: string
+                  example: id
+                sortOrder:
+                  type: string
+                  example: ASC
+                filters:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      example: "LineMate"
+                    status:
+                      type: string
+                      example: "completed"
+                    isArchived: 
+                      type: boolean
+                      example: false
+                    channel: 
+                      type: array
+                      items:
+                        type: string
+                      example: ["whatsapp"]
+                    tags:
+                      type: array
+                      items:
+                        type: string
+                      example: ["week1", "packaging"]
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListCampaignResponse'
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
+
 tags:
   - name: Permission
     description: Endpoints for creating and managing permissions.
@@ -3667,3 +4121,5 @@ tags:
     description: Endpoints for creating cohort and managing users.
   - name: Viber
     description: Endpoints for receiving content from viber.
+  - name: Campaign
+    description: Endpoints for creating and managing Campaigns
