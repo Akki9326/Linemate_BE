@@ -69,6 +69,11 @@ export const CohortMessage = {
 export const FilterMessage = {
 	filterForNotFound: 'filterFor is required in query params',
 };
+
+export const CampaignMessage = {
+	campaignNotFound: 'campaign not found',
+	campaignInProgress: 'campaign not found or in progress',
+};
 export const TemplateMessage = {
 	templateNotFound: 'template not found',
 	templateAlreadyExists: 'template already exists',
