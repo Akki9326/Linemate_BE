@@ -11,6 +11,7 @@ export class TenantDto {
 
 	@IsString()
 	@IsNotEmpty()
+	@IsOptional()
 	public trademark: string;
 
 	@IsBoolean()
@@ -24,6 +25,7 @@ export class TenantDto {
 
 	@IsString()
 	@IsNotEmpty()
+	@IsOptional()
 	public phoneNumber: number;
 
 	@IsString()
@@ -32,6 +34,7 @@ export class TenantDto {
 
 	@IsString()
 	@IsNotEmpty()
+	@IsOptional()
 	public currencyCode: string;
 
 	@IsString()

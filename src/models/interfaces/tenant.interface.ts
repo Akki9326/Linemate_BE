@@ -5,7 +5,7 @@ export interface createdBy {
 export interface Tenant {
 	id: number;
 	name: string;
-	trademark: string;
+	trademark?: string;
 	createdBy: createdBy;
-	phoneNumber: string;
+	phoneNumber?: string;
 }
