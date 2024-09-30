@@ -20,6 +20,8 @@ import UserPasswordModel from '@/models/db/userPassword.model';
 import UserTokenModel from '@/models/db/userToken.model';
 import UserVariableMasterModel from '@/models/db/userVariableMaster';
 import UserVariableMatrixModel from '@/models/db/userVariableMatrix';
+import CampaignMaster from '@/models/db/campaignMastel';
+import CampaignMatrix from '@/models/db/campaignMatrix';
 import UserModel from '@/models/db/users.model';
 import { DB_DATABASE, DB_HOST, DB_PASSWORD, DB_PORT, DB_USER } from '@config';
 import Sequelize from 'sequelize';
@@ -68,6 +70,8 @@ const DB = {
 	TemplateContentButtons: TemplateContentButtonsModel(sequelizeConnect),
 	TemplateContentButtonsSection: TemplateContentButtonsSectionModel(sequelizeConnect),
 	TemplateContentCards: TemplateContentCardsModel(sequelizeConnect),
+	CampaignMaster: CampaignMaster(sequelizeConnect),
+	CampaignMatrix: CampaignMatrix(sequelizeConnect),
 	sequelizeConnect, // connection instance (RAW queries)
 	Sequelize, // library
 };

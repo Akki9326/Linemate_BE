@@ -233,7 +233,7 @@ class UserService {
 	}
 	public async add(userData: UserDto, createdUser: JwtTokenData) {
 		let user = await this.users.findOne({
-			where: {	
+			where: {
 				[Op.and]: [
 					{ isDeleted: false },
 					{

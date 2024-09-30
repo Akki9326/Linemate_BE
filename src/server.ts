@@ -27,7 +27,6 @@ import ViberRoute from './routes/viber.route';
 
 validateEnv();
 
-
 const app = new App([
 	new IndexRoute(),
 	new AuthRoute(),
