@@ -27,3 +27,8 @@ export enum ReoccurenceType {
 	custom = 'custom',
 	once = 'once',
 }
+export enum Channel {
+	whatsapp = 'whatsapp',
+	sms = 'sms',
+	viber = 'viber',
+}

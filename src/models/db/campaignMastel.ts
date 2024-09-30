@@ -1,12 +1,12 @@
 import { DataTypes, Sequelize } from 'sequelize';
 import { AppDB_Common_Fields, AppDBModel } from './app-db.model';
-import { CampaignStatusType } from '../enums/campaign.enums';
+import { CampaignStatusType, Channel } from '../enums/campaign.enums';
 
 export class CampaignMasterModel extends AppDBModel {
 	public id: number;
 	public name: string;
 	public description: string;
-	public channel: string[];
+	public channel: Channel[];
 	public whatsappTemplateId: number;
 	public smsTemplateId: number;
 	public viberTemplateId: number;

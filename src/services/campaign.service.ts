@@ -6,6 +6,7 @@ import { AppMessages, CampaignMessage, TenantMessage } from '@/utils/helpers/app
 import { applyingCampaign } from '@/utils/helpers/cohort.helper';
 import { CampaignListDto } from '@/models/dtos/campaign-list.dto';
 import { CampaignMatrixDto } from '@/models/dtos/campaignMatrix.dto';
+import { ReoccurenceType, CampaignStatusType } from '@/models/enums/campaign.enums';
 
 export class CampaignService {
 	private campaignMaster = DB.CampaignMaster;
@@ -42,12 +43,12 @@ export class CampaignService {
 		campaign.tenantId = campaignDetails.tenantId;
 		campaign.createdBy = userId;
 
-		if (campaignDetails?.reoccurenceType === 'custom') {
+		if (campaignDetails?.reoccurenceType === ReoccurenceType.custom) {
 			campaign.reoccurenceType = campaignDetails.reoccurenceType;
 			campaign.reoccurenceDetails = campaignDetails.reoccurenceDetails;
 		}
 
-		if (campaignDetails?.reoccurenceType === 'once') {
+		if (campaignDetails?.reoccurenceType === ReoccurenceType.once) {
 			campaign.reoccurenceType = campaignDetails.reoccurenceType;
 			campaign.reoccurenceDetails = campaignDetails.reoccurenceDetails;
 		}
@@ -59,7 +60,7 @@ export class CampaignService {
 
 	public async update(campaignDetails: CampaignMasterDto, campaignId: number, userId: number) {
 		const campaign = await this.campaignMaster.findOne({
-			where: { isDeleted: false, id: campaignId, status: { [Op.ne]: 'in-progress' } },
+			where: { isDeleted: false, id: campaignId, status: { [Op.ne]: CampaignStatusType.inProgress } },
 		});
 		if (!campaign) {
 			throw new BadRequestException(CampaignMessage.campaignInProgress);
@@ -81,14 +82,14 @@ export class CampaignService {
 		campaign.status = campaignDetails.status;
 		campaign.isArchived = campaignDetails.isArchived;
 
-		if (campaignDetails?.reoccurenceType === 'custom') {
+		if (campaignDetails?.reoccurenceType === ReoccurenceType.custom) {
 			campaign.reoccurenceType = campaignDetails.reoccurenceType;
-			campaign.reoccurenceDetails = campaignDetails.reoccurenceDetails;
+			campaign.reoccurenceDetails = campaignDetails?.reoccurenceDetails;
 		}
 
-		if (campaignDetails?.reoccurenceType === 'once') {
+		if (campaignDetails?.reoccurenceType === ReoccurenceType.once) {
 			campaign.reoccurenceType = campaignDetails.reoccurenceType;
-			campaign.reoccurenceDetails = campaignDetails.reoccurenceDetails;
+			campaign.reoccurenceDetails = campaignDetails?.reoccurenceDetails;
 		}
 		const updatedCcampaign = await campaign.update(campaignDetails);
 
@@ -127,7 +128,7 @@ export class CampaignService {
 			where: {
 				isDeleted: false,
 				id: campaignId,
-				status: { [Op.ne]: 'in-progress' },
+				status: { [Op.ne]: CampaignStatusType.inProgress },
 			},
 		});
 

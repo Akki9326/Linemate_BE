@@ -4029,6 +4029,96 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error
+    put:
+      summary: Update Campaign
+      tags:
+        - Campaign
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                properties:
+                name:
+                  type: string
+                  example: "test"
+                description:
+                  type: string
+                  example: "test"
+                channel:
+                  type: array
+                  example: ["whatsapp"]
+                whatsappTemplateId:
+                  type: integer
+                  example: "1"
+                viberTemplateId:
+                  type: integer
+                  example: "2"
+                smsTemplateId:
+                  type: integer
+                  example: "3"
+                rules:
+                  type: array
+                  example: []
+                tags:
+                  type: array
+                  example: ["week1","packaging"]
+                status:
+                  type: string
+                  example: "completed"
+                tenantId:
+                  type: integer
+                  example: 1
+                isArchived:
+                  type: boolean
+                  example: false
+                reoccurenceType:
+                  type: string
+                  example: "custom"
+                reoccurenceDetails:
+                  type: object
+                  properties:
+                    repeatEvery:
+                      type: integer
+                      example: 1
+                    intervalTimeUnit:
+                      type: string
+                      example: "day"
+                    afterOccurences:
+                      type: integer
+                      example: 5
+                    startDate:
+                      type: string
+                      format: date
+                      example: "2024-09-26"
+                    endDate:
+                      type: string
+                      format: date
+                      example: "2024-09-27"
+                    time:
+                      type: string
+                      format: time
+                      example: "14:25"
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddCohortResponse'            
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error        
         
   /campaign/v1/list:
     post:
@@ -4084,6 +4174,9 @@ paths:
                       items:
                         type: string
                       example: ["week1", "packaging"]
+                    tenantId:
+                      type: integer
+                      example: 1
       responses:
         200:
           description: Success
