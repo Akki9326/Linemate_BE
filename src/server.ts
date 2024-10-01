@@ -25,6 +25,7 @@ import FiltersRoute from './routes/filters.route';
 import CohortRoute from './routes/cohort.route';
 import ViberRoute from './routes/viber.route';
 import CampaignRoute from './routes/campaign.route';
+import TemplateRoute from './routes/template.route';
 
 validateEnv();
 
@@ -43,6 +44,7 @@ const app = new App([
 	new CohortRoute(),
 	new ViberRoute(),
 	new CampaignRoute(),
+	new TemplateRoute(),
 ]);
 
 app.init();
