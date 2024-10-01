@@ -4577,6 +4577,60 @@ paths:
       parameters:
         - name: tenantId
           in: header
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                page: 
+                  type: integer
+                  example: 1
+                limit:
+                  type: integer
+                  example: 10
+                sortField:
+                  type: string
+                  example: id
+                sortOrder:
+                  type: string
+                  example: ASC
+                filters:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      example: "LineMate"
+                    status:
+                      type: string
+                      example: "completed"
+                    isArchived: 
+                      type: boolean
+                      example: false
+                    channel: 
+                      type: array
+                      items:
+                        type: string
+                      example: ["whatsapp"]
+                    tags:
+                      type: array
+                      items:
+                        type: string
+                      example: ["week1", "packaging"]
+                    tenantId:
+                      type: integer
+                      example: 1
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListCampaignResponse'
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
   /template/v1/add:
     post:
       summary: "Add a new template"
@@ -4652,61 +4706,6 @@ paths:
           schema:
             type: integer
             example: 1
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                page: 
-                  type: integer
-                  example: 1
-                limit:
-                  type: integer
-                  example: 10
-                sortField:
-                  type: string
-                  example: id
-                sortOrder:
-                  type: string
-                  example: ASC
-                filters:
-                  type: object
-                  properties:
-                    name:
-                      type: string
-                      example: "LineMate"
-                    status:
-                      type: string
-                      example: "completed"
-                    isArchived: 
-                      type: boolean
-                      example: false
-                    channel: 
-                      type: array
-                      items:
-                        type: string
-                      example: ["whatsapp"]
-                    tags:
-                      type: array
-                      items:
-                        type: string
-                      example: ["week1", "packaging"]
-                    tenantId:
-                      type: integer
-                      example: 1
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ListCampaignResponse'
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-
           description: "The ID of the tenant."
       requestBody:
         required: true
