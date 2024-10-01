@@ -33,7 +33,7 @@ CREATE TABLE "campaignMatrix" (
     "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP,
     "createdBy" VARCHAR(20) NOT NULL DEFAULT '', 
-    "updatedBy" VARCHAR(20)
+    "updatedBy" VARCHAR(20),
     CONSTRAINT fk_campaign_id FOREIGN KEY ("campaignId")
         REFERENCES "campaignMaster" (id)
         ON DELETE CASCADE
@@ -41,5 +41,5 @@ CREATE TABLE "campaignMatrix" (
 
 
 ALTER TABLE "campaignMaster"
-ADD COLUMN "reoccurenceType" VARCHAR(50)
+ADD COLUMN "reoccurenceType" VARCHAR(50),
 ADD COLUMN "reoccurentDetails" JSONB
