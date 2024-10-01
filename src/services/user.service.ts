@@ -498,6 +498,10 @@ class UserService {
 			isDeleted: false,
 			isActive: true,
 		};
+		const tenantCondition = {
+			isDeleted: false,
+			isActive: true,
+		};
 		const isPaginationEnabled = pageModel.page && pageModel.limit;
 		if (pageModel?.search && pageModel.search.trim() !== '') {
 			condition[Op.or] = [
@@ -507,6 +511,10 @@ class UserService {
 				{ mobileNumber: { [Op.iLike]: `%${pageModel.search}%` } },
 				{ employeeId: { [Op.iLike]: `%${pageModel.search}%` } },
 			];
+
+			tenantCondition['name'] = {
+				[Op.iLike]: `%${pageModel.search}%`,
+			};
 		}
 		if (pageModel.filter) {
 			condition['isActive'] = pageModel.filter.isActive;
@@ -519,6 +527,21 @@ class UserService {
 				[Op.contains]: [tenantId],
 			};
 		}
+
+		const companyList = await this.tenant.findAndCountAll({
+			where: tenantCondition,
+			attributes: ['id'],
+			order: [[orderByField, sortDirection]],
+			...(isPaginationEnabled && { offset: (pageModel.page - 1) * pageModel.limit, limit: pageModel.limit }), // Apply pagination if enabled
+		});
+
+		if (companyList.count) {
+			// Get the users having tenantId
+			condition['tenantIds'] = {
+				[Op.contains]: companyList.rows.map(company => company.id),
+			};
+		}
+
 		const userList = await this.users.findAndCountAll({
 			where: condition,
 			attributes: ['id', 'firstName', 'lastName', 'email', 'userType', 'mobileNumber', 'createdAt', 'tenantIds', 'employeeId', 'profilePhoto'],
