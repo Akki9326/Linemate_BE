@@ -7,6 +7,7 @@ export enum FilterFor {
 	Employee = 'employee',
 	Tenant = 'tenant',
 	Content = 'content',
+	Cohort = 'cohort',
 }
 export const commonFilterConfig = [
 	{
@@ -41,5 +42,25 @@ export const commonFilterConfig = [
 	{
 		filterFor: FilterFor.Content,
 		filterFields: [],
+	},
+	{
+		filterFor: FilterFor.Cohort,
+		filterFields: [
+			{
+				filterTitle: 'Joining Date',
+				filterKey: 'joiningDate',
+				filterType: FiltersEnum.DateRange,
+			},
+			{
+				filterTitle: 'Custom Fields',
+				filterKey: 'customFields',
+				filterType: FiltersEnum.DropDown,
+			},
+			{
+				filterTitle: 'Cohort',
+				filterKey: 'cohort',
+				filterType: FiltersEnum.DropDown,
+			},
+		],
 	},
 ];

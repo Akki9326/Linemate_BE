@@ -509,7 +509,7 @@ class UserService {
 			];
 		}
 		if (pageModel.filter) {
-			condition['isActive'] = pageModel.filter.isActive;
+			condition['isActive'] = pageModel.filter.isActive || true;
 			if (pageModel.filter.dynamicFilter) {
 				await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter);
 			}

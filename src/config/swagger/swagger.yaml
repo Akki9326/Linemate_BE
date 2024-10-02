@@ -116,6 +116,7 @@ components:
         - employee
         - tenant
         - content
+        - cohort
       description: Entities to which filters can apply.
 
     CohortRuleDataTypes:
@@ -769,17 +770,32 @@ components:
                   options:
                     type: array
                     items:
-                      type: string
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: "Role"
+                        name:
+                          type: string
+                          example: "Role"
                     example:
-                      - "manager"
-                      - "hr"
+                      - id: "Role"
+                        name: "Role"
+                      - id: "Manager"
+                        name: "Manager"
                 required:
                   - filterTitle
                   - filterKey
                   - filterType
-                  - minValue
-                  - maxValue
-              example:
+          example:
+            page: 1
+            limit: 10
+            sortField: "id"
+            sortOrder: "ASC"
+            search: "91"
+            filter:
+              isActive: true
+              dynamicFilter:
                 - filterTitle: "Joining Date"
                   filterKey: "joiningDate"
                   filterType: "DateRange"
@@ -788,11 +804,13 @@ components:
                 - filterTitle: "role"
                   filterKey: "role"
                   filterType: "DropDown"
-                  selectedValue: "hr"
-                  variableId: 6
+                  selectedValue: ""
+                  variableId: 11
                   options:
-                    - "manager"
-                    - "hr"
+                    - id: "Role"
+                      name: "Role"
+                    - id: "Manager"
+                      name: "Manager"
       required:
         - page
         - limit
@@ -1674,6 +1692,107 @@ components:
         search:
           type: string
           example: ''
+        filter:
+          type: object
+          properties:
+            dynamicFilter:
+              type: array
+              items:
+                type: object
+                properties:
+                  filterTitle:
+                    type: string
+                    example: "Joining Date"
+                  filterKey:
+                    type: string
+                    example: "joiningDate"
+                  filterType:
+                    type: string
+                    example: "DateRange"
+                  minValue:
+                    type: string
+                    format: date-time
+                    example: "2024-06-30T18:30:00.000Z"
+                  maxValue:
+                    type: string
+                    format: date-time
+                    example: "2024-10-31T18:29:59.999Z"
+                  selectedValue:
+                    type: string
+                    example: "manager"
+                  variableId:
+                    type: integer
+                    example: 7
+                  options:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: "manager"
+                        name:
+                          type: string
+                          example: "manager"
+                    example:
+                      - id: "manager"
+                        name: "manager"
+                      - id: "hr"
+                        name: "hr"
+                required:
+                  - filterTitle
+                  - filterKey
+                  - filterType
+          example:
+            dynamicFilter:
+              - filterTitle: "Joining Date"
+                filterKey: "joiningDate"
+                filterType: "DateRange"
+                minValue: "2024-06-30T18:30:00.000Z"
+                maxValue: "2024-10-31T18:29:59.999Z"
+              - filterTitle: "role"
+                filterKey: "role"
+                filterType: "DropDown"
+                selectedValue: "manager"
+                variableId: 7
+                options:
+                  - id: "manager"
+                    name: "manager"
+                  - id: "hr"
+                    name: "hr"
+              - filterTitle: "role12"
+                filterKey: "role12"
+                filterType: "DropDown"
+                selectedValue: ""
+                variableId: 8
+                options:
+                  - id: "manager"
+                    name: "manager"
+                  - id: "hr"
+                    name: "hr"
+              - filterTitle: "role"
+                filterKey: "role"
+                filterType: "DropDown"
+                selectedValue: ""
+                variableId: 11
+                options:
+                  - id: "Role"
+                    name: "Role"
+                  - id: "Manager"
+                    name: "Manager"
+              - filterTitle: "Cohort"
+                filterKey: "cohort"
+                filterType: "DropDown"
+                selectedValue: 9
+                options:
+                  - id: 1
+                    name: "test conhort"
+                  - id: 9
+                    name: "test conhort"
+      required:
+        - page
+        - limit
+
 
     ListCohortsResponse:
       type: object

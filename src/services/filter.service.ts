@@ -5,6 +5,7 @@ import { AppMessages, FilterMessage } from '@/utils/helpers/app-message.helper';
 import moment from 'moment';
 import { CohortService } from './cohort.service';
 import VariableServices from './variable.service';
+import { FilterHelper } from '@/utils/helpers/filter.helper';
 
 export class FilterService {
 	private variableServices = new VariableServices();
@@ -21,7 +22,7 @@ export class FilterService {
 				filterType: FiltersEnum.DropDown,
 				selectedValue: '',
 				variableId: variable.id,
-				options: variable.options || [],
+				options: variable.options?.length ? FilterHelper.formatOptions(variable.options) : [],
 			}));
 		} catch (error) {
 			return [];
@@ -64,6 +65,7 @@ export class FilterService {
 				}
 				if (field.filterKey === 'cohort') {
 					const cohorts = await this.getCohorts(tenantId);
+					console.log('cohorts', cohorts);
 					filterResponse.push({
 						filterTitle: field.filterTitle,
 						filterKey: field.filterKey,
