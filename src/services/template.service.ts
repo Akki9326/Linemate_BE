@@ -2,10 +2,11 @@
 import DB from '@/databases';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { TemplateModel } from '@/models/db/template.model';
+import { TemplateContentCardsModel } from '@/models/db/templateContentCard.model';
 import { FileDto, FileMediaType } from '@/models/dtos/file.dto';
 import { TemplateButtonDto, TemplateDto } from '@/models/dtos/template-dto';
 import { TemplateListRequestDto } from '@/models/dtos/template-list.dto';
-import { TemplateStatus, TemplateType } from '@/models/enums/template.enum';
+import { ButtonType, MediaType, TemplateStatus, TemplateType } from '@/models/enums/template.enum';
 import { ExternalTemplatePayload } from '@/models/interfaces/template.interface';
 import { AppMessages, TemplateMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
 import { TemplateGenerator } from '@/utils/helpers/template.helper';
@@ -27,27 +28,78 @@ export class TemplateService {
 	}
 
 	public async add(templateDetails: TemplateDto, userId: number) {
-		const transaction = await this.sequelize.transaction(); // Start a transaction
+		const transaction = await this.sequelize.transaction();
 		try {
-			const template = await this.createTemplate(templateDetails, userId, transaction);
-			const templateContent = await this.createTemplateContent(templateDetails, template.id, userId, transaction);
-			await this.addButtonsToTemplateContent(templateDetails, templateContent.id, userId, transaction);
-			await this.addContentCards(templateDetails, templateContent.id, userId, transaction);
-
+			const template = await this.createOrUpdateTemplate(templateDetails, userId, transaction);
+			const templateContent = await this.createOrUpdateTemplateContent(templateDetails, template.id, userId, transaction);
+			await this.addOrUpdatedButtonsToTemplateContent(templateDetails, templateContent.id, userId, transaction);
+			await this.addOrUpdateContentCards(templateDetails, templateContent.id, userId, transaction);
 			await this.generateTemplate(templateDetails, template);
 
-			await transaction.commit(); // Commit the transaction if all is successful
+			await transaction.commit();
 			return { id: template.id };
 		} catch (error) {
-			await transaction.rollback(); // Rollback if any error occurs
-			throw error; // Re-throw the error to handle it as needed
+			await transaction.rollback();
+			throw error;
 		}
 	}
 
-	private async createTemplate(templateDetails: TemplateDto, userId: number, transaction: Transaction) {
-		const existingTemplate = await this.template.findOne({ where: { name: templateDetails.name }, transaction });
-		if (existingTemplate) {
-			throw new BadRequestException(TemplateMessage.templateAlreadyExists);
+	public async update(templateDetails: TemplateDto, templateId: number, userId: number) {
+		const transaction = await this.sequelize.transaction();
+		try {
+			templateDetails.id = templateId;
+			const template = await this.createOrUpdateTemplate(templateDetails, userId, transaction);
+			const templateContent = await this.createOrUpdateTemplateContent(templateDetails, template.id, userId, transaction);
+			await this.addOrUpdatedButtonsToTemplateContent(templateDetails, templateContent.id, userId, transaction);
+			await this.addOrUpdateContentCards(templateDetails, templateContent.id, userId, transaction);
+			await this.generateTemplate(templateDetails, template);
+
+			await transaction.commit();
+			return { id: template.id };
+		} catch (error) {
+			await transaction.rollback();
+			throw error;
+		}
+	}
+
+	private async createOrUpdateTemplate(templateDetails: TemplateDto, userId: number, transaction: Transaction) {
+		let template: TemplateModel;
+		if (templateDetails.id) {
+			template = await this.template.findOne({ where: { id: templateDetails.id }, transaction });
+			if (!template) {
+				throw new BadRequestException(TemplateMessage.templateNotFound);
+			}
+			const existingTemplate = await this.template.findOne({
+				where: {
+					name: templateDetails.name,
+					id: { [Op.ne]: templateDetails.id },
+				},
+				transaction,
+			});
+			if (!template.providerTemplateId) {
+				let providerTemplate;
+				if (templateDetails?.templateType === TemplateType.ExternalTemplate) {
+					const externalTemplateDetails = await TemplateGenerator.getExternalTemplate(templateDetails.name);
+					providerTemplate = externalTemplateDetails.template_id;
+				} else {
+					const fynoTemplateDetails = await TemplateGenerator.getFynoTemplate(templateDetails.name);
+					providerTemplate = fynoTemplateDetails.template_id;
+				}
+				await template.update({ providerTemplateId: providerTemplate }, { where: { id: templateDetails.id, isDeleted: false } });
+			}
+
+			if (existingTemplate) {
+				throw new BadRequestException(TemplateMessage.templateAlreadyExists);
+			}
+		} else {
+			const existingTemplate = await this.template.findOne({
+				where: { name: templateDetails.name },
+				transaction,
+			});
+			if (existingTemplate) {
+				throw new BadRequestException(TemplateMessage.templateAlreadyExists);
+			}
+			template = new this.template();
 		}
 		if (templateDetails?.body?.length > 1032) {
 			throw new BadRequestException('The body content exceeds the maximum allowed length of 1032 characters.');
@@ -56,7 +108,6 @@ export class TemplateService {
 			throw new BadRequestException('The footer content exceeds the maximum allowed length of 60 characters.');
 		}
 
-		const template = new this.template();
 		Object.assign(template, {
 			name: templateDetails.name,
 			description: templateDetails.description,
@@ -64,7 +115,7 @@ export class TemplateService {
 			HSMUserId: templateDetails.HSMUserId,
 			HSMPassword: templateDetails.HSMPassword,
 			ISDCode: templateDetails.ISDCode,
-			businessContactNumber: templateDetails.businessNumber,
+			businessContactNumber: templateDetails.businessContactNumber,
 			channel: templateDetails.channel,
 			templateType: templateDetails.templateType,
 			language: templateDetails.language,
@@ -76,8 +127,35 @@ export class TemplateService {
 		return template;
 	}
 
-	private async createTemplateContent(templateDetails: TemplateDto, templateId: number, userId: number, transaction: Transaction) {
-		const templateContent = new this.templateContent();
+	private async createOrUpdateTemplateContent(templateDetails: TemplateDto, templateId: number, userId: number, transaction: Transaction) {
+		let templateContent;
+
+		if (templateDetails.id) {
+			templateContent = await this.templateContent.findOne({
+				where: { templateId: templateId, isDeleted: false },
+				transaction,
+			});
+
+			if (!templateContent) {
+				throw new Error('Template content not found');
+			}
+
+			templateContent.updatedBy = userId;
+		} else {
+			templateContent = new this.templateContent();
+			templateContent.createdBy = userId;
+		}
+		if (templateDetails?.headerMediaType && templateDetails?.headerMediaType !== MediaType.Location) {
+			if (!templateDetails.headerMediaUrl) {
+				throw new BadRequestException('headerMediaUrl is required.');
+			}
+			if (!templateDetails.headerMediaSample) {
+				throw new BadRequestException('headerMediaSample is required.');
+			}
+			if (!templateDetails.headerMediaHandle) {
+				throw new BadRequestException('headerMediaHandle is required.');
+			}
+		}
 		Object.assign(templateContent, {
 			headerType: templateDetails.headerType,
 			headerMediaType: templateDetails.headerMediaType,
@@ -89,23 +167,69 @@ export class TemplateService {
 			contentType: templateDetails.contentType,
 			isPreviewUrl: templateDetails.isPreviewUrl,
 			headerMediaUrl: templateDetails.headerMediaUrl,
+			headerMediaHandle: templateDetails.headerMediaHandle,
+			headerMediaSample: templateDetails.headerMediaSample,
 			locationName: templateDetails.locationName,
 			address: templateDetails.address,
 			messageText: templateDetails.messageText,
 			actionType: templateDetails.actionType || null,
 			menuButtonName: templateDetails.menuButtonName || null,
+			caption: templateDetails.caption,
+			latitude: templateDetails.latitude,
+			longitude: templateDetails.longitude,
+			contentUrl: templateDetails.contentUrl,
+			messageType: templateDetails.messageType,
+			contentSubType: templateDetails.contentSubType,
 			templateId: templateId,
-			createdBy: userId,
 		});
 
 		await templateContent.save({ transaction });
 		return templateContent;
 	}
 
-	private async addButtonsToTemplateContent(templateDetails: TemplateDto, templateContentId: number, userId: number, transaction: Transaction) {
+	private async addOrUpdatedButtonsToTemplateContent(
+		templateDetails: TemplateDto,
+		templateContentId: number,
+		userId: number,
+		transaction: Transaction,
+	) {
 		const buttonIds: number[] = [];
-		const processButton = async (buttonDetail: any, sectionId: number) => {
-			const contentButton = new this.templateContentButtons();
+		let flowButtonCount = 0;
+		let firstButtonType: string | null = null;
+
+		// Helper function to process each button and assign it to a section if provided
+		const processButton = async (buttonDetail: any, sectionId: number | null, index: number) => {
+			let contentButton;
+
+			if (buttonDetail.id) {
+				contentButton = await this.templateContentButtons.findOne({ where: { id: buttonDetail.id }, transaction });
+				if (!contentButton) {
+					throw new BadRequestException(`Button not found at index ${index}.`);
+				}
+			} else {
+				contentButton = new this.templateContentButtons();
+			}
+
+			// Validate button type
+			if (firstButtonType === null) {
+				firstButtonType = buttonDetail.buttonType;
+			} else {
+				if (firstButtonType === ButtonType.Flow && buttonDetail.buttonType !== ButtonType.Flow) {
+					throw new BadRequestException(`Only one button with buttonType ${ButtonType.Flow} is allowed.`);
+				}
+				if (firstButtonType !== ButtonType.Flow && buttonDetail.buttonType === ButtonType.Flow) {
+					throw new BadRequestException(`${ButtonType.Flow} button type is not allowed when the first button is not of type ${ButtonType.Flow}.`);
+				}
+			}
+
+			if (buttonDetail.buttonType === ButtonType.Flow) {
+				flowButtonCount++;
+				if (flowButtonCount > 1) {
+					throw new BadRequestException(`Only one button with buttonType ${ButtonType.Flow} is allowed.`);
+				}
+			}
+
+			// Assign button properties and save
 			Object.assign(contentButton, {
 				buttonType: buttonDetail.buttonType || null,
 				title: buttonDetail.title,
@@ -127,44 +251,82 @@ export class TemplateService {
 			buttonIds.push(contentButton.id);
 		};
 
-		if (templateDetails.buttons && templateDetails.buttons?.length > 0 && templateDetails.buttons[0].sectionName) {
+		if (templateDetails.buttons && templateDetails.buttons.length > 0) {
 			for (const section of templateDetails.buttons) {
-				let sectionRecord = await this.templateContentButtonsSection.findOne({ where: { name: section.sectionName }, transaction });
-				if (!sectionRecord) {
+				let sectionRecord: any = null;
+
+				// If sectionId is not provided, create a new section with the given sectionName or a default name
+				if (!section.sectionId) {
 					sectionRecord = new this.templateContentButtonsSection();
-					sectionRecord.name = section.sectionName;
+					sectionRecord.name = section.sectionName || 'New Section';
 					await sectionRecord.save({ transaction });
+					section.sectionId = sectionRecord.id; // Update the sectionId in request with the new section ID
+				} else {
+					// If sectionId is provided, find and update the section
+					sectionRecord = await this.templateContentButtonsSection.findOne({ where: { id: section.sectionId }, transaction });
+					if (sectionRecord) {
+						sectionRecord.name = section.sectionName || sectionRecord.name;
+						await sectionRecord.save({ transaction });
+					} else {
+						// Create a new section if sectionId does not exist
+						sectionRecord = new this.templateContentButtonsSection();
+						sectionRecord.id = section.sectionId;
+						sectionRecord.name = section.sectionName || 'New Section';
+						await sectionRecord.save({ transaction });
+					}
 				}
 
-				for (const buttonDetail of section.buttons) {
-					await processButton(buttonDetail, sectionRecord.id);
+				if (Array.isArray(section?.buttons)) {
+					for (const [index, buttonDetail] of section.buttons.entries()) {
+						await processButton(buttonDetail, sectionRecord.id, index);
+					}
 				}
 			}
 		} else {
-			for (const buttonDetail of templateDetails.buttons || []) {
-				await processButton(buttonDetail, null);
+			// Process buttons without sections
+			for (const [index, buttonDetail] of (templateDetails.buttons || []).entries()) {
+				await processButton(buttonDetail, null, index);
 			}
 		}
 
+		// Update the template content with button IDs
 		const templateContent = await this.templateContent.findOne({ where: { id: templateContentId }, transaction });
 		templateContent.buttonIds = buttonIds;
 		await templateContent.save({ transaction });
 	}
 
-	private async addContentCards(templateDetails: TemplateDto, templateContentId: number, userId: number, transaction: Transaction) {
-		if (templateDetails?.contentCards?.length > 10) {
-			throw new BadRequestException('The number of content cards exceeds the maximum allowed limit of 10.');
+	private async addOrUpdateContentCards(templateDetails: TemplateDto, templateContentId: number, userId: number, transaction: Transaction) {
+		const existingContentCardsCount = await this.templateContentCards.count({
+			where: { templateContentId },
+			transaction,
+		});
+
+		const newContentCardsCount = templateDetails?.templateContentCards?.length || 0;
+		if (existingContentCardsCount + newContentCardsCount > 10) {
+			throw new BadRequestException('The total number of content cards exceeds the maximum allowed limit of 10.');
 		}
-		for (const card of templateDetails?.contentCards || []) {
+
+		for (const card of templateDetails?.templateContentCards || []) {
 			if (card.body?.length > 160) {
 				throw new BadRequestException('The card body content exceeds the maximum allowed length of 160 characters.');
 			}
 
-			const contentCard = new this.templateContentCards();
+			let contentCard: TemplateContentCardsModel;
+
+			if (card.id) {
+				contentCard = await this.templateContentCards.findOne({ where: { id: card.id }, transaction });
+				if (!contentCard) {
+					throw new BadRequestException(`Content card not found with id ${card.id}.`);
+				}
+			} else {
+				contentCard = new this.templateContentCards();
+			}
+
 			Object.assign(contentCard, {
 				mediaType: card.mediaType,
 				contentUrl: card.contentUrl,
 				mediaHandle: card.mediaHandle,
+				mediaSample: card.mediaSample,
 				body: card.body,
 				bodyPlaceHolder: card.bodyPlaceHolder,
 				templateContentId: templateContentId,
@@ -172,11 +334,11 @@ export class TemplateService {
 			});
 			await contentCard.save({ transaction });
 
-			await this.addButtonsToContentCard(card.buttons, contentCard.id, userId, transaction);
+			await this.addOrUpdateButtonsToContentCard(card.buttons, contentCard.id, userId, transaction);
 		}
 	}
 
-	private async addButtonsToContentCard(buttons: TemplateButtonDto[], contentCardId: number, userId: number, transaction: Transaction) {
+	private async addOrUpdateButtonsToContentCard(buttons: TemplateButtonDto[], contentCardId: number, userId: number, transaction: Transaction) {
 		const cardButtonIds: number[] = [];
 
 		for (const buttonDetail of buttons || []) {
@@ -186,7 +348,19 @@ export class TemplateService {
 			if (buttonDetail.websiteUrl?.length > 2000) {
 				throw new BadRequestException('The card button websiteUrl exceeds the maximum allowed length of 2000 characters.');
 			}
-			const cardButton = new this.templateContentButtons();
+
+			let cardButton;
+
+			if (buttonDetail.id) {
+				cardButton = await this.templateContentButtons.findOne({ where: { id: buttonDetail.id }, transaction });
+				if (!cardButton) {
+					throw new BadRequestException(`Button not found with id ${buttonDetail.id}.`);
+				}
+			} else {
+				// Create new button
+				cardButton = new this.templateContentButtons();
+			}
+
 			Object.assign(cardButton, {
 				buttonType: buttonDetail.buttonType || null,
 				title: buttonDetail.title,
@@ -213,11 +387,12 @@ export class TemplateService {
 		let payload = {};
 
 		if (templateDetails.templateType === TemplateType.ExternalTemplate) {
-			payload = TemplateGenerator.externalTemplatePayload(templateDetails);
+			payload = TemplateGenerator.externalTemplatePayload(templateDetails, template?.providerTemplateId);
 			const response = await TemplateGenerator.createExternalTemplate(payload);
 			await this.handleExternalTemplateResponse(response, template, templateDetails, payload as ExternalTemplatePayload);
 		} else {
-			payload = TemplateGenerator.fynoTemplatePayload(templateDetails);
+			console.log('---template?.providerTemplateId', template?.providerTemplateId);
+			payload = TemplateGenerator.fynoTemplatePayload(templateDetails, template?.providerTemplateId);
 			const response = await TemplateGenerator.createFynoTemplate(payload);
 			await this.handleFynoTemplateResponse(response, template);
 		}
@@ -261,23 +436,6 @@ export class TemplateService {
 		}
 	}
 
-	public async update(templateDetails: TemplateDto, templateId: number, userId: number) {
-		let providerTemplateId;
-		// const template = await this.template.findOne({
-		// 	where: { id: templateId, isDeleted: false },
-		// });
-		// if (!templateId) {
-		// 	throw new BadRequestException(TemplateMessage.templateNotFound);
-		// }
-		// if (!template.providerTemplateId) {
-		// 	providerTemplateId = await this.assignProviderTemplateId(template);
-		// } else {
-		// 	providerTemplateId = template.providerTemplateId;
-		// }
-		console.log('providerTemplateId', providerTemplateId);
-		console.log('userId', userId);
-	}
-
 	public async one(templateId: number) {
 		const template = await this.template.findOne({
 			where: { id: templateId, isDeleted: false },
@@ -292,6 +450,7 @@ export class TemplateService {
 				'ISDCode',
 				'businessContactNumber',
 				'language',
+				'channel',
 				'status',
 				'tenantId',
 			],
@@ -305,7 +464,7 @@ export class TemplateService {
 							model: this.templateContentCards,
 							as: 'templateContentCards',
 							where: { isDeleted: false },
-							attributes: ['mediaType', 'contentUrl', 'body', 'bodyPlaceHolder', 'buttonIds'],
+							attributes: ['id', 'mediaType', 'contentUrl', 'body', 'bodyPlaceHolder', 'buttonIds', 'mediaSample', 'mediaHandle'],
 							required: false,
 						},
 					],
@@ -318,7 +477,6 @@ export class TemplateService {
 						'body',
 						'bodyPlaceHolder',
 						'footer',
-						'contentUrl',
 						'caption',
 						'latitude',
 						'longitude',
@@ -329,6 +487,10 @@ export class TemplateService {
 						'contentSubType',
 						'actionType',
 						'menuButtonName',
+						'contentUrl',
+						'headerMediaHandle',
+						'headerMediaSample',
+						'headerMediaUrl',
 					],
 					required: false,
 				},
@@ -346,8 +508,10 @@ export class TemplateService {
 		if (!template) {
 			throw new BadRequestException(TemplateMessage.templateNotFound);
 		}
+
 		const allButtonIds = new Set<number>();
 
+		// Collect button IDs from template content and cards
 		if (template?.dataValues.templateContent && template?.dataValues.templateContent?.length > 0) {
 			for (const content of template?.dataValues.templateContent || []) {
 				if (content.buttonIds && content.buttonIds?.length > 0) {
@@ -383,7 +547,7 @@ export class TemplateService {
 				'isTrackUrl',
 				'buttonId',
 				'additionalData',
-				'sectionId', // Include sectionId
+				'sectionId',
 			],
 		});
 
@@ -402,7 +566,7 @@ export class TemplateService {
 		});
 
 		const sectionMap = sectionDetails.reduce((map: any, section: any) => {
-			map[section.id] = section.name;
+			map[section.id] = section;
 			return map;
 		}, {});
 
@@ -421,7 +585,8 @@ export class TemplateService {
 							const sectionId = button.sectionId || 'no_section';
 							if (!acc[sectionId]) {
 								acc[sectionId] = {
-									sectionName: sectionId === 'no_section' ? null : sectionMap[sectionId],
+									sectionId: sectionId === 'no_section' ? null : sectionId,
+									sectionName: sectionId === 'no_section' ? null : sectionMap[sectionId]?.name,
 									buttons: [],
 								};
 							}
@@ -429,14 +594,9 @@ export class TemplateService {
 							return acc;
 						}, {});
 
+					// Store buttons array directly if no section, otherwise keep section details
 					content.dataValues.buttons = Object.values(groupedButtons)
-						.map((group: any) => {
-							if (group.sectionName) {
-								return group;
-							} else {
-								return group.buttons;
-							}
-						})
+						.map((group: any) => (group.sectionId ? group : group.buttons))
 						.flat();
 				}
 
@@ -450,7 +610,8 @@ export class TemplateService {
 									const sectionId = button.sectionId || 'no_section';
 									if (!acc[sectionId]) {
 										acc[sectionId] = {
-											sectionName: sectionId === 'no_section' ? null : sectionMap[sectionId],
+											sectionId: sectionId === 'no_section' ? null : sectionId,
+											sectionName: sectionId === 'no_section' ? null : sectionMap[sectionId]?.name,
 											buttons: [],
 										};
 									}
@@ -458,20 +619,21 @@ export class TemplateService {
 									return acc;
 								}, {});
 
+							// Store buttons array directly if no section, otherwise keep section details
 							card.dataValues.buttons = Object.values(groupedButtons)
-								.map((group: any) => {
-									if (group.sectionName) {
-										return group;
-									} else {
-										return group.buttons;
-									}
-								})
+								.map((group: any) => (group.sectionId ? group : group.buttons))
 								.flat();
 						}
 					}
 				}
 			}
 		}
+
+		// Flatten templateContent if there are multiple entries
+		if (template?.dataValues.templateContent.length > 0) {
+			template.dataValues.templateContent = template.dataValues.templateContent[0];
+		}
+
 		return template;
 	}
 
@@ -497,8 +659,9 @@ export class TemplateService {
 	}
 
 	public async all(pageModel: TemplateListRequestDto, tenantId: number) {
-		const { page = 1, limit = 10, sortField = 'id', sortOrder = 'ASC' } = pageModel;
-		const offset = (page - 1) * limit;
+		const sortField = pageModel.sortField || 'id',
+			sortOrder = pageModel.sortOrder || 'ASC';
+		const isPaginationEnabled = pageModel.page && pageModel.limit;
 		let condition: WhereOptions = { isDeleted: false };
 
 		if (!tenantId) {
@@ -538,8 +701,6 @@ export class TemplateService {
 		}
 		const templateResult = await this.template.findAndCountAll({
 			where: condition,
-			offset,
-			limit,
 			order: [[sortField, sortOrder]],
 			attributes: ['id', 'name', 'description', 'channel', 'language', 'status'],
 			include: [
@@ -552,6 +713,7 @@ export class TemplateService {
 					attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
 				},
 			],
+			...(isPaginationEnabled && { limit: pageModel.limit, offset: (pageModel.page - 1) * pageModel.limit }), // Apply pagination if enabled
 		});
 
 		return templateResult;

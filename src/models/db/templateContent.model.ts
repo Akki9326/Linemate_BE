@@ -30,7 +30,9 @@ export class TemplateContentModel extends AppDBModel {
 	public contentSubType: string;
 	public additionalData: string;
 	public locationName: string;
+	public headerMediaHandle: string;
 	public headerMediaUrl: string;
+	public headerMediaSample: string;
 	public actionType: string;
 	public menuButtonName: string;
 	public templateId: number;
@@ -100,6 +102,14 @@ export default function (sequelize: Sequelize): typeof TemplateContentModel {
 				type: DataTypes.STRING(200),
 			},
 			headerMediaUrl: {
+				allowNull: true,
+				type: DataTypes.STRING,
+			},
+			headerMediaHandle: {
+				allowNull: true,
+				type: DataTypes.STRING,
+			},
+			headerMediaSample: {
 				allowNull: true,
 				type: DataTypes.STRING,
 			},

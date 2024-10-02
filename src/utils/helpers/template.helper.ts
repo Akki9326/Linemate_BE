@@ -185,7 +185,7 @@ export const TemplateGenerator = {
 			return cardPayload;
 		});
 	},
-	externalTemplatePayload: (templateDetails: TemplateDto): ExternalTemplatePayload => {
+	externalTemplatePayload: (templateDetails: TemplateDto, providerTemplateId: string): ExternalTemplatePayload => {
 		if (!templateDetails) {
 			throw new BadRequestException('Template details are required to generate the payload.');
 		}
@@ -201,9 +201,8 @@ export const TemplateGenerator = {
 			body,
 			footer,
 			buttons,
-			contentCards,
+			templateContentCards,
 			contentType,
-			templateId,
 		} = templateDetails;
 		const content: {
 			header?: ContentSection;
@@ -267,8 +266,8 @@ export const TemplateGenerator = {
 			content.buttons = TemplateGenerator.processButtons(buttons);
 		}
 
-		if (contentCards && contentCards.length > 0 && contentType === ContentType.Carousel) {
-			content.cards = TemplateGenerator.processContentCards(contentCards);
+		if (templateContentCards && templateContentCards.length > 0 && contentType === ContentType.Carousel) {
+			content.cards = TemplateGenerator.processContentCards(templateContentCards);
 		}
 
 		const payload: ExternalTemplatePayload = {
@@ -283,7 +282,7 @@ export const TemplateGenerator = {
 						...content,
 					},
 					send_for_approval: true,
-					template_id: templateId,
+					template_id: providerTemplateId,
 				},
 			],
 		};
@@ -429,7 +428,7 @@ export const TemplateGenerator = {
 
 		return content;
 	},
-	fynoTemplatePayload: (templateDetails: TemplateDto) => {
+	fynoTemplatePayload: (templateDetails: TemplateDto, providerTemplateId: string) => {
 		const { name, messageType, contentSubType, templateType } = templateDetails;
 		if (templateType === TemplateType.Interactive) {
 			if (!contentSubType) {
@@ -471,6 +470,7 @@ export const TemplateGenerator = {
 				},
 			},
 			template: {
+				template_id: providerTemplateId,
 				channels: {
 					whatsapp: content,
 				},

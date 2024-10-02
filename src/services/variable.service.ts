@@ -112,11 +112,10 @@ class VariableServices {
 		return { id: variable.id };
 	}
 	public async all(pageModel: variableListDto, tenantId: number) {
-		const page = pageModel.page || 1,
-			limit = pageModel.limit || 10,
-			orderByField = pageModel.sortField || 'id',
+		const orderByField = pageModel.sortField || 'id',
 			sortDirection = pageModel.sortOrder || 'ASC';
-		const offset = (page - 1) * limit;
+
+		const isPaginationEnabled = pageModel.page && pageModel.limit;
 		if (!tenantId) {
 			throw new BadRequestException(AppMessages.headerTenantId);
 		}
@@ -140,10 +139,9 @@ class VariableServices {
 		}
 		const validateList = await this.variableMaster.findAndCountAll({
 			where: { isDeleted: false, ...condition },
-			offset,
-			limit,
 			attributes: ['id', 'name', 'isMandatory', 'type', 'description', 'category', 'options', 'tenantId'],
 			order: [[orderByField, sortDirection]],
+			...(isPaginationEnabled && { limit: pageModel.limit, offset: (pageModel.page - 1) * pageModel.limit }), // Apply pagination if enabled
 		});
 		return validateList;
 	}
