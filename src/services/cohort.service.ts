@@ -299,7 +299,7 @@ export class CohortService {
 					[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
 				};
 			}
-			if (filter.filterKey === 'cohort') {
+			if (filter.filterKey === 'cohort' && filter?.selectedValue) {
 				condition['id'] = filter?.selectedValue;
 			}
 		}
