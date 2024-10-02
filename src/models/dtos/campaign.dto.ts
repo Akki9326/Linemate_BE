@@ -40,6 +40,10 @@ export class CampaignMasterDto {
 	@IsNumber()
 	public tenantId: number;
 
+	@IsNumber()
+	@IsOptional()
+	public deliveryStatus: number;
+
 	@IsString()
 	public reoccurenceType: string;
 

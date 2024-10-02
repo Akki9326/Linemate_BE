@@ -961,7 +961,59 @@ components:
         - success
         - code
         - message
-    
+
+    ImportUserRequest:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              firstName:
+                type: string
+                example: Nikunj
+              lastName:
+                type: string
+                example: Dhaduk
+              email:
+                type: string
+                example: nikunj.dhaduk1@gmail.com
+              mobileNumber:
+                type: string
+                example: 9912123291
+              userType:
+                type: string
+                example: Company Admin
+              countyCode:
+                type: string
+                example: +91
+              permissionGroup:
+                type: string
+                example: "HR Role, Accounts"
+              employeeId:
+                type: string
+                example: "1"
+              tenantVariables:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    tenantId: 
+                      type: integer
+                      example: 1
+                    variables:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          variableId:
+                            type: integer
+                            example: 2
+                          value:
+                            type: string
+                            example: "5441544654"
+
     ActivateUsersRequest:
       type: object
       properties:
@@ -2563,6 +2615,12 @@ components:
             channel:
               type: array
               example: ["whatsapp","viber","sms"]
+            templateId:
+              type: integer
+              example: 1
+            deliveryStatus:
+              type: integer
+              example: 0 
             reoccurenceType:
               type: string
               example: "custom"
@@ -2697,6 +2755,10 @@ components:
                     type: string
                     description: Details of the reoccurrence (optional)
                     example: null
+                  deliveryStatus:
+                    type: integer
+                    description: Delivery status of the campaign
+                    example: 0
                   createdAt:
                     type: string
                     format: date-time
@@ -3631,6 +3693,33 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ChangePasswordResponse'
+  
+  /user/v1/import-user/{tenantId}:
+    post:
+      summary: Import User
+      tags:
+        - User
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportUserRequest'                
+      responses:
+        '200':
+          description: Success
+        '400':
+          description: Bad Request
+        '500':
+          description: Internal Server Error
 
   /tenant/v1/add:
     post:
@@ -4379,6 +4468,9 @@ paths:
                 isArchived:
                   type: boolean
                   example: false
+                deliveryStatus:
+                  type: integer
+                  example: 0                  
                 reoccurenceType:
                   type: string
                   example: "custom"
@@ -4528,6 +4620,9 @@ paths:
                 isArchived:
                   type: boolean
                   example: false
+                deliveryStatus:
+                  type: integer
+                  example: 0
                 reoccurenceType:
                   type: string
                   example: "custom"

@@ -41,6 +41,7 @@ export class CampaignService {
 		campaign.isArchived = campaignDetails.isArchived;
 		campaign.rules = campaignDetails.rules;
 		campaign.tenantId = campaignDetails.tenantId;
+		campaign.deliveryStatus = campaignDetails.deliveryStatus;
 		campaign.createdBy = userId;
 
 		if (campaignDetails?.reoccurenceType === ReoccurenceType.custom) {
@@ -81,6 +82,7 @@ export class CampaignService {
 		campaign.tags = campaignDetails.tags;
 		campaign.status = campaignDetails.status;
 		campaign.isArchived = campaignDetails.isArchived;
+		campaign.deliveryStatus = campaignDetails.deliveryStatus;
 
 		if (campaignDetails?.reoccurenceType === ReoccurenceType.custom) {
 			campaign.reoccurenceType = campaignDetails.reoccurenceType;
@@ -114,6 +116,7 @@ export class CampaignService {
 				'channel',
 				'reoccurenceType',
 				'reoccurenceDetails',
+				'deliveryStatus',
 			],
 		});
 
