@@ -1,19 +1,22 @@
 import DB from '@/databases';
 import { BadRequestException } from '@/exceptions/BadRequestException';
+import { CohortListDto } from '@/models/dtos/cohort-list.dto';
 import { AssignCohort, CohortDto } from '@/models/dtos/cohort.dto';
 import { CohortRuleDataTypes, RuleOperators, RuleTypes } from '@/models/enums/cohort.enum';
+import { AssignCohortUserId } from '@/models/interfaces/assignCohort';
+import { FilterCondition, FilterResponse } from '@/models/interfaces/filter.interface';
 import { AppMessages, CohortMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
+import { applyingCohort } from '@/utils/helpers/cohort.helper';
+import { parseISO } from 'date-fns';
 import { BelongsTo, Op, Sequelize, WhereOptions } from 'sequelize';
 import VariableServices from './variable.service';
-import { CohortListDto } from '@/models/dtos/cohort-list.dto';
-import { AssignCohortUserId } from '@/models/interfaces/assignCohort';
-import { applyingCohort } from '@/utils/helpers/cohort.helper';
 
 export class CohortService {
 	private cohortMaster = DB.CohortMaster;
 	private cohortMatrix = DB.CohortMatrix;
 	private users = DB.Users;
 	private tenant = DB.Tenant;
+	private variableMatrix = DB.VariableMatrix;
 	private variableServices = new VariableServices();
 
 	constructor() {}
@@ -242,6 +245,68 @@ export class CohortService {
 		return cohortMaster.id;
 	}
 
+	private async getCohortIdsFromVariableMatrix(filterCriteria: { variableId: number; value: string }[], condition: FilterCondition) {
+		const whereConditions = filterCriteria.map(criteria => {
+			const jsonStringValue = JSON.stringify([criteria.value]);
+			return {
+				variableId: criteria.variableId,
+				[Op.or]: [{ value: { [Op.like]: `%${criteria.value}%` } }, { value: { [Op.like]: `%${jsonStringValue}%` } }],
+			};
+		});
+		const matchingRecords = await this.variableMatrix.findAll({
+			where: {
+				[Op.or]: whereConditions,
+			},
+			attributes: ['userId'],
+		});
+
+		const matchingUserIds = Array.from(new Set(matchingRecords.map(record => record.userId)));
+
+		const cohortMatrixRecords = await this.cohortMatrix.findAll({
+			where: {
+				userId: {
+					[Op.in]: matchingUserIds,
+				},
+			},
+			attributes: ['cohortId'],
+			group: ['cohortId'],
+		});
+
+		const cohortIds = cohortMatrixRecords.map(record => record.cohortId);
+		const combinedCohortIds = Array.from(new Set([...cohortIds, condition.id]));
+		if (cohortIds?.length) {
+			condition = {
+				...condition,
+				id: { [Op.in]: combinedCohortIds.filter(id => typeof id === 'number') },
+			};
+		}
+		return condition;
+	}
+
+	private async mappingDynamicFilter(condition: FilterCondition, dynamicFilter: FilterResponse[]) {
+		const variableList = dynamicFilter
+			.filter(filter => 'variableId' in filter && 'selectedValue' in filter)
+			.map(filter => ({
+				value: filter.selectedValue,
+				variableId: filter.variableId,
+			}));
+
+		for (const filter of dynamicFilter) {
+			if (filter.filterKey === 'joiningDate') {
+				const parsedStartDate = parseISO(String(filter.minValue));
+				const parsedEndDate = parseISO(String(filter.maxValue));
+				condition['createdAt'] = {
+					[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
+				};
+			}
+			if (filter.filterKey === 'cohort') {
+				condition['id'] = filter?.selectedValue;
+			}
+		}
+		condition = await this.getCohortIdsFromVariableMatrix(variableList, condition);
+		return condition;
+	}
+
 	public async all(pageModel: CohortListDto, tenantId: number) {
 		const { page = 1, limit = 10, sortField = 'id', sortOrder = 'ASC' } = pageModel;
 		const offset = (page - 1) * limit;
@@ -261,6 +326,12 @@ export class CohortService {
 				name: { [Op.iLike]: `%${pageModel.search}%` },
 			};
 		}
+		if (pageModel.filter) {
+			if (pageModel.filter.dynamicFilter) {
+				await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter);
+			}
+		}
+		console.log('condition', condition);
 		const cohortResult = await this.cohortMaster.findAll({
 			where: condition,
 			offset,

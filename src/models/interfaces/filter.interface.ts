@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import { FiltersEnum } from '../enums/filter.enum';
 
 export interface FilterResponse {
@@ -8,5 +9,13 @@ export interface FilterResponse {
 	minValue?: string | number;
 	selectedValue?: string;
 	variableId?: number;
-	options?: string[] | object[];
+	options?: object[];
+}
+
+export interface FilterCondition {
+	id?:
+		| {
+				[Op.in]?: number[];
+		  }
+		| string;
 }
