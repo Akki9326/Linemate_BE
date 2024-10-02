@@ -28,6 +28,10 @@ import {
 import { Type } from 'class-transformer';
 
 export class TemplateButtonDto {
+	@IsNumber()
+	@IsOptional()
+	public id: number;
+
 	@IsEnum(ButtonType)
 	@IsOptional()
 	public buttonType: ButtonType;
@@ -87,6 +91,10 @@ export class TemplateButtonDto {
 	@IsOptional()
 	public sectionName: string;
 
+	@IsNumber()
+	@IsOptional()
+	public sectionId: number;
+
 	@IsArray()
 	@ValidateNested({ each: true })
 	@Type(() => TemplateButtonDto)
@@ -95,6 +103,10 @@ export class TemplateButtonDto {
 }
 
 export class TemplateContentCardDto {
+	@IsNumber()
+	@IsOptional()
+	public id: number;
+
 	@IsEnum(CardMediaType)
 	@IsOptional()
 	public mediaType: CardMediaType;
@@ -131,6 +143,10 @@ export class TemplateContentCardDto {
 }
 
 export class TemplateDto {
+	@IsNumber()
+	@IsOptional()
+	public id: number;
+
 	@IsString()
 	@IsNotEmpty()
 	@IsLowercase()
@@ -155,7 +171,7 @@ export class TemplateDto {
 	public ISDCode: string;
 
 	@IsString()
-	public businessNumber: string;
+	public businessContactNumber: string;
 
 	@IsEnum(Channel)
 	public channel: Channel;
@@ -278,5 +294,5 @@ export class TemplateDto {
 	@ValidateNested({ each: true })
 	@Type(() => TemplateContentCardDto)
 	@IsOptional()
-	public contentCards: TemplateContentCardDto[];
+	public templateContentCards: TemplateContentCardDto[];
 }

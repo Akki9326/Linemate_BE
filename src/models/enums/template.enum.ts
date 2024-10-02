@@ -57,7 +57,7 @@ export enum ContentType {
 
 export enum ContentSubType {
 	Common = 'common',
-	Request = 'request',
+	Request = 'requestLocation',
 	Address = 'address',
 	Flow = 'flow',
 }

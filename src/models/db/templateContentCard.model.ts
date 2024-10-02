@@ -13,6 +13,8 @@ export class TemplateContentCardsModel extends AppDBModel {
 	public isDeleted: boolean;
 	public mediaType: string;
 	public contentUrl: string;
+	public mediaSample: string;
+	public mediaHandle: string;
 	public body: string;
 	public bodyPlaceHolder: number[];
 	public buttonIds: number[];
@@ -61,6 +63,14 @@ export default function (sequelize: Sequelize): typeof TemplateContentCardsModel
 				values: Object.values(CardMediaType),
 			},
 			contentUrl: {
+				allowNull: true,
+				type: DataTypes.TEXT,
+			},
+			mediaHandle: {
+				allowNull: true,
+				type: DataTypes.TEXT,
+			},
+			mediaSample: {
 				allowNull: true,
 				type: DataTypes.TEXT,
 			},

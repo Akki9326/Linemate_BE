@@ -69,6 +69,7 @@ export interface FynoTemplatePayload {
 	name: string;
 	event: object;
 	template: {
+		template_id: string;
 		channels: {
 			whatsapp: FynoContentPayload;
 		};
