@@ -498,24 +498,8 @@ class UserService {
 			isDeleted: false,
 			isActive: true,
 		};
-		const tenantCondition = {
-			isDeleted: false,
-			isActive: true,
-		};
-		const isPaginationEnabled = pageModel.page && pageModel.limit;
-		if (pageModel?.search && pageModel.search.trim() !== '') {
-			condition[Op.or] = [
-				{ firstName: { [Op.iLike]: `%${pageModel.search}%` } },
-				{ lastName: { [Op.iLike]: `%${pageModel.search}%` } },
-				{ email: { [Op.iLike]: `%${pageModel.search}%` } },
-				{ mobileNumber: { [Op.iLike]: `%${pageModel.search}%` } },
-				{ employeeId: { [Op.iLike]: `%${pageModel.search}%` } },
-			];
 
-			tenantCondition['name'] = {
-				[Op.iLike]: `%${pageModel.search}%`,
-			};
-		}
+		const isPaginationEnabled = pageModel.page && pageModel.limit;
 		if (pageModel.filter) {
 			condition['isActive'] = pageModel.filter.isActive;
 			if (pageModel.filter.dynamicFilter) {
@@ -528,20 +512,7 @@ class UserService {
 			};
 		}
 
-		const companyList = await this.tenant.findAndCountAll({
-			where: tenantCondition,
-			attributes: ['id'],
-			order: [[orderByField, sortDirection]],
-			...(isPaginationEnabled && { offset: (pageModel.page - 1) * pageModel.limit, limit: pageModel.limit }), // Apply pagination if enabled
-		});
-
-		if (companyList.count) {
-			// Get the users having tenantId
-			condition['tenantIds'] = {
-				[Op.contains]: companyList.rows.map(company => company.id),
-			};
-		}
-
+		let searchArray;
 		const userList = await this.users.findAndCountAll({
 			where: condition,
 			attributes: ['id', 'firstName', 'lastName', 'email', 'userType', 'mobileNumber', 'createdAt', 'tenantIds', 'employeeId', 'profilePhoto'],
@@ -561,9 +532,26 @@ class UserService {
 					};
 				}),
 			);
-			userList.rows = userRows;
+			searchArray = userRows;
 		}
-		return userList;
+
+		if (pageModel?.search && pageModel.search.trim() !== '') {
+			const regex = new RegExp(pageModel?.search, 'i');
+			const filteredRows = searchArray.filter(row => {
+				const firstNameMatches = regex.test(row.firstName);
+				const lastNameMatches = regex.test(row.lastName);
+				const emailMatches = regex.test(row.email);
+				const mobileNoMatches = regex.test(row.mobileNumber);
+				const employeeIdMatches = row.employeeId ? regex.test(row.employeeId) : false;
+				const tenantNameMatches = row.tenantDetails.some(tenant => regex.test(tenant.name));
+
+				// Return true if any of the fields match
+				return firstNameMatches || lastNameMatches || emailMatches || mobileNoMatches || employeeIdMatches || tenantNameMatches;
+			});
+
+			return filteredRows;
+		}
+		return searchArray;
 	}
 	public async deActive(userIds: UserActionDto, userId: number) {
 		const usersToDeActive = await this.users.findAll({
