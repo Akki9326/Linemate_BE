@@ -15,12 +15,15 @@ export class CampaignMasterDto {
 	public channel: Channel[];
 
 	@IsNumber()
+	@IsOptional()
 	public whatsappTemplateId: number;
 
 	@IsNumber()
+	@IsOptional()
 	public smsTemplateId: number;
 
 	@IsNumber()
+	@IsOptional()
 	public viberTemplateId: number;
 
 	@IsArray()
