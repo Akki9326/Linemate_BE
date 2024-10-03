@@ -391,7 +391,6 @@ export class TemplateService {
 			const response = await TemplateGenerator.createExternalTemplate(payload);
 			await this.handleExternalTemplateResponse(response, template, templateDetails, payload as ExternalTemplatePayload);
 		} else {
-			console.log('---template?.providerTemplateId', template?.providerTemplateId);
 			payload = TemplateGenerator.fynoTemplatePayload(templateDetails, template?.providerTemplateId);
 			const response = await TemplateGenerator.createFynoTemplate(payload);
 			await this.handleFynoTemplateResponse(response, template);
@@ -412,16 +411,18 @@ export class TemplateService {
 			await template.save();
 			throw new BadRequestException(response[0]?._message?.error_user_msg || response[0]?._message?.message || 'Error saving template.');
 		} else {
-			template.status = TemplateStatus[response[0]?.message?.status];
-			template.providerTemplateId = response[0]?.message?.id;
-			if (
-				TemplateStatus[response[0]?.message?.status] === TemplateStatus.APPROVED ||
-				TemplateStatus[response[0]?.message?.status] === TemplateStatus.PENDING
-			) {
-				notificationPayload = TemplateGenerator.externalNotificationPayload(templateDetails, payload as ExternalTemplatePayload);
-				await TemplateGenerator.createFynoTemplate(notificationPayload);
+			if (!template.providerTemplateId) {
+				template.status = TemplateStatus[response[0]?.message?.status];
+				template.providerTemplateId = response[0]?.message?.id;
+				if (
+					TemplateStatus[response[0]?.message?.status] === TemplateStatus.APPROVED ||
+					TemplateStatus[response[0]?.message?.status] === TemplateStatus.PENDING
+				) {
+					notificationPayload = TemplateGenerator.externalNotificationPayload(templateDetails, payload as ExternalTemplatePayload);
+					await TemplateGenerator.createFynoTemplate(notificationPayload);
+				}
+				await template.save();
 			}
-			await template.save();
 		}
 	}
 
@@ -493,14 +494,6 @@ export class TemplateService {
 						'headerMediaUrl',
 					],
 					required: false,
-				},
-				{
-					association: new BelongsTo(this.users, this.template, { as: 'Creator', foreignKey: 'createdBy' }),
-					attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
-				},
-				{
-					association: new BelongsTo(this.users, this.template, { as: 'Updater', foreignKey: 'updatedBy' }),
-					attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
 				},
 			],
 		});
@@ -629,33 +622,106 @@ export class TemplateService {
 			}
 		}
 
-		// Flatten templateContent if there are multiple entries
-		if (template?.dataValues.templateContent.length > 0) {
-			template.dataValues.templateContent = template.dataValues.templateContent[0];
+		// Merge templateContent with template data
+		if (template?.dataValues.templateContent && template?.dataValues.templateContent.length > 0) {
+			template.dataValues = {
+				...template.dataValues,
+				...template.dataValues.templateContent[0].dataValues,
+			};
+			delete template.dataValues.templateContent;
 		}
 
 		return template;
 	}
 
 	public async delete(templateId: number, userId: number) {
-		const template = await this.template.findOne({
-			where: { id: templateId, isDeleted: false },
-		});
+		const transaction = await this.sequelize.transaction();
+		try {
+			const template = await this.template.findOne({
+				where: { id: templateId, isDeleted: false },
+				transaction,
+			});
 
-		if (!template) {
-			throw new BadRequestException(TemplateMessage.templateNotFound);
-		}
-		await this.template.update(
-			{ isDeleted: true, updatedBy: userId },
-			{
-				where: {
-					id: templateId,
-					isDeleted: false,
+			if (!template) {
+				throw new BadRequestException(TemplateMessage.templateNotFound);
+			}
+			await this.template.update(
+				{ isDeleted: true, updatedBy: userId },
+				{
+					where: {
+						id: templateId,
+						isDeleted: false,
+					},
+					transaction,
 				},
-			},
-		);
+			);
 
-		return { id: template.id };
+			const buttonIds = [];
+			const updatedTemplateContent = await this.templateContent.findOne({
+				where: { templateId, isDeleted: false },
+				transaction,
+			});
+
+			if (updatedTemplateContent) {
+				updatedTemplateContent.isDeleted = true;
+				updatedTemplateContent.updatedBy = userId;
+				await updatedTemplateContent.save({ transaction });
+				buttonIds.push(...updatedTemplateContent.buttonIds);
+			}
+
+			const updatedTemplateContentCards = await this.templateContentCards.findAll({
+				where: { templateContentId: updatedTemplateContent.id, isDeleted: false },
+				attributes: ['buttonIds'],
+				transaction,
+			});
+
+			const allButtonIds = updatedTemplateContentCards.flatMap(card => card.buttonIds);
+
+			await this.templateContentCards.update(
+				{ isDeleted: true, updatedBy: userId },
+				{
+					where: { templateContentId: updatedTemplateContent.id, isDeleted: false },
+					transaction,
+				},
+			);
+
+			buttonIds.push(...allButtonIds);
+
+			await this.templateContentButtons.update(
+				{ isDeleted: true, updatedBy: userId },
+				{
+					where: { id: buttonIds, isDeleted: false },
+					transaction,
+				},
+			);
+			let providerTemplateId: string;
+			if (!template?.providerTemplateId) {
+				if (template?.templateType === TemplateType.ExternalTemplate) {
+					const externalTemplateDetails = await TemplateGenerator.getExternalTemplate(template.name);
+					providerTemplateId = externalTemplateDetails.template_id;
+				} else {
+					const fynoTemplateDetails = await TemplateGenerator.getFynoTemplate(template.name);
+					providerTemplateId = fynoTemplateDetails.template_id;
+				}
+			} else {
+				providerTemplateId = template.providerTemplateId;
+			}
+			if (template?.templateType === TemplateType.ExternalTemplate) {
+				await TemplateGenerator.deleteExternalTemplate(template.name, providerTemplateId, template.language);
+				if (template.status === TemplateStatus.APPROVED) {
+					await TemplateGenerator.deleteFynoTemplate(template.name);
+				}
+			} else {
+				await TemplateGenerator.deleteFynoTemplate(template.name);
+			}
+
+			await transaction.commit();
+
+			return { id: template.id };
+		} catch (error) {
+			await transaction.rollback();
+			throw error;
+		}
 	}
 
 	public async all(pageModel: TemplateListRequestDto, tenantId: number) {

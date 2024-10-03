@@ -23,6 +23,7 @@ import {
 	HeaderType,
 	MediaType,
 	MessageType,
+	TemplateStatus,
 	TemplateType,
 } from '../enums/template.enum';
 import { Type } from 'class-transformer';
@@ -140,6 +141,10 @@ export class TemplateContentCardDto {
 	@IsArray()
 	@IsOptional()
 	public bodyPlaceHolder: number[];
+
+	@IsArray()
+	@IsOptional()
+	public buttonIds: number[];
 }
 
 export class TemplateDto {
@@ -203,6 +208,10 @@ export class TemplateDto {
 	@IsString()
 	@IsOptional()
 	public headerMediaUrl: string;
+
+	@IsString()
+	@IsOptional()
+	public status: TemplateStatus;
 
 	@IsString()
 	@IsOptional()
@@ -283,6 +292,10 @@ export class TemplateDto {
 	@IsString()
 	@IsOptional()
 	public menuButtonName: string;
+
+	@IsArray()
+	@IsOptional()
+	public buttonIds: number[];
 
 	@IsArray()
 	@ValidateNested({ each: true })
