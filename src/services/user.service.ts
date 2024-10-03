@@ -549,9 +549,18 @@ class UserService {
 				return firstNameMatches || lastNameMatches || emailMatches || mobileNoMatches || employeeIdMatches || tenantNameMatches;
 			});
 
-			return filteredRows;
+			if (filteredRows) {
+				searchArray = filteredRows;
+			}
+
+			const res = {};
+			res['count'] = searchArray.length;
+			res['rows'] = searchArray;
+
+			return res;
 		}
-		return searchArray;
+
+		return userList;
 	}
 	public async deActive(userIds: UserActionDto, userId: number) {
 		const usersToDeActive = await this.users.findAll({
