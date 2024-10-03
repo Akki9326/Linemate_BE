@@ -73,5 +73,16 @@ class CampaignController {
 			next(ex);
 		}
 	};
+
+	public cloneCampaign = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const campaignId = parseInt(req.params.id);
+			const userId = req.user.id as number;
+			const campaignResponce = await this.campaignService.cloneCampaign(campaignId, userId);
+			AppResponseHelper.sendSuccess(res, 'Success', campaignResponce);
+		} catch (ex) {
+			next(ex);
+		}
+	};
 }
 export default CampaignController;

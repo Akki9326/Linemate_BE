@@ -63,9 +63,11 @@ export class CampaignService {
 		const campaign = await this.campaignMaster.findOne({
 			where: { isDeleted: false, id: campaignId, status: { [Op.ne]: CampaignStatusType.inProgress } },
 		});
+
 		if (!campaign) {
 			throw new BadRequestException(CampaignMessage.campaignInProgress);
 		}
+
 		if (campaignDetails?.rules?.length) {
 			campaignDetails['userIds'] = (await applyingCampaign(campaignDetails?.rules)) || [];
 		}
@@ -93,6 +95,7 @@ export class CampaignService {
 			campaign.reoccurenceType = campaignDetails.reoccurenceType;
 			campaign.reoccurenceDetails = campaignDetails?.reoccurenceDetails;
 		}
+
 		const updatedCcampaign = await campaign.update(campaignDetails);
 
 		return { id: updatedCcampaign.id };
@@ -285,5 +288,44 @@ export class CampaignService {
 				campaignId,
 			},
 		});
+	}
+
+	public async cloneCampaign(campaignId: number, userId: number) {
+		const campaignExist = await this.campaignMaster.findOne({
+			where: { isDeleted: false, id: campaignId, status: { [Op.ne]: CampaignStatusType.inProgress } },
+		});
+
+		if (!campaignExist) {
+			throw new BadRequestException(CampaignMessage.campaignInProgress);
+		}
+		const campaign = new this.campaignMaster();
+		campaign.name = 'copy ' + campaignExist.name;
+		campaign.channel = campaignExist.channel;
+		campaign.description = campaignExist.description;
+		campaign.whatsappTemplateId = campaignExist.whatsappTemplateId;
+		campaign.viberTemplateId = campaignExist.viberTemplateId;
+		campaign.smsTemplateId = campaignExist.smsTemplateId;
+		campaign.tags = campaignExist.tags;
+		campaign.status = campaignExist.status;
+		campaign.isArchived = campaignExist.isArchived;
+		campaign.rules = campaignExist.rules;
+		campaign.tenantId = campaignExist.tenantId;
+		campaign.deliveryStatus = campaignExist.deliveryStatus;
+		campaign.createdBy = userId;
+
+		if (campaignExist?.reoccurenceType === ReoccurenceType.custom) {
+			campaign.reoccurenceType = campaignExist.reoccurenceType;
+			campaign.reoccurenceDetails = campaignExist?.reoccurenceDetails;
+		}
+
+		if (campaignExist?.reoccurenceType === ReoccurenceType.once) {
+			campaign.reoccurenceType = campaignExist.reoccurenceType;
+			campaign.reoccurenceDetails = campaignExist?.reoccurenceDetails;
+		}
+
+		await campaign.save();
+		return {
+			id: campaign.id,
+		};
 	}
 }
