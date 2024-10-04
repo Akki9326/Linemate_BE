@@ -144,11 +144,11 @@ class UserService {
 		}
 		return tenantDetails;
 	}
-	private async validateTenantVariable(tenantVariables: TenantVariables[]) {
+	private async validateTenantVariable(tenantVariables: TenantVariables[], tenantId?: number) {
 		for (const variable of tenantVariables) {
 			const tenantDetails = await this.tenant.findOne({
 				where: {
-					id: variable.tenantId,
+					id: variable.tenantId || tenantId,
 					isDeleted: false,
 				},
 				attributes: ['name'],
@@ -157,7 +157,7 @@ class UserService {
 				throw new BadRequestException(TenantMessage.tenantVariableNotFound);
 			}
 			const variableMaster = await this.variableMaster.findAll({
-				where: { isDeleted: false, tenantId: variable.tenantId, category: VariableCategories.Custom },
+				where: { isDeleted: false, tenantId: variable.tenantId || tenantId, category: VariableCategories.Custom },
 			});
 			if (!variableMaster.length) {
 				return true;
@@ -682,6 +682,7 @@ class UserService {
 		if (!tenantExists) {
 			throw new BadRequestException(TenantMessage.tenantNotFound);
 		}
+
 		if (userData.length) {
 			const emails = userData.map(row => row['email'].toString());
 			const mobileNumbers = userData.map(row => row['mobileNumber'].toString());
@@ -754,7 +755,7 @@ class UserService {
 					}
 
 					if (userEle.tenantVariables && userEle.tenantVariables.length) {
-						await this.validateTenantVariable(userEle.tenantVariables);
+						await this.validateTenantVariable(userEle.tenantVariables, tenantId);
 						this.addTenantVariables(userEle.tenantVariables, createUser.id, createdBy.id);
 					}
 

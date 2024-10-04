@@ -65,7 +65,6 @@ export class FilterService {
 				}
 				if (field.filterKey === 'cohort') {
 					const cohorts = await this.getCohorts(tenantId);
-					console.log('cohorts', cohorts);
 					filterResponse.push({
 						filterTitle: field.filterTitle,
 						filterKey: field.filterKey,

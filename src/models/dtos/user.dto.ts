@@ -1,7 +1,7 @@
 import { IsArray, IsDefined, IsEmail, IsEnum, IsMobilePhone, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { UserType } from '../enums/user-types.enum';
 import { TenantVariables } from '../interfaces/variable.interface';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export class UserDto {
 	@IsString()
@@ -14,7 +14,8 @@ export class UserDto {
 	public email: string;
 
 	@IsEnum(UserType)
-	public userType: UserType;
+	@IsOptional()
+	public userType: UserType = UserType.User;
 
 	@IsMobilePhone()
 	public mobileNumber: string;
@@ -89,7 +90,10 @@ export class UserData {
 	public email: string;
 
 	@IsEnum(UserType)
-	@IsDefined()
+	@IsOptional()
+	@Transform(({ value }) => {
+		return value === '' || value === undefined ? UserType.User : value;
+	})
 	public userType: UserType;
 
 	@IsMobilePhone()
@@ -98,10 +102,12 @@ export class UserData {
 
 	@IsString()
 	@IsDefined()
+	@IsOptional()
 	public countyCode: string;
 
 	@IsString()
 	@IsDefined()
+	@IsOptional()
 	public permissionGroup: string;
 
 	@IsString()
