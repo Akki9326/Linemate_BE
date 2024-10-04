@@ -1,10 +1,10 @@
 import { UserListDto } from '@/models/dtos/user-list.dto';
-import { ChangePasswordDto, ImportUserDto, UserActionDto, UserDto } from '@/models/dtos/user.dto';
+import { ChangePasswordDto, ImportUserDto, SelectUserData, UserActionDto, UserDto } from '@/models/dtos/user.dto';
 import { RequestWithUser } from '@/models/interfaces/auth.interface';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import UserService from '@/services/user.service';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
-import { NextFunction, Response, Request } from 'express-serve-static-core';
+import { NextFunction, Request, Response } from 'express-serve-static-core';
 
 class UserController {
 	public userService = new UserService();
@@ -114,6 +114,16 @@ class UserController {
 		try {
 			const tenantId = parseInt(req.params.tenantId) as number;
 			const userResponse = await this.userService.getUserFields(tenantId);
+			AppResponseHelper.sendSuccess(res, 'Success', userResponse);
+		} catch (ex) {
+			next(ex);
+		}
+	};
+	public selectUser = async (req: Request, res: Response, next: NextFunction) => {
+		try {
+			const tenantId = parseInt(req.params.tenantId) as number;
+			const userDetails = req.body.data as SelectUserData[];
+			const userResponse = await this.userService.selectUser(userDetails, tenantId);
 			AppResponseHelper.sendSuccess(res, 'Success', userResponse);
 		} catch (ex) {
 			next(ex);

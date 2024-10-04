@@ -3224,6 +3224,52 @@ components:
         success:
           type: boolean
           example: true
+
+    UserSelectionRequest:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              email:
+                type: string
+                format: email
+                description: "Email of the user"
+              mobileNumber:
+                type: string
+                description: "Mobile number of the user"
+              employeeId:
+                type: string
+                description: "Employee ID of the user"
+          description: "List of users to be selected"
+      required:
+        - data
+
+    UserSelectionResponse:
+        type: object
+        properties:
+          data:
+            type: array
+            items:
+              type: integer
+              description: "IDs of the selected users"
+          success:
+            type: boolean
+            description: "Indicates if the request was successful"
+          code:
+            type: integer
+            description: "Response code"
+          message:
+            type: string
+            description: "Detailed message of the result"
+        required:
+          - data
+          - success
+          - code
+          - message
+
 paths:
   /permission/v1/add:
     post:
@@ -3790,8 +3836,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ActivateUsersResponse'
-          
 
+  /user/v1/select-user/{tenantId}:
+    post:
+      summary: Select User
+      description: Select multiple users based on their information.
+      tags:
+        - User
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the user
+      requestBody:
+        description: User selection request payload
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSelectionRequest'
+      responses:
+        '200':
+          description: Successful response with selected users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSelectionResponse'
+        
   /user/v1/change-password:
     post:
       summary: Change Password for Bulk Users
