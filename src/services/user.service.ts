@@ -1,8 +1,11 @@
 import { FRONTEND_URL, MAX_CHIEF } from '@/config';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { UserListDto } from '@/models/dtos/user-list.dto';
-import { ChangePasswordDto, ImportUserDto, UserActionDto, UserData, UserDto } from '@/models/dtos/user.dto';
+import { ChangePasswordDto, ImportUserDto, SelectUserData, UserActionDto, UserData, UserDto } from '@/models/dtos/user.dto';
+import { FileDestination } from '@/models/enums/file-destination.enum';
+import { RoleType } from '@/models/enums/role.enum';
 import { UserType, getPermissionGroup } from '@/models/enums/user-types.enum';
+import { VariableCategories } from '@/models/enums/variable.enum';
 import { FilterResponse } from '@/models/interfaces/filter.interface';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { User } from '@/models/interfaces/users.interface';
@@ -13,18 +16,15 @@ import { findDefaultRole } from '@/utils/helpers/default.role.helper';
 import { PasswordHelper } from '@/utils/helpers/password.helper';
 import { VariableHelper } from '@/utils/helpers/variable.helper';
 import { Email } from '@/utils/services/email';
+import S3Services from '@/utils/services/s3.services';
 import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.transaction';
 import DB from '@databases';
 import { parseISO } from 'date-fns';
+import 'reflect-metadata';
 import { Op } from 'sequelize';
+import { CohortService } from './cohort.service';
 import { TenantService } from './tenant.service';
 import VariableServices from './variable.service';
-import { VariableCategories } from '@/models/enums/variable.enum';
-import { FileDestination } from '@/models/enums/file-destination.enum';
-import S3Services from '@/utils/services/s3.services';
-import 'reflect-metadata';
-import { RoleType } from '@/models/enums/role.enum';
-import { CohortService } from './cohort.service';
 
 class UserService {
 	private users = DB.Users;
@@ -462,7 +462,6 @@ class UserService {
 
 		return matchingUserIds;
 	}
-
 	private async mappingDynamicFilter(condition: object, dynamicFilter: FilterResponse[]) {
 		const cohortUserIds = [];
 		const variableList = dynamicFilter
@@ -783,6 +782,28 @@ class UserService {
 			defaultFields: UserData.fields,
 			variableFields: getTenantVariable,
 		};
+	}
+	public async selectUser(userDetails: SelectUserData[], tenantId: number) {
+		const userIdsSet = new Set<number>();
+
+		for (const user of userDetails) {
+			const { email, mobileNumber, employeeId } = user;
+			const users = await this.users.findAll({
+				where: {
+					tenantIds: {
+						[Op.contains]: [tenantId],
+					},
+					[Op.or]: [{ email: email }, { mobileNumber }, { employeeId }],
+				},
+				attributes: ['id'],
+			});
+			if (Array.isArray(users)) {
+				users.forEach(user => userIdsSet.add(user.id));
+			}
+		}
+
+		const userIds = Array.from(userIdsSet);
+		return userIds;
 	}
 }
 

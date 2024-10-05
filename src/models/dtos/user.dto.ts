@@ -62,6 +62,22 @@ export class UserActionDto {
 	@IsArray()
 	public userIds: number[];
 }
+export class SelectUserData {
+	@IsEmail()
+	public email: string;
+
+	@IsMobilePhone()
+	public mobileNumber: string;
+
+	@IsString()
+	public employeeId: string;
+}
+export class UserSelectDto {
+	@IsArray()
+	@ValidateNested({ each: true })
+	@Type(() => SelectUserData)
+	public data: SelectUserData[];
+}
 
 export class UserVariableDto {
 	@IsNumber()

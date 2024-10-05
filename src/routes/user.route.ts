@@ -1,7 +1,7 @@
 import UserController from '@/controllers/user.controller';
 import authMiddleware from '@/middlewares/auth.middleware';
 import headerMiddleware from '@/middlewares/header.middleWare';
-import { ChangePasswordDto, ImportUserDto, UserActionDto, UserDto } from '@/models/dtos/user.dto';
+import { ChangePasswordDto, ImportUserDto, UserActionDto, UserDto, UserSelectDto } from '@/models/dtos/user.dto';
 import { Routes } from '@/models/interfaces/routes.interface';
 import validationMiddleware from '@middlewares/validation.middleware';
 import { Router } from 'express';
@@ -36,6 +36,12 @@ class UserRoute implements Routes {
 			validationMiddleware(ImportUserDto, 'body'),
 			authMiddleware,
 			this.userController.importUser,
+		);
+		this.router.post(
+			`${this.path}/v1/select-user/:tenantId`,
+			validationMiddleware(UserSelectDto, 'body'),
+			authMiddleware,
+			this.userController.selectUser,
 		);
 	}
 }
