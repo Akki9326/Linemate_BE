@@ -252,7 +252,9 @@ export class TemplateService {
 		};
 
 		if (templateDetails.buttons && templateDetails.buttons.length > 0) {
-			for (const section of templateDetails.buttons) {
+			const buttonsWithSections = templateDetails.buttons.filter(section => section.buttons);
+			const buttonsWithoutSections = templateDetails.buttons.filter(button => !button.buttons);
+			for (const section of buttonsWithSections) {
 				let sectionRecord: any = null;
 
 				// If sectionId is not provided, create a new section with the given sectionName or a default name
@@ -282,9 +284,9 @@ export class TemplateService {
 					}
 				}
 			}
-		} else {
+
 			// Process buttons without sections
-			for (const [index, buttonDetail] of (templateDetails.buttons || []).entries()) {
+			for (const [index, buttonDetail] of buttonsWithoutSections.entries()) {
 				await processButton(buttonDetail, null, index);
 			}
 		}
