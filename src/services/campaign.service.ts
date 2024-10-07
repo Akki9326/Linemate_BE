@@ -1,5 +1,5 @@
 import DB from '@/databases';
-import { Op, WhereOptions } from 'sequelize';
+import { Op, WhereOptions, BelongsTo } from 'sequelize';
 import { CampaignMasterDto } from '@/models/dtos/campaign.dto';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { AppMessages, CampaignMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
@@ -11,6 +11,7 @@ import { ReoccurenceType, CampaignStatusType } from '@/models/enums/campaign.enu
 export class CampaignService {
 	private campaignMaster = DB.CampaignMaster;
 	private campaignMatrix = DB.CampaignMatrix;
+	private user = DB.Users;
 	private tenant = DB.Tenant;
 	constuructor() {}
 
@@ -197,6 +198,20 @@ export class CampaignService {
 			offset,
 			limit,
 			order: [[sortField, sortOrder]],
+			include: [
+				{
+					association: new BelongsTo(this.user, this.campaignMaster, { as: 'Creator', foreignKey: 'createdBy' }),
+					attributes: ['id', 'firstName', 'lastName'],
+				},
+				{
+					association: new BelongsTo(this.user, this.campaignMaster, { as: 'Updater', foreignKey: 'updatedBy' }),
+					attributes: ['id', 'firstName', 'lastName'],
+				},
+				{
+					association: new BelongsTo(this.tenant, this.campaignMaster, { as: 'Tenant', foreignKey: 'id' }),
+					attributes: ['id', 'name', 'companyType', 'phoneNumber'],
+				},
+			],
 		});
 		return {
 			count: campaignResule?.length,

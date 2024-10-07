@@ -331,7 +331,6 @@ export class CohortService {
 				await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter);
 			}
 		}
-		console.log('condition', condition);
 		const cohortResult = await this.cohortMaster.findAll({
 			where: condition,
 			offset,

@@ -1017,9 +1017,6 @@ components:
                 items:
                   type: object
                   properties:
-                    tenantId: 
-                      type: integer
-                      example: 1
                     variables:
                       type: array
                       items:

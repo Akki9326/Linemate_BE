@@ -3,6 +3,6 @@ export interface variableValues {
 	value: string;
 }
 export interface TenantVariables {
-	tenantId: number;
+	tenantId?: number;
 	variables: variableValues[];
 }
