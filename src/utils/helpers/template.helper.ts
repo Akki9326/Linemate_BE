@@ -608,4 +608,33 @@ export const TemplateGenerator = {
 		};
 		return payload;
 	},
+	deleteExternalTemplate: async (name: string, templateId: string, language: string) => {
+		try {
+			const payload = {
+				template_id: templateId,
+				integration_id: FYNO_WHATSAPP_INTEGRATION_ID,
+				language,
+			};
+			const response = await axios.post(`${FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/external-template/${name}/delete`, payload, {
+				headers: {
+					Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
+				},
+			});
+			return response;
+		} catch (error) {
+			throw new BadRequestException(error?.response?.data);
+		}
+	},
+	deleteFynoTemplate: async (name: string) => {
+		try {
+			const response = await axios.delete(`${FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/notification/${name}`, {
+				headers: {
+					Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
+				},
+			});
+			return response;
+		} catch (error) {
+			throw new BadRequestException(error?.response?.data);
+		}
+	},
 };
