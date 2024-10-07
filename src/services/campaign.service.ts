@@ -121,6 +121,9 @@ export class CampaignService {
 				'reoccurenceType',
 				'reoccurenceDetails',
 				'deliveryStatus',
+				'whatsappTemplateId',
+				'smsTemplateId',
+				'viberTemplateId',
 			],
 		});
 

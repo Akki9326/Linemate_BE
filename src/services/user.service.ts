@@ -511,7 +511,7 @@ class UserService {
 			};
 		}
 
-		let searchArray;
+		let searchArray = [];
 		const userList = await this.users.findAndCountAll({
 			where: condition,
 			attributes: ['id', 'firstName', 'lastName', 'email', 'userType', 'mobileNumber', 'createdAt', 'tenantIds', 'employeeId', 'profilePhoto'],
@@ -549,14 +549,18 @@ class UserService {
 			});
 
 			if (filteredRows) {
-				searchArray = filteredRows;
+				searchArray = filteredRows.map(row => {
+					// Use delete to remove properties from row
+					delete row.tenantDetails;
+					delete row.tenantVariableDetails;
+					return row;
+				});
 			}
 
-			const res = {};
-			res['count'] = searchArray.length;
-			res['rows'] = searchArray;
-
-			return res;
+			const response = {};
+			response['count'] = searchArray.length;
+			response['rows'] = searchArray;
+			return response;
 		}
 
 		return userList;

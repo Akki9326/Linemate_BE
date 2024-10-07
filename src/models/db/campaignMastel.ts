@@ -43,12 +43,15 @@ export default function (sequelize: Sequelize): typeof CampaignMasterModel {
 			},
 			whatsappTemplateId: {
 				type: DataTypes.STRING,
+				allowNull: true,
 			},
 			smsTemplateId: {
 				type: DataTypes.STRING,
+				allowNull: true,
 			},
 			viberTemplateId: {
 				type: DataTypes.STRING,
+				allowNull: true,
 			},
 			rules: {
 				type: DataTypes.JSONB,
