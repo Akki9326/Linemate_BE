@@ -14,12 +14,15 @@ export const AppMessages = {
 	activeUserNotFound: 'Active Users not found.',
 	passwordReused: 'New password cannot be the same as the last 5 passwords.',
 	existedUser: 'User already exists',
+	existedEmail: 'Email already exists',
+	existedMobileNumber: 'Mobile number already exists',
 	maxAdmin: 'Max admin allowed for admin users.',
 	wrongOldPassword: 'Old password not valid.',
 	invalidPayload: 'Invalid req data from req.',
 	invalidFileType: `Invalid file extension type. type must be valid for : ${[...Object.keys(FileMimeType)]}`,
 	headerTenantId: 'tenantId not found in header',
 	isRequired: 'is required.',
+	somethingWentWrong: 'Something went wrong, please try again',
 };
 
 export const RoleMessage = {
@@ -42,6 +45,10 @@ export const VariableMessage = {
 	NotAddStandard: 'standard variable not allowed to add',
 	NotEditStandard: 'standard variable not allowed to edit',
 	NotDeleteStandard: 'standard variable not allowed to delete',
+	textVariableMustString: 'Text variable value must be a string',
+	numericVariableMustNumber: 'Numeric variable value must be a Number',
+	singleSelectMustMustBeAnOptions: 'Single select variable value must be an options',
+	multiSelectMustMustBeAnOptions: 'Multi select variable value must be an options',
 };
 export const CommonMessage = {
 	filterIsRequired: 'filter is required',
