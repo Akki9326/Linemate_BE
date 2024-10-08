@@ -1,6 +1,6 @@
 import { IsArray, IsDefined, IsEmail, IsEnum, IsMobilePhone, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { UserType } from '../enums/user-types.enum';
-import { TenantVariables } from '../interfaces/variable.interface';
+import { TenantVariables, variableValues } from '../interfaces/variable.interface';
 import { Transform, Type } from 'class-transformer';
 
 export class UserDto {
@@ -132,7 +132,7 @@ export class UserData {
 
 	@IsArray()
 	@IsOptional()
-	public tenantVariables: TenantVariables[];
+	public tenantVariables: variableValues[];
 
 	public static fields = ['firstName', 'lastName', 'email', 'userType', 'mobileNumber', 'countyCode', 'permissionGroup', 'employeeId'];
 }
