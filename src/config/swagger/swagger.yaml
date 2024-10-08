@@ -1017,17 +1017,12 @@ components:
                 items:
                   type: object
                   properties:
-                    variables:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          variableId:
-                            type: integer
-                            example: 2
-                          value:
-                            type: string
-                            example: "5441544654"
+                    variableId:
+                      type: integer
+                      example: 2
+                    value:
+                      type: string
+                      example: "5441544654"
 
     ActivateUsersRequest:
       type: object

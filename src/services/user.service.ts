@@ -1,22 +1,22 @@
 import { FRONTEND_URL, MAX_CHIEF } from '@/config';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { UserListDto } from '@/models/dtos/user-list.dto';
-import { ChangePasswordDto, ImportUserDto, SelectUserData, UserActionDto, UserData, UserDto } from '@/models/dtos/user.dto';
+import { ChangePasswordDto, SelectUserData, UserActionDto, UserData, UserDto } from '@/models/dtos/user.dto';
 import { FileDestination } from '@/models/enums/file-destination.enum';
-import { RoleType } from '@/models/enums/role.enum';
 import { UserType, getPermissionGroup } from '@/models/enums/user-types.enum';
-import { VariableCategories } from '@/models/enums/variable.enum';
+import { VariableCategories, VariableType } from '@/models/enums/variable.enum';
 import { FilterResponse } from '@/models/interfaces/filter.interface';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { User } from '@/models/interfaces/users.interface';
-import { TenantVariables } from '@/models/interfaces/variable.interface';
-import { AppMessages, RoleMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
+import { TenantVariables, variableValues } from '@/models/interfaces/variable.interface';
+import { AppMessages, RoleMessage, TenantMessage, VariableMessage } from '@/utils/helpers/app-message.helper';
 import { UserCaching } from '@/utils/helpers/caching-user.helper';
 import { findDefaultRole } from '@/utils/helpers/default.role.helper';
 import { PasswordHelper } from '@/utils/helpers/password.helper';
 import { VariableHelper } from '@/utils/helpers/variable.helper';
 import { Email } from '@/utils/services/email';
 import S3Services from '@/utils/services/s3.services';
+import ExcelService from '@/utils/helpers/error-excel.helper';
 import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.transaction';
 import DB from '@databases';
 import { parseISO } from 'date-fns';
@@ -25,6 +25,9 @@ import { Op } from 'sequelize';
 import { CohortService } from './cohort.service';
 import { TenantService } from './tenant.service';
 import VariableServices from './variable.service';
+import { ServerException } from '@/exceptions/ServerException';
+import { ValidationError, validate } from 'class-validator';
+import { plainToInstance } from 'class-transformer';
 
 class UserService {
 	private users = DB.Users;
@@ -36,6 +39,7 @@ class UserService {
 	private variableServices = new VariableServices();
 	public s3Service = new S3Services();
 	private cohortService = new CohortService();
+	private excelService = new ExcelService();
 
 	constructor() {}
 	public async sendAccountActivationEmail(userData, temporaryPassword: string, createdUser: JwtTokenData) {
@@ -176,6 +180,35 @@ class UserService {
 				const missingFieldsNames = missingMandatoryVariables.map(variable => variable.name).join(', ');
 				throw new BadRequestException(`Tenant "${tenantDetails.name}" Missing mandatory fields: ${missingFieldsNames}`);
 			}
+		}
+	}
+	private async validateImportUserVariables(tenantVariables: variableValues[]) {
+		let message;
+		for (let i = 0; i < tenantVariables.length; i++) {
+			const variableElement = tenantVariables[i];
+			const variable = await this.variableMaster.findOne({ where: { id: variableElement.variableId } });
+			if (!variable) {
+				message = VariableMessage.variableNotFound;
+			}
+
+			if (variable.type === VariableType.Text && variableElement.value == '' && !(typeof variableElement.value == 'string')) {
+				message = VariableMessage.textVariableMustString;
+			}
+			function isNumeric(value): boolean {
+				return typeof value === 'number' && !isNaN(value);
+			}
+			if (variable.type === VariableType.Numeric && !isNumeric(variableElement.value)) {
+				message = VariableMessage.numericVariableMustNumber;
+			}
+			if (variable.type === VariableType.SingleSelect) {
+				if (!variable.options.includes(variableElement.value)) message = VariableMessage.singleSelectMustMustBeAnOptions;
+			}
+			if (variable.type === VariableType.MultiSelect) {
+				for (const value of variableElement.value) {
+					if (!variable.options.includes(value)) message = VariableMessage.multiSelectMustMustBeAnOptions;
+				}
+			}
+			return message;
 		}
 	}
 	private async addTenantVariables(tenantVariables: TenantVariables[], userId: number, creatorId: number) {
@@ -675,106 +708,154 @@ class UserService {
 
 		return userData;
 	}
-	public async importUser(tenantId: number, userData: ImportUserDto[], createdBy: JwtTokenData) {
-		const tenantExists = await this.tenant.findOne({
-			where: {
-				id: tenantId,
-			},
-		});
+	public async removeMatchingRecords(errorsArray, dataArray) {
+		return dataArray.filter(dataItem => {
+			const isMatch = errorsArray.some(errorItem => {
+				const emailMatch = errorItem.email === dataItem.email;
+				const employeeIdMatch = errorItem.employeeId === dataItem.employeeId;
 
-		if (!tenantExists) {
-			throw new BadRequestException(TenantMessage.tenantNotFound);
-		}
-
-		if (userData.length) {
-			const emails = userData.map(row => row['email'].toString());
-			const mobileNumbers = userData.map(row => row['mobileNumber'].toString());
-
-			const existingUsers = await this.users.findAll({
-				where: {
-					[Op.or]: [{ email: { [Op.in]: emails } }, { mobileNumber: { [Op.in]: mobileNumbers } }],
-				},
-				raw: true,
+				return emailMatch || employeeIdMatch; // Return true if either email or employeeId match
 			});
 
-			if (existingUsers.length) {
-				const existingEmails = existingUsers.map(user => user.email);
-				const existingMobiles = existingUsers.map(user => user.mobileNumber);
-				const duplicates = userData.filter(
-					row => existingEmails.includes(row['email'].toString()) || existingMobiles.includes(row['mobileNumber'].toString()),
-				);
-				throw new BadRequestException(`Duplicate entries found: ${JSON.stringify(duplicates)}`);
+			// Keep the item if no match is found
+			console.log(`Match found: ${isMatch ? 'Yes' : 'No'}`);
+			return !isMatch;
+		});
+	}
+	public async importUser(tenantId: number, userData, createdBy: JwtTokenData) {
+		try {
+			const tenantExists = await this.tenant.findOne({
+				where: {
+					id: tenantId,
+				},
+			});
+
+			if (!tenantExists) {
+				throw new BadRequestException(TenantMessage.tenantNotFound);
+			}
+			const errorArray = [];
+
+			const userDataInstances = userData.map(user => plainToInstance(UserData, user));
+
+			for (const userInstance of userDataInstances) {
+				const validationErrors = await validate(userInstance, {
+					skipMissingProperties: false, // This ensures that missing properties will be flagged as errors
+					whitelist: true,
+					forbidNonWhitelisted: true,
+				});
+
+				if (validationErrors.length > 0) {
+					// Collect the error message for each validation error
+					let message = '';
+					validationErrors.forEach((error: ValidationError) => {
+						if (error.constraints) {
+							// Combine error messages
+							message += Object.values(error.constraints).join(', ') + '. ';
+						}
+					});
+
+					// Push the relevant fields and error message into the errorArray
+					errorArray.push({
+						firstName: userInstance.firstName,
+						lastName: userInstance.lastName,
+						email: userInstance.email,
+						employeeId: userInstance.employeeId,
+						errorReason: message.trim(), // Remove extra spaces
+					});
+				}
 			}
 
-			// Map rows to user objects
-			const modifyUserData = userData.map(row => {
-				const plainPassword = PasswordHelper.generateTemporaryPassword();
-				const hashedPassword = PasswordHelper.hashPassword(plainPassword);
-				const role = row['permissionGroup'].split(',');
-				return {
-					firstName: row['firstName'],
-					lastName: row['lastName'],
-					email: row['email'],
-					mobileNumber: row['mobileNumber'],
-					userType: UserType.User,
-					countryCode: row['countyCode'],
-					tenantIds: [tenantId],
-					password: hashedPassword,
-					plainPassword: plainPassword,
-					employeeId: row['employeeId'],
-					role: role[0],
-					tenantVariables: row['tenantVariables'] && row['tenantVariables'].length ? row['tenantVariables'] : [],
-				};
-			});
+			const userArray = await this.removeMatchingRecords(errorArray, userData);
 
-			const plainPasswords = modifyUserData.map(user => ({
-				email: user['email'],
-				password: user['plainPassword'],
-			}));
+			if (userArray.length) {
+				for (let i = 0; i < userData.length; i++) {
+					const user = userData[i];
 
-			for (const userEle of modifyUserData) {
-				const newUserObj = {
-					...userEle,
-				};
-				delete newUserObj.role;
+					const emailExists = await this.users.findOne({
+						where: {
+							email: user.email,
+						},
+					});
 
-				const userExists = await this.users.findOne({ where: { email: newUserObj.email, isDeleted: false } });
-				if (!userExists) {
-					const createUser = await this.users.create(newUserObj);
-					const role = await this.role.findOne({ where: { name: userEle.role, tenantId: tenantId } });
-					let newUserlist = [];
-					if (role) {
-						newUserlist = [...role.userIds, createUser.id];
-						await this.role.update({ userIds: newUserlist }, { where: { id: role.id } });
-					} else {
-						newUserlist = [createUser.id];
-						await this.role.create({
-							name: userEle.role,
-							tenantId: tenantId,
-							userIds: newUserlist,
-							type: RoleType.Custom,
-							description: userEle.role,
-						});
+					if (emailExists) {
+						const errorObj = {
+							employeeId: user.employeeId,
+							firstName: user.firstName,
+							lastName: user.lastName,
+							email: user.email,
+							errorReason: AppMessages.existedEmail,
+						};
+						errorArray.push(errorObj);
+						continue;
 					}
 
-					if (userEle.tenantVariables && userEle.tenantVariables.length) {
-						await this.validateTenantVariable(userEle.tenantVariables, tenantId);
-						this.addTenantVariables(userEle.tenantVariables, createUser.id, createdBy.id);
+					const mobileNumberExists = await this.users.findOne({
+						where: {
+							mobileNumber: user.mobileNumber,
+						},
+					});
+
+					if (mobileNumberExists) {
+						const errorObj = {
+							employeeId: user.employeeId,
+							firstName: user.firstName,
+							lastName: user.lastName,
+							email: user.email,
+							errorReason: AppMessages.existedMobileNumber,
+						};
+						errorArray.push(errorObj);
+						continue;
 					}
 
-					const plainPassword = plainPasswords.find(p => p.email === userEle.email).password;
+					const plainPassword = PasswordHelper.generateTemporaryPassword();
+					const hashedPassword = PasswordHelper.hashPassword(plainPassword);
+
+					user.password = hashedPassword;
+					user.userType = UserType.User;
+					user.tenantIds = [tenantId];
+
+					const createUser = await this.users.create(user);
+
 					const emailSubject = await EmailSubjects.accountActivationSubject(tenantExists.name);
 					const emailBody = EmailTemplates.accountActivationEmail(
 						tenantExists.name,
-						userEle.firstName,
-						userEle.lastName,
-						userEle.email,
+						user.firstName,
+						user.lastName,
+						user.email,
 						plainPassword,
 						FRONTEND_URL,
 					);
-					await Email.sendEmail(userEle.email, emailSubject, emailBody);
+					await Email.sendEmail(user.email, emailSubject, emailBody);
+
+					if (user.tenantVariables && user.tenantVariables.length) {
+						const tenantVariables = [];
+						const validateVariableValue = this.validateImportUserVariables(user.tenantVariables);
+						if (validateVariableValue) {
+							const errorObj = {
+								employeeId: user.employeeId,
+								firstName: user.firstName,
+								lastName: user.lastName,
+								email: user.email,
+								errorReason: validateVariableValue,
+							};
+							errorArray.push(errorObj);
+							continue;
+						}
+						tenantVariables.push({ tenantId: tenantId, variables: user.tenantVariables });
+						await this.validateTenantVariable(tenantVariables, tenantId);
+						this.addTenantVariables(tenantVariables, createUser.id, createdBy.id);
+					}
 				}
 			}
+			if (errorArray && errorArray.length) {
+				const dir = `tenant/${tenantId}/excel/${Date.now()}`;
+				const excelErrorFile = await this.excelService.createAndUploadExcelFile(errorArray, dir);
+				const errorReportSubject = 'Import User Failed Report';
+				const emailBody = EmailTemplates.errorReportEmail(createdBy.firstName, createdBy.lastName, excelErrorFile);
+				await Email.sendEmail(createdBy.email, errorReportSubject, emailBody);
+			}
+		} catch (error) {
+			throw new ServerException(AppMessages.somethingWentWrong);
 		}
 	}
 	public async getUserFields(tenantId: number) {
