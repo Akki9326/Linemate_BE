@@ -848,11 +848,19 @@ class UserService {
 				}
 			}
 			if (errorArray && errorArray.length) {
-				const dir = `tenant/${tenantId}/excel/${Date.now()}`;
-				const excelErrorFile = await this.excelService.createAndUploadExcelFile(errorArray, dir);
+				const excelErrorBuffer = await this.excelService.createAndUploadExcelFile(errorArray);
+				const excelBuffer: Buffer = Buffer.from(excelErrorBuffer);
+
 				const errorReportSubject = 'Import User Failed Report';
-				const emailBody = EmailTemplates.errorReportEmail(createdBy.firstName, createdBy.lastName, excelErrorFile);
-				await Email.sendEmail(createdBy.email, errorReportSubject, emailBody);
+				const attachments = [
+					{
+						filename: 'ErrorReport.xlsx', // The name of the file
+						content: excelBuffer,
+						contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+					},
+				];
+				const emailBody = EmailTemplates.errorReportEmail(createdBy.firstName, createdBy.lastName);
+				await Email.sendEmail(createdBy.email, errorReportSubject, emailBody, attachments);
 			}
 		} catch (error) {
 			throw new ServerException(AppMessages.somethingWentWrong);
