@@ -355,7 +355,21 @@ export const TemplateGenerator = {
 		}
 		return content;
 	},
-	quickButtonsMapping: (buttons: TemplateButtonDto[], contentSubType: ContentSubType) => {
+	quickButtonsMapping: (buttons: TemplateButtonDto[]) => {
+		return {
+			buttons: buttons.map(button => {
+				return {
+					id: button.buttonId,
+					title: button.title,
+				};
+			}),
+		};
+	},
+	menuButtonsMapping: (
+		buttons: { sectionName: string; buttons: { title: string; buttonDescription: string; buttonId: string }[] }[] | TemplateButtonDto,
+		menuButtonName: string,
+		contentSubType: ContentSubType,
+	) => {
 		if (contentSubType === ContentSubType.Flow) {
 			return {
 				[ContentSubType.Flow]: {
@@ -368,37 +382,26 @@ export const TemplateGenerator = {
 				},
 			};
 		} else {
+			const mappedButton = Array.isArray(buttons)
+				? buttons.map(section => {
+						return {
+							title: section.sectionName,
+							rows: section.buttons.map(button => {
+								return {
+									id: uuidv4(),
+									title: button.title,
+									description: button.buttonDescription,
+									buttonId: button.buttonId,
+								};
+							}),
+						};
+				  })
+				: [];
 			return {
-				buttons: buttons.map(button => {
-					return {
-						id: button.buttonId,
-						title: button.title,
-					};
-				}),
+				button: menuButtonName,
+				sections: mappedButton,
 			};
 		}
-	},
-	menuButtonsMapping: (
-		buttons: { sectionName: string; buttons: { title: string; buttonDescription: string; buttonId: string }[] }[],
-		menuButtonName: string,
-	) => {
-		const mappedButton = buttons.map(section => {
-			return {
-				title: section.sectionName,
-				rows: section.buttons.map(button => {
-					return {
-						id: uuidv4(),
-						title: button.title,
-						description: button.buttonDescription,
-						buttonId: button.buttonId,
-					};
-				}),
-			};
-		});
-		return {
-			button: menuButtonName,
-			sections: mappedButton,
-		};
 	},
 	generateInteractiveContent: (templateDetails: TemplateDto) => {
 		const { contentSubType, body, footer, messageType } = templateDetails;
@@ -418,8 +421,8 @@ export const TemplateGenerator = {
 			},
 			action: templateDetails?.buttons?.length
 				? templateDetails?.actionType === ActionType.QuickReply
-					? TemplateGenerator.quickButtonsMapping(templateDetails.buttons, templateDetails.contentSubType)
-					: TemplateGenerator.menuButtonsMapping(templateDetails.buttons, templateDetails.menuButtonName)
+					? TemplateGenerator.quickButtonsMapping(templateDetails.buttons)
+					: TemplateGenerator.menuButtonsMapping(templateDetails.buttons, templateDetails.menuButtonName, templateDetails.contentSubType)
 				: [],
 			footer: {
 				text: footer,

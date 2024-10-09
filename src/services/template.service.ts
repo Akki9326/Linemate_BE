@@ -543,6 +543,7 @@ export class TemplateService {
 				'buttonId',
 				'additionalData',
 				'sectionId',
+				'buttonDescription',
 			],
 		});
 
