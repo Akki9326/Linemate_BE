@@ -401,7 +401,7 @@ class UserService {
 		}
 		return user;
 	}
-	public async update(userData: UserDto, userId: number, updatedBy: number) {
+	public async update(userData: UserDto, userId: number, updatedBy: JwtTokenData) {
 		const existingUser = await this.users.findOne({
 			where: {
 				id: { [Op.not]: userId },
@@ -439,17 +439,26 @@ class UserService {
 		if (userData.tenantVariables && userData.tenantVariables.length) {
 			await this.validateTenantVariable(userData.tenantVariables);
 		}
+
+		const temporaryPassword = PasswordHelper.generateTemporaryPassword();
 		const userOldType = user.userType;
 		user.firstName = userData.firstName;
 		user.lastName = userData.lastName;
-		user.email = userData.email;
-		user.mobileNumber = userData.mobileNumber;
 		user.tenantIds = userData.userType !== UserType.ChiefAdmin ? userData.tenantIds : [];
 		user.userType = userData.userType;
 		user.countryCode = userData.countyCode;
 		user.employeeId = userData.employeeId;
 		user.profilePhoto = userData.profilePhoto;
-		user.updatedBy = updatedBy;
+
+		if (userData.email || userData.mobileNumber) {
+			user.email = userData.email;
+			user.mobileNumber = userData.mobileNumber;
+
+			// Send invitaion email
+			this.sendAccountActivationEmail(user, temporaryPassword, updatedBy);
+		}
+		user.updatedBy = updatedBy.id;
+
 		await user.save();
 		this.updateUserRole(userOldType, userData, user.id);
 		if (userData.userType !== UserType.ChiefAdmin) {
@@ -581,22 +590,18 @@ class UserService {
 				return firstNameMatches || lastNameMatches || emailMatches || mobileNoMatches || employeeIdMatches || tenantNameMatches;
 			});
 
-			if (filteredRows) {
-				searchArray = filteredRows.map(row => {
-					// Use delete to remove properties from row
-					delete row.tenantDetails;
-					delete row.tenantVariableDetails;
-					return row;
-				});
+			if (filteredRows && filteredRows.length) {
+				const response = {};
+				response['count'] = filteredRows.length;
+				response['rows'] = filteredRows;
+				return response;
 			}
-
-			const response = {};
-			response['count'] = searchArray.length;
-			response['rows'] = searchArray;
-			return response;
 		}
 
-		return userList;
+		const response = {};
+		response['count'] = searchArray.length;
+		response['rows'] = searchArray;
+		return response;
 	}
 	public async deActive(userIds: UserActionDto, userId: number) {
 		const usersToDeActive = await this.users.findAll({

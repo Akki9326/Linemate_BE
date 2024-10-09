@@ -238,6 +238,7 @@ export default class AuthService {
 		if (!user) {
 			throw new BadRequestException(AppMessages.invalidUsername);
 		}
+		console.log(otp);
 		await this.saveTokenInDB(user.id, TokenTypes.FORGOT_PASSWORD, otp);
 		await this.triggerLoginOTPs(user, otp);
 	}
