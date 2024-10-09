@@ -494,6 +494,8 @@ export class TemplateService {
 						'headerMediaHandle',
 						'headerMediaSample',
 						'headerMediaUrl',
+						'messageText',
+						'locationName',
 					],
 					required: false,
 				},
