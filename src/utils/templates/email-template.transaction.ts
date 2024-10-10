@@ -38,10 +38,7 @@ export class EmailTemplates extends EmailTemplateBase {
 	static errorReportEmail(firstName: string, lastName: string) {
 		const email = `
     <p>Dear ${firstName},<br><br>${lastName} has generated an error report for the recent process conducted at. 
-    Please find the details of the errors by clicking on the link below to download the report:<br><br>
-    
-    <a href="" target="_blank" style="display: inline-block; padding: 10px 20px; font-size: 16px; color: white; background-color: #4CAF50; text-align: center; text-decoration: none; border-radius: 5px;">Download Error Report</a></p>
-
+	
     <p>Thanks and Regards,<br>LineMate Team</p>
 `;
 		return this.template(email);
