@@ -1,0 +1,2 @@
+ALTER TABLE "contents"
+ALTER COLUMN "name" TYPE VARCHAR(100);
