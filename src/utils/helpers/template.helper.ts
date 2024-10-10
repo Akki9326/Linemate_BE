@@ -36,6 +36,7 @@ import axios from 'axios';
 import FormData from 'form-data';
 import { v4 as uuidv4 } from 'uuid';
 import { Readable } from 'stream';
+import { TemplateModel } from '@/models/db/template.model';
 
 export const TemplateGenerator = {
 	isValidUrl: (url: string) => {
@@ -509,6 +510,21 @@ export const TemplateGenerator = {
 			return error?.response?.data;
 		}
 	},
+	updateFynoTemplate: async (payload: unknown, name: string) => {
+		try {
+			const request = await payload;
+			const response = await axios.put(`${FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/notification/${name}`, request, {
+				headers: {
+					Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
+					'Content-Type': 'application/json',
+				},
+			});
+			return response.data;
+		} catch (error) {
+			console.error('Error:', error?.response?.data);
+			return error?.response?.data;
+		}
+	},
 	bufferToStream: (buffer: Buffer) => {
 		const stream = new Readable();
 		stream.push(buffer);
@@ -562,7 +578,7 @@ export const TemplateGenerator = {
 			throw new BadRequestException(error?.response?.data);
 		}
 	},
-	externalNotificationPayload: async (templateDetails: TemplateDto, externalPayload: ExternalTemplatePayload) => {
+	externalNotificationPayload: async (templateDetails: TemplateModel, externalPayload: ExternalTemplatePayload, notificationTemplateId: string) => {
 		let transformedSample = {};
 		if (typeof externalPayload.languages[0].content.body !== 'string' && externalPayload.languages[0].content.body.sample?.length) {
 			transformedSample = externalPayload.languages[0].content.body.sample.reduce((acc, item, index) => {
@@ -587,6 +603,7 @@ export const TemplateGenerator = {
 				},
 			},
 			template: {
+				template_id: notificationTemplateId,
 				channels: {
 					whatsapp: {
 						content: {

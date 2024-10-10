@@ -16,6 +16,7 @@ export class TemplateModel extends AppDBModel {
 	public language: string;
 	public tenantId: number;
 	public providerTemplateId: string;
+	public notificationTemplateId: string;
 	public status: string;
 }
 
@@ -81,6 +82,10 @@ export default function (sequelize: Sequelize): typeof TemplateModel {
 				allowNull: false,
 			},
 			providerTemplateId: {
+				type: DataTypes.STRING,
+				allowNull: true,
+			},
+			notificationTemplateId: {
 				type: DataTypes.STRING,
 				allowNull: true,
 			},
