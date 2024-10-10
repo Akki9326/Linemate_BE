@@ -43,7 +43,7 @@ class UserController {
 		try {
 			const userId = parseInt(req.params.id);
 			const userData: UserDto = req.body;
-			const updatedBy = req.user.id as number;
+			const updatedBy = req.user as JwtTokenData;
 			const userResponse = await this.userService.update(userData, userId, updatedBy);
 			AppResponseHelper.sendSuccess(res, 'Success', userResponse);
 		} catch (ex) {
