@@ -34,7 +34,7 @@ export class TemplateService {
 			const templateContent = await this.createOrUpdateTemplateContent(templateDetails, template.id, userId, transaction);
 			await this.addOrUpdatedButtonsToTemplateContent(templateDetails, templateContent.id, userId, transaction);
 			await this.addOrUpdateContentCards(templateDetails, templateContent.id, userId, transaction);
-			await this.generateTemplate(templateDetails, template);
+			await this.generateTemplate(templateDetails, template, transaction);
 
 			await transaction.commit();
 			return { id: template.id };
@@ -52,7 +52,7 @@ export class TemplateService {
 			const templateContent = await this.createOrUpdateTemplateContent(templateDetails, template.id, userId, transaction);
 			await this.addOrUpdatedButtonsToTemplateContent(templateDetails, templateContent.id, userId, transaction);
 			await this.addOrUpdateContentCards(templateDetails, templateContent.id, userId, transaction);
-			await this.generateTemplate(templateDetails, template);
+			await this.generateTemplate(templateDetails, template, transaction);
 
 			await transaction.commit();
 			return { id: template.id };
@@ -385,17 +385,22 @@ export class TemplateService {
 		await contentCard.save({ transaction });
 	}
 
-	private async generateTemplate(templateDetails: TemplateDto, template: TemplateModel) {
+	private async generateTemplate(templateDetails: TemplateDto, template: TemplateModel, transaction: Transaction) {
 		let payload = {};
 
 		if (templateDetails.templateType === TemplateType.ExternalTemplate) {
 			payload = TemplateGenerator.externalTemplatePayload(templateDetails, template?.providerTemplateId);
 			const response = await TemplateGenerator.createExternalTemplate(payload);
-			await this.handleExternalTemplateResponse(response, template, templateDetails, payload as ExternalTemplatePayload);
+			await this.handleExternalTemplateResponse(response, transaction, template, templateDetails, payload as ExternalTemplatePayload);
 		} else {
 			payload = TemplateGenerator.fynoTemplatePayload(templateDetails, template?.providerTemplateId);
-			const response = await TemplateGenerator.createFynoTemplate(payload);
-			await this.handleFynoTemplateResponse(response, template);
+			const response = {};
+			if (templateDetails.id) {
+				await TemplateGenerator.updateFynoTemplate(payload, template.name);
+			} else {
+				await TemplateGenerator.createFynoTemplate(payload);
+			}
+			await this.handleFynoTemplateResponse(response, template, transaction);
 		}
 
 		return payload;
@@ -403,6 +408,7 @@ export class TemplateService {
 
 	private async handleExternalTemplateResponse(
 		response: any,
+		transaction: Transaction,
 		template: TemplateModel,
 		templateDetails: TemplateDto,
 		payload: ExternalTemplatePayload,
@@ -410,32 +416,39 @@ export class TemplateService {
 		let notificationPayload = {};
 		if (response[0].status === TemplateStatus.ERROR) {
 			template.status = response[0].status || TemplateStatus.ERROR;
-			await template.save();
 			throw new BadRequestException(response[0]?._message?.error_user_msg || response[0]?._message?.message || 'Error saving template.');
 		} else {
-			if (!template.providerTemplateId) {
+			if (!template?.id) {
 				template.status = TemplateStatus[response[0]?.message?.status];
 				template.providerTemplateId = response[0]?.message?.id;
-				if (
-					TemplateStatus[response[0]?.message?.status] === TemplateStatus.APPROVED ||
-					TemplateStatus[response[0]?.message?.status] === TemplateStatus.PENDING
-				) {
-					notificationPayload = TemplateGenerator.externalNotificationPayload(templateDetails, payload as ExternalTemplatePayload);
-					await TemplateGenerator.createFynoTemplate(notificationPayload);
+			}
+			if (template.status === TemplateStatus.APPROVED || template.status === TemplateStatus.PENDING) {
+				const templateData = await this.template.findOne({ where: { id: template.id } });
+				if (templateData?.notificationTemplateId) {
+					notificationPayload = TemplateGenerator.externalNotificationPayload(
+						template,
+						payload as ExternalTemplatePayload,
+						templateData.notificationTemplateId,
+					);
+					await TemplateGenerator.updateFynoTemplate(notificationPayload, template.name);
+				} else {
+					notificationPayload = TemplateGenerator.externalNotificationPayload(template, payload as ExternalTemplatePayload, null);
+					const notificationDetail = await TemplateGenerator.createFynoTemplate(notificationPayload);
+					template.notificationTemplateId = notificationDetail.event?.event_flow?.template;
 				}
-				await template.save();
 			}
 		}
+		await template.save({ transaction });
 	}
 
-	private async handleFynoTemplateResponse(response: any, template: TemplateModel) {
+	private async handleFynoTemplateResponse(response: any, template: TemplateModel, transaction: Transaction) {
 		if (response.status === TemplateStatus.ERROR) {
 			template.status = response.status;
-			await template.save();
+			await template.save({ transaction });
 			throw new BadRequestException(response?._message || 'Error saving template.');
 		} else {
 			template.status = TemplateStatus.APPROVED;
-			await template.save();
+			await template.save({ transaction });
 		}
 	}
 
@@ -777,7 +790,7 @@ export class TemplateService {
 		const templateResult = await this.template.findAndCountAll({
 			where: condition,
 			order: [[sortField, sortOrder]],
-			attributes: ['id', 'name', 'description', 'channel', 'language', 'status'],
+			attributes: ['id', 'name', 'description', 'channel', 'language', 'status', 'createdAt', 'updatedAt'],
 			include: [
 				{
 					association: new BelongsTo(this.users, this.template, { as: 'Creator', foreignKey: 'createdBy' }),
