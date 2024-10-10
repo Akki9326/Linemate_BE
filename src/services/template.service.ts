@@ -767,7 +767,11 @@ export class TemplateService {
 		if (pageModel?.search) {
 			condition = {
 				...condition,
-				name: { [Op.iLike]: `%${pageModel.search}%` },
+				[Op.or]: [
+					{ name: { [Op.iLike]: `%${pageModel.search}%` } },
+					{ '$Creator.firstName$': { [Op.iLike]: `%${pageModel.search}%` } },
+					{ '$Creator.lastName$': { [Op.iLike]: `%${pageModel.search}%` } },
+				],
 			};
 		}
 		const templateResult = await this.template.findAndCountAll({
@@ -778,10 +782,12 @@ export class TemplateService {
 				{
 					association: new BelongsTo(this.users, this.template, { as: 'Creator', foreignKey: 'createdBy' }),
 					attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
+					required: false, // Keep it as a left join, so it doesn't exclude templates without a Creator
 				},
 				{
 					association: new BelongsTo(this.users, this.template, { as: 'Updater', foreignKey: 'updatedBy' }),
 					attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
+					required: false, // Optional association, does not enforce the presence of Updater
 				},
 			],
 			...(isPaginationEnabled && { limit: pageModel.limit, offset: (pageModel.page - 1) * pageModel.limit }), // Apply pagination if enabled
