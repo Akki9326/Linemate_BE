@@ -33,7 +33,7 @@ export class TenantService {
 		if (companyNameExists) throw new BadRequestException(TenantMessage.companyNameIsAlreadyExists);
 
 		if (tenantDetails?.trademark) {
-			const trademarkExists = await this.tenantModel.findOne({ where: { trademark: tenantDetails.trademark, isDeleted: false } });
+			const trademarkExists = await this.tenantModel.findOne({ where: { trademark: tenantDetails.trademark } });
 			if (trademarkExists) throw new BadRequestException(TenantMessage.trademarkIsAlreadyExists);
 		}
 
@@ -107,7 +107,7 @@ export class TenantService {
 
 		if (updateObj.trademark) {
 			const trademarkExists = await this.tenantModel.findOne({
-				where: { trademark: updateObj.trademark, isDeleted: false, id: { [Op.ne]: tenantId } },
+				where: { trademark: updateObj.trademark, id: { [Op.ne]: tenantId } },
 				raw: true,
 			});
 			if (trademarkExists) throw new BadRequestException(TenantMessage.trademarkIsAlreadyExists);

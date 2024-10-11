@@ -327,7 +327,7 @@ export class CohortService {
 			};
 		}
 		if (pageModel.filter) {
-			if (pageModel.filter.dynamicFilter) {
+			if (pageModel.filter.dynamicFilter && pageModel.filter.dynamicFilter.length) {
 				await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter);
 			}
 		}
