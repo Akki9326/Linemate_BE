@@ -10,6 +10,7 @@ import { applyingCohort } from '@/utils/helpers/cohort.helper';
 import { parseISO } from 'date-fns';
 import { BelongsTo, Op, Sequelize, WhereOptions } from 'sequelize';
 import VariableServices from './variable.service';
+import { FilterKey } from '@/models/enums/filter.enum';
 
 export class CohortService {
 	private cohortMaster = DB.CohortMaster;
@@ -292,14 +293,14 @@ export class CohortService {
 			}));
 
 		for (const filter of dynamicFilter) {
-			if (filter.filterKey === 'joiningDate') {
+			if (filter.filterKey === FilterKey.JoiningDate) {
 				const parsedStartDate = parseISO(String(filter.minValue));
 				const parsedEndDate = parseISO(String(filter.maxValue));
 				condition['createdAt'] = {
 					[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
 				};
 			}
-			if (filter.filterKey === 'cohort' && filter?.selectedValue) {
+			if (filter.filterKey === FilterKey.Cohort && filter?.selectedValue) {
 				condition['id'] = filter?.selectedValue;
 			}
 		}

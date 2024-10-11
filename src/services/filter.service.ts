@@ -1,15 +1,18 @@
 import { BadRequestException } from '@/exceptions/BadRequestException';
-import { commonFilterConfig, FilterFor, FiltersEnum } from '@/models/enums/filter.enum';
+import { commonFilterConfig, FilterFor, FilterKey, FiltersEnum } from '@/models/enums/filter.enum';
+import { Channel, TemplateStatus } from '@/models/enums/template.enum';
 import { FilterResponse } from '@/models/interfaces/filter.interface';
 import { AppMessages, FilterMessage } from '@/utils/helpers/app-message.helper';
+import { FilterHelper } from '@/utils/helpers/filter.helper';
 import moment from 'moment';
 import { CohortService } from './cohort.service';
+import { LanguageService } from './language.service';
 import VariableServices from './variable.service';
-import { FilterHelper } from '@/utils/helpers/filter.helper';
 
 export class FilterService {
 	private variableServices = new VariableServices();
 	private cohortService = new CohortService();
+	private languageService = new LanguageService();
 
 	constructor() {}
 
@@ -59,11 +62,11 @@ export class FilterService {
 					maxValue: endOfMonth,
 				});
 			} else if (field.filterType === FiltersEnum.DropDown) {
-				if (field.filterKey === 'customFields') {
+				if (field.filterKey === FilterKey.CustomFields) {
 					const customFields = await this.getCustomFields(tenantId);
 					filterResponse.push(...customFields);
 				}
-				if (field.filterKey === 'cohort') {
+				if (field.filterKey === FilterKey.Cohort) {
 					const cohorts = await this.getCohorts(tenantId);
 					filterResponse.push({
 						filterTitle: field.filterTitle,
@@ -71,6 +74,43 @@ export class FilterService {
 						filterType: field.filterType,
 						selectedValue: '',
 						options: cohorts,
+					});
+				}
+				if (field.filterKey === FilterKey.Channel) {
+					filterResponse.push({
+						filterTitle: field.filterTitle,
+						filterKey: field.filterKey,
+						filterType: field.filterType,
+						selectedValue: '',
+						options: Object.values(Channel)?.length ? FilterHelper.formatOptions(Object.values(Channel)) : [],
+					});
+				}
+				if (field.filterKey === FilterKey.TemplateStatus) {
+					filterResponse.push({
+						filterTitle: field.filterTitle,
+						filterKey: field.filterKey,
+						filterType: field.filterType,
+						selectedValue: '',
+						options: Object.values(TemplateStatus)?.length ? FilterHelper.formatOptions(Object.values(TemplateStatus)) : [],
+					});
+				}
+				if (field.filterKey === FilterKey.Language) {
+					const languages = await this.languageService.list();
+					filterResponse.push({
+						filterTitle: field.filterTitle,
+						filterKey: field.filterKey,
+						filterType: field.filterType,
+						selectedValue: '',
+						options: FilterHelper.formatOptions(languages.map(language => language.code)),
+					});
+				}
+				if (field.filterKey === FilterKey.CreatedBy) {
+					filterResponse.push({
+						filterTitle: field.filterTitle,
+						filterKey: field.filterKey,
+						filterType: field.filterType,
+						selectedValue: '',
+						options: await FilterHelper.createdByOption(tenantId),
 					});
 				}
 			} else if (field.filterType === FiltersEnum.NumberRange) {

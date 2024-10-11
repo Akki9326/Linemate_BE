@@ -1,7 +1,8 @@
-import { IsBoolean, IsDate, IsEnum, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsDate, IsEnum, IsNumber, IsObject, IsOptional, IsString } from 'class-validator';
 import { Channel } from 'diagnostics_channel';
 import { SortOrder } from '../enums/sort-order.enum';
 import { TemplateStatus } from '../enums/template.enum';
+import { FilterResponse } from '../interfaces/filter.interface';
 
 export class ListRequestDto<T> {
 	@IsOptional()
@@ -45,5 +46,8 @@ export class TemplateListFilterDto {
 
 	@IsString()
 	public language: string;
+
+	@IsArray()
+	dynamicFilter: FilterResponse[];
 }
 export class TemplateListRequestDto extends ListRequestDto<TemplateListFilterDto> {}
