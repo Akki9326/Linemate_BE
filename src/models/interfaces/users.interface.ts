@@ -15,4 +15,3 @@ export interface User {
 	countryCode?: string;
 	tenantIds: string[];
 }
-	

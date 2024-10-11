@@ -543,7 +543,7 @@ class UserService {
 		const isPaginationEnabled = pageModel.page && pageModel.limit;
 		if (pageModel.filter) {
 			condition['isActive'] = pageModel.filter.isActive ?? true;
-			if (pageModel.filter.dynamicFilter) {
+			if (pageModel.filter.dynamicFilter && pageModel.filter.dynamicFilter.length) {
 				await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter);
 			}
 		}
