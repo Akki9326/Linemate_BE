@@ -28,6 +28,7 @@ import VariableServices from './variable.service';
 import { ServerException } from '@/exceptions/ServerException';
 import { ValidationError, validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
+import { FilterKey } from '@/models/enums/filter.enum';
 
 class UserService {
 	private users = DB.Users;
@@ -514,14 +515,14 @@ class UserService {
 			}));
 
 		for (const filter of dynamicFilter) {
-			if (filter.filterKey === 'joiningDate') {
+			if (filter.filterKey === FilterKey.JoiningDate) {
 				const parsedStartDate = parseISO(String(filter.minValue));
 				const parsedEndDate = parseISO(String(filter.maxValue));
 				condition['createdAt'] = {
 					[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
 				};
 			}
-			if (filter.filterKey === 'cohort') {
+			if (filter.filterKey === FilterKey.Cohort) {
 				const userIds = await this.cohortService.getUserByCohortId(Number(filter?.selectedValue));
 				cohortUserIds.push(...userIds);
 			}
@@ -890,6 +891,7 @@ class UserService {
 	}
 	public async selectUser(userDetails: SelectUserData[], tenantId: number) {
 		const userIdsSet = new Set<number>();
+		const userDetailsMap = new Map<number, { firstName: string; lastName: string; profilePhoto: string }>();
 
 		for (const user of userDetails) {
 			const { email, mobileNumber, employeeId } = user;
@@ -900,15 +902,27 @@ class UserService {
 					},
 					[Op.or]: [{ email: email }, { mobileNumber }, { employeeId }],
 				},
-				attributes: ['id'],
+				attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
 			});
 			if (Array.isArray(users)) {
-				users.forEach(user => userIdsSet.add(user.id));
+				users.forEach(user => {
+					userIdsSet.add(user.id);
+					userDetailsMap.set(user.id, {
+						firstName: user.firstName,
+						lastName: user.lastName,
+						profilePhoto: user.profilePhoto,
+					});
+				});
 			}
 		}
 
 		const userIds = Array.from(userIdsSet);
-		return userIds;
+		const userDetailsArray = userIds.map(id => ({
+			id,
+			...userDetailsMap.get(id),
+		}));
+
+		return userDetailsArray;
 	}
 }
 

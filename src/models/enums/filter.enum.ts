@@ -8,6 +8,19 @@ export enum FilterFor {
 	Tenant = 'tenant',
 	Content = 'content',
 	Cohort = 'cohort',
+	Template = 'template',
+}
+export enum FilterKey {
+	JoiningDate = 'joiningDate',
+	CustomFields = 'customFields',
+	Experience = 'experience',
+	Cohort = 'cohort',
+	CreatedDate = 'createdDate',
+	UpdateDate = 'updateDate',
+	Language = 'language',
+	Channel = 'channel',
+	TemplateStatus = 'templateStatus',
+	CreatedBy = 'createdBy',
 }
 export const commonFilterConfig = [
 	{
@@ -15,22 +28,22 @@ export const commonFilterConfig = [
 		filterFields: [
 			{
 				filterTitle: 'Joining Date',
-				filterKey: 'joiningDate',
+				filterKey: FilterKey.JoiningDate,
 				filterType: FiltersEnum.DateRange,
 			},
 			{
 				filterTitle: 'Custom Fields',
-				filterKey: 'customFields',
+				filterKey: FilterKey.CustomFields,
 				filterType: FiltersEnum.DropDown,
 			},
 			{
 				filterTitle: 'Experience',
-				filterKey: 'experience',
+				filterKey: FilterKey.Experience,
 				filterType: FiltersEnum.NumberRange,
 			},
 			{
 				filterTitle: 'Cohort',
-				filterKey: 'cohort',
+				filterKey: FilterKey.Cohort,
 				filterType: FiltersEnum.DropDown,
 			},
 		],
@@ -41,24 +54,65 @@ export const commonFilterConfig = [
 	},
 	{
 		filterFor: FilterFor.Content,
-		filterFields: [],
+		filterFields: [
+			{
+				filterTitle: 'Created Date',
+				filterKey: FilterKey.CreatedDate,
+				filterType: FiltersEnum.DateRange,
+			},
+			{
+				filterTitle: 'Updated Date',
+				filterKey: FilterKey.UpdateDate,
+				filterType: FiltersEnum.DateRange,
+			},
+		],
 	},
 	{
 		filterFor: FilterFor.Cohort,
 		filterFields: [
 			{
 				filterTitle: 'Joining Date',
-				filterKey: 'joiningDate',
+				filterKey: FilterKey.JoiningDate,
 				filterType: FiltersEnum.DateRange,
 			},
 			{
 				filterTitle: 'Custom Fields',
-				filterKey: 'customFields',
+				filterKey: FilterKey.CustomFields,
 				filterType: FiltersEnum.DropDown,
 			},
 			{
 				filterTitle: 'Cohort',
-				filterKey: 'cohort',
+				filterKey: FilterKey.Cohort,
+				filterType: FiltersEnum.DropDown,
+			},
+		],
+	},
+	{
+		filterFor: FilterFor.Template,
+		filterFields: [
+			{
+				filterTitle: 'Created Date',
+				filterKey: FilterKey.CreatedDate,
+				filterType: FiltersEnum.DateRange,
+			},
+			{
+				filterTitle: 'Language',
+				filterKey: FilterKey.Language,
+				filterType: FiltersEnum.DropDown,
+			},
+			{
+				filterTitle: 'Channel',
+				filterKey: FilterKey.Channel,
+				filterType: FiltersEnum.DropDown,
+			},
+			{
+				filterTitle: 'Status',
+				filterKey: FilterKey.TemplateStatus,
+				filterType: FiltersEnum.DropDown,
+			},
+			{
+				filterTitle: 'CreatedBy',
+				filterKey: FilterKey.CreatedBy,
 				filterType: FiltersEnum.DropDown,
 			},
 		],

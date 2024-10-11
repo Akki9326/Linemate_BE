@@ -6,7 +6,9 @@ import { TemplateContentCardsModel } from '@/models/db/templateContentCard.model
 import { FileDto, FileMediaType } from '@/models/dtos/file.dto';
 import { TemplateButtonDto, TemplateDto } from '@/models/dtos/template-dto';
 import { TemplateListRequestDto } from '@/models/dtos/template-list.dto';
+import { FilterKey } from '@/models/enums/filter.enum';
 import { ButtonType, MediaType, TemplateStatus, TemplateType } from '@/models/enums/template.enum';
+import { FilterResponse } from '@/models/interfaces/filter.interface';
 import { ExternalTemplatePayload } from '@/models/interfaces/template.interface';
 import { AppMessages, TemplateMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
 import { TemplateGenerator } from '@/utils/helpers/template.helper';
@@ -742,6 +744,30 @@ export class TemplateService {
 		}
 	}
 
+	private async mappingDynamicFilter(condition: object, dynamicFilter: FilterResponse[]) {
+		for (const filter of dynamicFilter) {
+			if (filter.filterKey === FilterKey.CreatedDate) {
+				const parsedStartDate = parseISO(String(filter.minValue));
+				const parsedEndDate = parseISO(String(filter.maxValue));
+				condition['createdAt'] = {
+					[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
+				};
+			}
+			if (filter.filterKey === FilterKey.Language && filter?.selectedValue) {
+				condition['language'] = filter.selectedValue;
+			}
+			if (filter.filterKey === FilterKey.Channel && filter?.selectedValue) {
+				condition['channel'] = filter.selectedValue;
+			}
+			if (filter.filterKey === FilterKey.TemplateStatus && filter?.selectedValue) {
+				condition['status'] = filter.selectedValue;
+			}
+			if (filter.filterKey === FilterKey.CreatedBy && filter?.selectedValue) {
+				condition['createdBy'] = filter.selectedValue;
+			}
+		}
+	}
+
 	public async all(pageModel: TemplateListRequestDto, tenantId: number) {
 		const sortField = pageModel.sortField || 'id',
 			sortOrder = pageModel.sortOrder || 'ASC';
@@ -754,24 +780,8 @@ export class TemplateService {
 		if (pageModel.filter.isDeleted) {
 			condition.isDeleted = pageModel.filter.isDeleted;
 		}
-		if (pageModel.filter.channel) {
-			condition.channel = pageModel.filter.channel;
-		}
-		if (pageModel.filter.status) {
-			condition.status = pageModel.filter.status;
-		}
-		if (pageModel.filter.startDate && pageModel.filter.endDate) {
-			const parsedStartDate = parseISO(String(pageModel.filter.startDate));
-			const parsedEndDate = parseISO(String(pageModel.filter.endDate));
-			condition.createdAt = {
-				[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
-			};
-		}
-		if (pageModel.filter.createdBy) {
-			condition.createdBy = pageModel.filter.createdBy;
-		}
-		if (pageModel.filter.language) {
-			condition.language = pageModel.filter.language;
+		if (pageModel.filter.dynamicFilter && pageModel.filter.dynamicFilter.length) {
+			await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter);
 		}
 		if (tenantId) {
 			condition.tenantId = tenantId;
