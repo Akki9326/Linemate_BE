@@ -771,7 +771,7 @@ class UserService {
 			}
 
 			const userArray = await this.removeMatchingRecords(errorArray, userData);
-
+			let successCount = 0;
 			if (userArray.length) {
 				for (let i = 0; i < userData.length; i++) {
 					const user = userData[i];
@@ -820,6 +820,7 @@ class UserService {
 					user.tenantIds = [tenantId];
 
 					const createUser = await this.users.create(user);
+					successCount++;
 
 					const emailSubject = await EmailSubjects.accountActivationSubject(tenantExists.name);
 					const emailBody = EmailTemplates.accountActivationEmail(
@@ -867,6 +868,12 @@ class UserService {
 				const emailBody = EmailTemplates.errorReportEmail(createdBy.firstName, createdBy.lastName);
 				await Email.sendEmail(createdBy.email, errorReportSubject, emailBody, attachments);
 			}
+
+			const errorCount = {
+				failureCount: errorArray.length,
+				successCount: successCount,
+			};
+			return errorCount;
 		} catch (error) {
 			throw new ServerException(AppMessages.somethingWentWrong);
 		}
