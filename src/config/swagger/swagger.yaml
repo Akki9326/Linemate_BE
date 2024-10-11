@@ -4259,7 +4259,7 @@ paths:
           required: true
           schema:
             type: string
-          description: Specify the category for which filters are being requested, e.g., 'employee,tenant,content'.
+          description: Specify the category for which filters are being requested, e.g., 'employee,tenant,content,cohort,template'.
         - name: tenantId
           in: header
           required: true
