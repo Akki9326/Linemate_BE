@@ -11,6 +11,8 @@ import { parseISO } from 'date-fns';
 import { BelongsTo, Op, Sequelize, WhereOptions } from 'sequelize';
 import VariableServices from './variable.service';
 import { FilterKey } from '@/models/enums/filter.enum';
+import { CohortMasterModel } from '@/models/db/cohortMaster.model';
+import { SortOrder } from '@/models/enums/sort-order.enum';
 
 export class CohortService {
 	private cohortMaster = DB.CohortMaster;
@@ -309,7 +311,10 @@ export class CohortService {
 	}
 
 	public async all(pageModel: CohortListDto, tenantId: number) {
-		const { page = 1, limit = 10, sortField = 'id', sortOrder = 'ASC' } = pageModel;
+		const { page = 1, limit = 10 } = pageModel;
+		const validSortFields = Object.keys(CohortMasterModel.rawAttributes);
+		const sortField = validSortFields.includes(pageModel.sortField) ? pageModel.sortField : 'id';
+		const sortOrder = Object.values(SortOrder).includes(pageModel.sortOrder as SortOrder) ? pageModel.sortOrder : SortOrder.ASC;
 		const offset = (page - 1) * limit;
 		let condition: WhereOptions = { isDeleted: false };
 

@@ -7,6 +7,7 @@ import { FileDto, FileMediaType } from '@/models/dtos/file.dto';
 import { TemplateButtonDto, TemplateDto } from '@/models/dtos/template-dto';
 import { TemplateListRequestDto } from '@/models/dtos/template-list.dto';
 import { FilterKey } from '@/models/enums/filter.enum';
+import { SortOrder } from '@/models/enums/sort-order.enum';
 import { ButtonType, MediaType, TemplateStatus, TemplateType } from '@/models/enums/template.enum';
 import { FilterResponse } from '@/models/interfaces/filter.interface';
 import { ExternalTemplatePayload } from '@/models/interfaces/template.interface';
@@ -769,8 +770,9 @@ export class TemplateService {
 	}
 
 	public async all(pageModel: TemplateListRequestDto, tenantId: number) {
-		const sortField = pageModel.sortField || 'id',
-			sortOrder = pageModel.sortOrder || 'ASC';
+		const validSortFields = Object.keys(TemplateModel.rawAttributes);
+		const sortField = validSortFields.includes(pageModel.sortField) ? pageModel.sortField : 'id';
+		const sortOrder = Object.values(SortOrder).includes(pageModel.sortOrder as SortOrder) ? pageModel.sortOrder : SortOrder.ASC;
 		const isPaginationEnabled = pageModel.page && pageModel.limit;
 		let condition: WhereOptions = { isDeleted: false };
 

@@ -7,6 +7,8 @@ import { applyingCampaign } from '@/utils/helpers/cohort.helper';
 import { CampaignListDto } from '@/models/dtos/campaign-list.dto';
 import { CampaignMatrixDto } from '@/models/dtos/campaignMatrix.dto';
 import { ReoccurenceType, CampaignStatusType } from '@/models/enums/campaign.enums';
+import { CampaignMasterModel } from '@/models/db/campaignMastel';
+import { SortOrder } from '@/models/enums/sort-order.enum';
 
 export class CampaignService {
 	private campaignMaster = DB.CampaignMaster;
@@ -163,7 +165,10 @@ export class CampaignService {
 	}
 
 	public async all(pageModel: CampaignListDto, tenantId: number) {
-		const { page = 1, limit = 10, sortField = 'id', sortOrder = 'ASC' } = pageModel;
+		const { page = 1, limit = 10 } = pageModel;
+		const validSortFields = Object.keys(CampaignMasterModel.rawAttributes);
+		const sortField = validSortFields.includes(pageModel.sortField) ? pageModel.sortField : 'id';
+		const sortOrder = Object.values(SortOrder).includes(pageModel.sortOrder as SortOrder) ? pageModel.sortOrder : SortOrder.ASC;
 		const offset = (page - 1) * limit;
 		let condition: WhereOptions = { isDeleted: false };
 

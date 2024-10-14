@@ -10,6 +10,7 @@ import { insertDefaultRoles } from '@/utils/helpers/default.role.helper';
 import { TenantMessage } from '@/utils/helpers/app-message.helper';
 import { FileDestination } from '@/models/enums/file-destination.enum';
 import { UserType } from '@/models/enums/user-types.enum';
+import { TenantModel } from '@/models/db/tenant.model';
 
 export class TenantService {
 	private tenantModel = DB.Tenant;
@@ -123,8 +124,9 @@ export class TenantService {
 	}
 
 	public async list(pageModel: TenantListRequestDto, userId: number) {
-		const sortField = pageModel.sortField || 'id',
-			sortOrder = pageModel.sortOrder || SortOrder.ASC;
+		const validSortFields = Object.keys(TenantModel.rawAttributes);
+		const sortField = validSortFields.includes(pageModel.sortField) ? pageModel.sortField : 'id';
+		const sortOrder = Object.values(SortOrder).includes(pageModel.sortOrder as SortOrder) ? pageModel.sortOrder : SortOrder.ASC;
 
 		const isPaginationEnabled = pageModel.page && pageModel.limit;
 
