@@ -29,6 +29,7 @@ import { ServerException } from '@/exceptions/ServerException';
 import { ValidationError, validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { FilterKey } from '@/models/enums/filter.enum';
+import { RoleService } from './role.service';
 
 class UserService {
 	private users = DB.Users;
@@ -37,6 +38,7 @@ class UserService {
 	private variableMaster = DB.VariableMaster;
 	private variableMatrix = DB.VariableMatrix;
 	private tenantService = new TenantService();
+	private roleService = new RoleService();
 	private variableServices = new VariableServices();
 	public s3Service = new S3Services();
 	private cohortService = new CohortService();
@@ -710,6 +712,15 @@ class UserService {
 			const userData = await Promise.all(
 				data.map(async user => {
 					const tenantVariableDetails = tenantId ? await VariableHelper.findTenantVariableDetails(user.id, tenantId) : [];
+					const userDetails = {
+						email: user.email,
+						firstName: user.firstName,
+						lastName: user.lastName,
+						id: user.id,
+						userType: user.userType,
+					} as JwtTokenData;
+					const access = await this.roleService.getAccessByRoleIds(userDetails, [tenantId]);
+
 					const returnObj = {
 						'First Name': user.firstName,
 						'Last Name': user.lastName,
@@ -719,6 +730,7 @@ class UserService {
 						'Country Code': user.countryCode,
 						'Created At': user.createdAt,
 						tenantVariableDetails: tenantVariableDetails,
+						permissionGroup: access,
 					};
 
 					return returnObj;
