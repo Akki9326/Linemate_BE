@@ -895,15 +895,24 @@ class UserService {
 
 		for (const user of userDetails) {
 			const { email, mobileNumber, employeeId } = user;
-			const users = await this.users.findAll({
-				where: {
-					tenantIds: {
-						[Op.contains]: [tenantId],
-					},
-					[Op.or]: [{ email: email }, { mobileNumber }, { employeeId }],
+			const whereClause = {
+				tenantIds: {
+					[Op.contains]: [tenantId],
 				},
+				[Op.or]: [],
+			};
+
+			if (email) whereClause[Op.or].push({ email });
+			if (mobileNumber) whereClause[Op.or].push({ mobileNumber });
+			if (employeeId) whereClause[Op.or].push({ employeeId });
+
+			if (whereClause[Op.or].length === 0) continue;
+
+			const users = await this.users.findAll({
+				where: whereClause,
 				attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
 			});
+
 			if (Array.isArray(users)) {
 				users.forEach(user => {
 					userIdsSet.add(user.id);
