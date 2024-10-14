@@ -20,7 +20,7 @@ export const FilterHelper = {
 		});
 		return userList.map(user => ({
 			id: user.id,
-			value: `${user.firstName} ${user.lastName}`,
+			name: `${user.firstName} ${user.lastName}`,
 		}));
 	},
 };

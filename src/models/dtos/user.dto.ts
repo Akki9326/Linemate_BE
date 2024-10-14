@@ -64,17 +64,19 @@ export class UserActionDto {
 }
 export class SelectUserData {
 	@IsEmail()
+	@IsOptional()
 	public email: string;
 
 	@IsMobilePhone()
+	@IsOptional()
 	public mobileNumber: string;
 
 	@IsString()
+	@IsOptional()
 	public employeeId: string;
 }
 export class UserSelectDto {
 	@IsArray()
-	@ValidateNested({ each: true })
 	@Type(() => SelectUserData)
 	public data: SelectUserData[];
 }
