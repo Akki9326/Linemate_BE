@@ -29,6 +29,7 @@ import { ServerException } from '@/exceptions/ServerException';
 import { ValidationError, validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { FilterKey } from '@/models/enums/filter.enum';
+import { RoleService } from './role.service';
 
 class UserService {
 	private users = DB.Users;
@@ -37,6 +38,7 @@ class UserService {
 	private variableMaster = DB.VariableMaster;
 	private variableMatrix = DB.VariableMatrix;
 	private tenantService = new TenantService();
+	private roleService = new RoleService();
 	private variableServices = new VariableServices();
 	public s3Service = new S3Services();
 	private cohortService = new CohortService();
@@ -190,23 +192,32 @@ class UserService {
 			const variable = await this.variableMaster.findOne({ where: { id: variableElement.variableId } });
 			if (!variable) {
 				message = VariableMessage.variableNotFound;
+				continue;
 			}
 
 			if (variable.type === VariableType.Text && variableElement.value == '' && !(typeof variableElement.value == 'string')) {
 				message = VariableMessage.textVariableMustString;
+				continue;
 			}
 			function isNumeric(value): boolean {
 				return typeof value === 'number' && !isNaN(value);
 			}
 			if (variable.type === VariableType.Numeric && !isNumeric(variableElement.value)) {
 				message = VariableMessage.numericVariableMustNumber;
+				continue;
 			}
 			if (variable.type === VariableType.SingleSelect) {
-				if (!variable.options.includes(variableElement.value)) message = VariableMessage.singleSelectMustMustBeAnOptions;
+				if (!variable.options.includes(variableElement.value)) {
+					message = VariableMessage.singleSelectMustMustBeAnOptions;
+					continue;
+				}
 			}
 			if (variable.type === VariableType.MultiSelect) {
 				for (const value of variableElement.value) {
-					if (!variable.options.includes(value)) message = VariableMessage.multiSelectMustMustBeAnOptions;
+					if (!variable.options.includes(value)) {
+						message = VariableMessage.multiSelectMustMustBeAnOptions;
+						continue;
+					}
 				}
 			}
 			return message;
@@ -697,22 +708,36 @@ class UserService {
 			},
 			raw: true,
 		});
-		let userData = [];
 		if (data.length) {
-			userData = data.map(user => {
-				return {
-					'First Name': user.firstName,
-					'Last Name': user.lastName,
-					Email: user.email,
-					'Mobile Number': user.mobileNumber,
-					'User Type': user.userType,
-					'Country Code': user.countryCode,
-					'Created At': user.createdAt,
-				};
-			});
-		}
+			const userData = await Promise.all(
+				data.map(async user => {
+					const tenantVariableDetails = tenantId ? await VariableHelper.findTenantVariableDetails(user.id, tenantId) : [];
+					const userDetails = {
+						email: user.email,
+						firstName: user.firstName,
+						lastName: user.lastName,
+						id: user.id,
+						userType: user.userType,
+					} as JwtTokenData;
+					const access = await this.roleService.getAccessByRoleIds(userDetails, [tenantId]);
 
-		return userData;
+					const returnObj = {
+						'First Name': user.firstName,
+						'Last Name': user.lastName,
+						Email: user.email,
+						'Mobile Number': user.mobileNumber,
+						'User Type': user.userType,
+						'Country Code': user.countryCode,
+						'Created At': user.createdAt,
+						tenantVariableDetails: tenantVariableDetails,
+						permissionGroup: access,
+					};
+
+					return returnObj;
+				}),
+			);
+			return userData;
+		}
 	}
 	public async removeMatchingRecords(errorsArray, dataArray) {
 		return dataArray.filter(dataItem => {
@@ -724,7 +749,6 @@ class UserService {
 			});
 
 			// Keep the item if no match is found
-			console.log(`Match found: ${isMatch ? 'Yes' : 'No'}`);
 			return !isMatch;
 		});
 	}
@@ -774,8 +798,8 @@ class UserService {
 			const userArray = await this.removeMatchingRecords(errorArray, userData);
 			let successCount = 0;
 			if (userArray.length) {
-				for (let i = 0; i < userData.length; i++) {
-					const user = userData[i];
+				for (let i = 0; i < userArray.length; i++) {
+					const user = userArray[i];
 
 					const emailExists = await this.users.findOne({
 						where: {
@@ -820,23 +844,11 @@ class UserService {
 					user.userType = UserType.User;
 					user.tenantIds = [tenantId];
 
-					const createUser = await this.users.create(user);
-					successCount++;
-
-					const emailSubject = await EmailSubjects.accountActivationSubject(tenantExists.name);
-					const emailBody = EmailTemplates.accountActivationEmail(
-						tenantExists.name,
-						user.firstName,
-						user.lastName,
-						user.email,
-						plainPassword,
-						FRONTEND_URL,
-					);
-					await Email.sendEmail(user.email, emailSubject, emailBody);
+					let createUser;
 
 					if (user.tenantVariables && user.tenantVariables.length) {
 						const tenantVariables = [];
-						const validateVariableValue = this.validateImportUserVariables(user.tenantVariables);
+						const validateVariableValue = await this.validateImportUserVariables(user.tenantVariables);
 						if (validateVariableValue) {
 							const errorObj = {
 								employeeId: user.employeeId,
@@ -850,14 +862,34 @@ class UserService {
 						}
 						tenantVariables.push({ tenantId: tenantId, variables: user.tenantVariables });
 						await this.validateTenantVariable(tenantVariables, tenantId);
+						createUser = await this.users.create(user);
+						successCount++;
+
 						this.addTenantVariables(tenantVariables, createUser.id, createdBy.id);
+					} else {
+						createUser = await this.users.create(user);
+						successCount++;
+					}
+
+					if (createUser) {
+						const emailSubject = await EmailSubjects.accountActivationSubject(tenantExists.name);
+						const emailBody = EmailTemplates.accountActivationEmail(
+							tenantExists.name,
+							user.firstName,
+							user.lastName,
+							user.email,
+							plainPassword,
+							FRONTEND_URL,
+						);
+						await Email.sendEmail(user.email, emailSubject, emailBody);
 					}
 				}
 			}
+			let uniqueEmployees;
 			if (errorArray && errorArray.length) {
-				const excelErrorBuffer = await this.excelService.createAndUploadExcelFile(errorArray);
+				uniqueEmployees = errorArray.filter((employee, index, self) => index === self.findIndex(e => e.employeeId == employee.employeeId));
+				const excelErrorBuffer = await this.excelService.createAndUploadExcelFile(uniqueEmployees);
 				const excelBuffer: Buffer = Buffer.from(excelErrorBuffer);
-
 				const errorReportSubject = 'Import User Failed Report';
 				const attachments = [
 					{
@@ -871,7 +903,7 @@ class UserService {
 			}
 
 			const errorCount = {
-				failureCount: errorArray.length,
+				failureCount: uniqueEmployees.length,
 				successCount: successCount,
 			};
 			return errorCount;
