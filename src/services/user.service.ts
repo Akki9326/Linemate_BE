@@ -29,6 +29,8 @@ import { ServerException } from '@/exceptions/ServerException';
 import { ValidationError, validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { FilterKey } from '@/models/enums/filter.enum';
+import { SortOrder } from '@/models/enums/sort-order.enum';
+import { UserModel } from '@/models/db/users.model';
 import { RoleService } from './role.service';
 
 class UserService {
@@ -545,8 +547,9 @@ class UserService {
 		};
 	}
 	public async all(pageModel: UserListDto, tenantId: number) {
-		const orderByField = pageModel.sortField || 'id',
-			sortDirection = pageModel.sortOrder || 'ASC';
+		const validSortFields = Object.keys(UserModel.rawAttributes);
+		const orderByField = validSortFields.includes(pageModel.sortField) ? pageModel.sortField : 'id';
+		const sortDirection = Object.values(SortOrder).includes(pageModel.sortOrder as SortOrder) ? pageModel.sortOrder : SortOrder.ASC;
 		const condition = {
 			isDeleted: false,
 			isActive: true,

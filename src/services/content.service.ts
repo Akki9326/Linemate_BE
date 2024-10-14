@@ -12,6 +12,8 @@ import { BelongsTo, HasMany, Op, WhereOptions } from 'sequelize';
 import UserService from './user.service';
 import { ConteTypes } from '@/models/enums/contentType.enum';
 import { ScoringType } from '@/models/enums/assessment.enum';
+import { ContentModel } from '@/models/db/content.model';
+import { SortOrder } from '@/models/enums/sort-order.enum';
 
 export class ContentService {
 	private content = DB.Content;
@@ -255,7 +257,10 @@ export class ContentService {
 	}
 
 	public async all(pageModel: ContentListDto, tenantId: number) {
-		const { page = 1, limit = 10, sortField = 'id', sortOrder = 'ASC' } = pageModel;
+		const { page = 1, limit = 10 } = pageModel;
+		const validSortFields = Object.keys(ContentModel.rawAttributes);
+		const sortField = validSortFields.includes(pageModel.sortField) ? pageModel.sortField : 'id';
+		const sortOrder = Object.values(SortOrder).includes(pageModel.sortOrder as SortOrder) ? pageModel.sortOrder : SortOrder.ASC;
 		const offset = (page - 1) * limit;
 		if (!tenantId) {
 			throw new BadRequestException(AppMessages.headerTenantId);
