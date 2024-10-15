@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { MAX_CONTENT_LENGTH } from '@/config';
 import DB from '@/databases';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { TemplateModel } from '@/models/db/template.model';
@@ -104,6 +105,10 @@ export class TemplateService {
 			}
 			template = new this.template();
 		}
+		if (templateDetails.description && templateDetails.description?.length > parseInt(MAX_CONTENT_LENGTH)) {
+			throw new BadRequestException(`The description exceeds the maximum allowed length of ${MAX_CONTENT_LENGTH} characters.`);
+		}
+
 		if (templateDetails?.body?.length > 1032) {
 			throw new BadRequestException('The body content exceeds the maximum allowed length of 1032 characters.');
 		}
@@ -159,6 +164,15 @@ export class TemplateService {
 				throw new BadRequestException('headerMediaHandle is required.');
 			}
 		}
+		if (templateDetails.locationName && templateDetails.locationName.length > parseInt(MAX_CONTENT_LENGTH)) {
+			throw new BadRequestException(`locationName exceeds the maximum length of ${parseInt(MAX_CONTENT_LENGTH)} characters .`);
+		}
+		if (templateDetails.address && templateDetails.address.length > parseInt(MAX_CONTENT_LENGTH)) {
+			throw new BadRequestException(`address exceeds the maximum length of ${parseInt(MAX_CONTENT_LENGTH)} characters .`);
+		}
+		if (templateDetails.messageText && templateDetails.messageText.length > parseInt(MAX_CONTENT_LENGTH)) {
+			throw new BadRequestException(`messageText exceeds the maximum length of ${parseInt(MAX_CONTENT_LENGTH)} characters .`);
+		}
 		Object.assign(templateContent, {
 			headerType: templateDetails.headerType,
 			headerMediaType: templateDetails.headerMediaType,
@@ -211,6 +225,16 @@ export class TemplateService {
 				}
 			} else {
 				contentButton = new this.templateContentButtons();
+			}
+
+			if (buttonDetail.buttonDescription && buttonDetail.buttonDescription.length > MAX_CONTENT_LENGTH) {
+				throw new BadRequestException(`buttonDescription exceeds the maximum length of ${MAX_CONTENT_LENGTH} characters at index ${index}.`);
+			}
+			if (buttonDetail.navigateScreen && buttonDetail.navigateScreen.length > MAX_CONTENT_LENGTH) {
+				throw new BadRequestException(`navigateScreen exceeds the maximum length of ${MAX_CONTENT_LENGTH} characters at index ${index}.`);
+			}
+			if (buttonDetail.initialScreen && buttonDetail.initialScreen.length > MAX_CONTENT_LENGTH) {
+				throw new BadRequestException(`initialScreen exceeds the maximum length of ${MAX_CONTENT_LENGTH} characters at index ${index}.`);
 			}
 
 			// Validate button type
@@ -719,18 +743,20 @@ export class TemplateService {
 			if (!template?.providerTemplateId) {
 				if (template?.templateType === TemplateType.ExternalTemplate) {
 					const externalTemplateDetails = await TemplateGenerator.getExternalTemplate(template.name);
-					providerTemplateId = externalTemplateDetails.template_id;
+					providerTemplateId = externalTemplateDetails?.template_id;
 				} else {
 					const fynoTemplateDetails = await TemplateGenerator.getFynoTemplate(template.name);
-					providerTemplateId = fynoTemplateDetails.template_id;
+					providerTemplateId = fynoTemplateDetails?.template_id;
 				}
 			} else {
 				providerTemplateId = template.providerTemplateId;
 			}
 			if (template?.templateType === TemplateType.ExternalTemplate) {
-				await TemplateGenerator.deleteExternalTemplate(template.name, providerTemplateId, template.language);
-				if (template.status === TemplateStatus.APPROVED) {
-					await TemplateGenerator.deleteFynoTemplate(template.name);
+				if (providerTemplateId) {
+					await TemplateGenerator.deleteExternalTemplate(template.name, providerTemplateId, template.language);
+					if (template.status === TemplateStatus.APPROVED) {
+						await TemplateGenerator.deleteFynoTemplate(template.name);
+					}
 				}
 			} else {
 				await TemplateGenerator.deleteFynoTemplate(template.name);
