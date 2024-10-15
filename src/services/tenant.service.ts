@@ -140,7 +140,6 @@ export class TenantService {
 		let whereClause = {};
 		if (pageModel.search) {
 			whereClause = {
-				...whereClause,
 				[Op.or]: {
 					name: { [Op.iLike]: `%${pageModel.search}%` },
 					trademark: { [Op.iLike]: `%${pageModel.search}%` },
@@ -148,11 +147,14 @@ export class TenantService {
 				},
 			};
 		}
-		let tenantDetails;
+
+		let tenantDetails: TenantModel[];
+		let totalTenantCount: number;
 
 		if (user.userType !== UserType.ChiefAdmin) {
 			if (user.tenantIds && user.tenantIds.length > 0) {
-				tenantDetails = await this.tenantModel.findAndCountAll({
+				// Fetch total tenant count without pagination
+				totalTenantCount = await this.tenantModel.count({
 					where: {
 						id: {
 							[Op.in]: user.tenantIds,
@@ -161,7 +163,16 @@ export class TenantService {
 						isDeleted: false,
 						isActive: true,
 					},
-					distinct: true,
+				});
+				tenantDetails = await this.tenantModel.findAll({
+					where: {
+						id: {
+							[Op.in]: user.tenantIds,
+						},
+						...whereClause,
+						isDeleted: false,
+						isActive: true,
+					},
 					order: [[sortField, sortOrder]],
 					...(isPaginationEnabled && { limit: pageModel.limit, offset: (pageModel.page - 1) * pageModel.limit }), // Apply pagination if enabled
 					include: [
@@ -177,13 +188,20 @@ export class TenantService {
 				});
 			}
 		} else {
-			tenantDetails = await this.tenantModel.findAndCountAll({
+			totalTenantCount = await this.tenantModel.count({
 				where: {
 					...whereClause,
 					isDeleted: false,
 					isActive: true,
 				},
-				distinct: true,
+			});
+
+			tenantDetails = await this.tenantModel.findAll({
+				where: {
+					...whereClause,
+					isDeleted: false,
+					isActive: true,
+				},
 				order: [[sortField, sortOrder]],
 				...(isPaginationEnabled && { limit: pageModel.limit, offset: (pageModel.page - 1) * pageModel.limit }), // Apply pagination if enabled
 				include: [
@@ -199,6 +217,9 @@ export class TenantService {
 			});
 		}
 
-		return tenantDetails;
+		return {
+			count: totalTenantCount,
+			rows: tenantDetails,
+		};
 	}
 }

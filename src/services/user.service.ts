@@ -555,7 +555,6 @@ class UserService {
 			isActive: true,
 		};
 
-		const isPaginationEnabled = pageModel.page && pageModel.limit;
 		if (pageModel.filter) {
 			condition['isActive'] = pageModel.filter.isActive ?? true;
 			if (pageModel.filter.dynamicFilter && pageModel.filter.dynamicFilter.length) {
@@ -568,17 +567,23 @@ class UserService {
 			};
 		}
 
-		let searchArray = [];
-		const userList = await this.users.findAndCountAll({
+		const totalUsersCount = await this.users.count({
+			where: condition,
+		});
+
+		const userList = await this.users.findAll({
 			where: condition,
 			attributes: ['id', 'firstName', 'lastName', 'email', 'userType', 'mobileNumber', 'createdAt', 'tenantIds', 'employeeId', 'profilePhoto'],
 			order: [[orderByField, sortDirection]],
-			...(isPaginationEnabled && { offset: (pageModel.page - 1) * pageModel.limit, limit: pageModel.limit }), // Apply pagination if enabled
+			offset: pageModel.page ? (pageModel.page - 1) * pageModel.limit : undefined,
+			limit: pageModel.limit || undefined, // Apply pagination if enabled
 		});
 
-		if (userList.count) {
+		let searchArray = [];
+
+		if (userList.length) {
 			const userRows = await Promise.all(
-				userList.rows.map(async user => {
+				userList.map(async user => {
 					const tenantDetails = await this.findMultipleTenant(user.tenantIds);
 					const tenantVariableDetails = tenantId ? await VariableHelper.findTenantVariableDetails(user.id, tenantId) : [];
 					return {
@@ -606,17 +611,16 @@ class UserService {
 			});
 
 			if (filteredRows && filteredRows.length) {
-				const response = {};
-				response['count'] = filteredRows.length;
-				response['rows'] = filteredRows;
-				return response;
+				return {
+					count: totalUsersCount,
+					rows: filteredRows,
+				};
 			}
 		}
-
-		const response = {};
-		response['count'] = searchArray.length;
-		response['rows'] = searchArray;
-		return response;
+		return {
+			count: totalUsersCount,
+			rows: searchArray,
+		};
 	}
 	public async deActive(userIds: UserActionDto, userId: number) {
 		const usersToDeActive = await this.users.findAll({
@@ -933,6 +937,7 @@ class UserService {
 			const whereClause = {
 				tenantIds: {
 					[Op.contains]: [tenantId],
+					isDeleted: false,
 				},
 				[Op.or]: [],
 			};

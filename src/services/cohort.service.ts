@@ -337,6 +337,18 @@ export class CohortService {
 				await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter);
 			}
 		}
+		const totalCohortCount = await this.cohortMaster.count({
+			where: condition,
+			include: [
+				{
+					model: this.cohortMatrix,
+					where: { isDeleted: false },
+					as: 'userMatrix',
+					attributes: [],
+					required: false,
+				},
+			],
+		});
 		const cohortResult = await this.cohortMaster.findAll({
 			where: condition,
 			offset,
@@ -372,7 +384,7 @@ export class CohortService {
 		});
 
 		return {
-			count: cohortResult?.length,
+			count: totalCohortCount,
 			rows: cohortResult,
 		};
 	}

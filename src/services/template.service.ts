@@ -779,10 +779,10 @@ export class TemplateService {
 		if (!tenantId) {
 			throw new BadRequestException(AppMessages.headerTenantId);
 		}
-		if (pageModel.filter.isDeleted) {
-			condition.isDeleted = pageModel.filter.isDeleted;
+		if (pageModel?.filter?.isDeleted) {
+			condition.isDeleted = pageModel?.filter?.isDeleted;
 		}
-		if (pageModel.filter.dynamicFilter && pageModel.filter.dynamicFilter.length) {
+		if (pageModel?.filter?.dynamicFilter && pageModel?.filter?.dynamicFilter?.length) {
 			await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter);
 		}
 		if (tenantId) {
