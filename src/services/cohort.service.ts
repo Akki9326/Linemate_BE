@@ -339,15 +339,6 @@ export class CohortService {
 		}
 		const totalCohortCount = await this.cohortMaster.count({
 			where: condition,
-			include: [
-				{
-					model: this.cohortMatrix,
-					where: { isDeleted: false },
-					as: 'userMatrix',
-					attributes: [],
-					required: false,
-				},
-			],
 		});
 		const cohortResult = await this.cohortMaster.findAll({
 			where: condition,
