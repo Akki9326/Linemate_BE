@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { MAX_CONTENT_LENGTH } from '@/config';
 import DB from '@/databases';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { TemplateModel } from '@/models/db/template.model';
@@ -105,8 +104,8 @@ export class TemplateService {
 			}
 			template = new this.template();
 		}
-		if (templateDetails.description && templateDetails.description?.length > parseInt(MAX_CONTENT_LENGTH)) {
-			throw new BadRequestException(`The description exceeds the maximum allowed length of ${MAX_CONTENT_LENGTH} characters.`);
+		if (templateDetails.description && templateDetails.description?.length > 250) {
+			throw new BadRequestException(`The description exceeds the maximum allowed length of 250 characters.`);
 		}
 
 		if (templateDetails?.body?.length > 1032) {
@@ -164,15 +163,6 @@ export class TemplateService {
 				throw new BadRequestException('headerMediaHandle is required.');
 			}
 		}
-		if (templateDetails.locationName && templateDetails.locationName.length > parseInt(MAX_CONTENT_LENGTH)) {
-			throw new BadRequestException(`locationName exceeds the maximum length of ${parseInt(MAX_CONTENT_LENGTH)} characters .`);
-		}
-		if (templateDetails.address && templateDetails.address.length > parseInt(MAX_CONTENT_LENGTH)) {
-			throw new BadRequestException(`address exceeds the maximum length of ${parseInt(MAX_CONTENT_LENGTH)} characters .`);
-		}
-		if (templateDetails.messageText && templateDetails.messageText.length > parseInt(MAX_CONTENT_LENGTH)) {
-			throw new BadRequestException(`messageText exceeds the maximum length of ${parseInt(MAX_CONTENT_LENGTH)} characters .`);
-		}
 		Object.assign(templateContent, {
 			headerType: templateDetails.headerType,
 			headerMediaType: templateDetails.headerMediaType,
@@ -227,16 +217,9 @@ export class TemplateService {
 				contentButton = new this.templateContentButtons();
 			}
 
-			if (buttonDetail.buttonDescription && buttonDetail.buttonDescription.length > MAX_CONTENT_LENGTH) {
-				throw new BadRequestException(`buttonDescription exceeds the maximum length of ${MAX_CONTENT_LENGTH} characters at index ${index}.`);
+			if (buttonDetail.buttonDescription && buttonDetail.buttonDescription.length > 70) {
+				throw new BadRequestException(`buttonDescription exceeds the maximum length of 70 characters at index ${index}.`);
 			}
-			if (buttonDetail.navigateScreen && buttonDetail.navigateScreen.length > MAX_CONTENT_LENGTH) {
-				throw new BadRequestException(`navigateScreen exceeds the maximum length of ${MAX_CONTENT_LENGTH} characters at index ${index}.`);
-			}
-			if (buttonDetail.initialScreen && buttonDetail.initialScreen.length > MAX_CONTENT_LENGTH) {
-				throw new BadRequestException(`initialScreen exceeds the maximum length of ${MAX_CONTENT_LENGTH} characters at index ${index}.`);
-			}
-
 			// Validate button type
 			if (firstButtonType === null) {
 				firstButtonType = buttonDetail.buttonType;
