@@ -1,4 +1,4 @@
-import { CampaignMasterDto } from '@/models/dtos/campaign.dto';
+import { AssignCampaign, CampaignMasterDto } from '@/models/dtos/campaign.dto';
 import validationMiddleware from '@/middlewares/validation.middleware';
 import authMiddleware from '@/middlewares/auth.middleware';
 import CampaignController from '@/controllers/campaign.controller';
@@ -16,6 +16,12 @@ class CampaignRoute implements Routes {
 	}
 
 	private initializeRoutes() {
+		this.router.post(
+			`${this.path}/v1/assign-campaign`,
+			validationMiddleware(AssignCampaign, 'body'),
+			authMiddleware,
+			this.campaignController.assignMultiCampaign,
+		);
 		this.router.post(`${this.path}/v1/add`, validationMiddleware(CampaignMasterDto, 'body'), authMiddleware, this.campaignController.add);
 		this.router.get(`${this.path}/v1/:id`, authMiddleware, this.campaignController.getById);
 		this.router.delete(`${this.path}/v1/:id`, authMiddleware, this.campaignController.delete);

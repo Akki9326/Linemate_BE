@@ -1947,6 +1947,38 @@ components:
           type: string
           example: "Success"
 
+    AssignCampaignRequest:
+      type: object
+      properties:
+        campaignIds:
+          type: array
+          description: List of campaign IDs to which users will be assigned
+          items:
+            type: integer
+          example: [2]
+        userIds:
+          type: array
+          description: List of user IDs to be assigned to the campaign
+          items:
+            type: integer
+          example: [2, 3]
+      required:
+        - campaignIds
+        - userIds
+
+    AssignCampaignResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        code:
+          type: integer
+          example: 200
+        message:
+          type: string
+          example: "Success"
+
     GetCohortByUserRequest:
       type: object
       properties:
@@ -4867,7 +4899,29 @@ paths:
         400:
           description: Bad Request
         500:
-          description: Internal Server Error        
+          description: Internal Server Error  
+
+  /campaign/v1/assign-campaign:
+    post:
+      summary: Assign users to a specified campaign.
+      tags:
+        - Campaign
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignCampaignRequest'
+      responses:
+        '200':
+          description: Success  
+          content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/AssignCampaignResponse'
+          
         
   /campaign/v1/list:
     post:
