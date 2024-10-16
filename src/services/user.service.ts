@@ -21,7 +21,7 @@ import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.
 import DB from '@databases';
 import { parseISO } from 'date-fns';
 import 'reflect-metadata';
-import { Op } from 'sequelize';
+import { Op, Sequelize } from 'sequelize';
 import { CohortService } from './cohort.service';
 import { TenantService } from './tenant.service';
 import VariableServices from './variable.service';
@@ -507,11 +507,20 @@ class UserService {
 				[Op.or]: [{ value: { [Op.like]: `%${criteria.value}%` } }, { value: { [Op.like]: `%${jsonStringValue}%` } }],
 			};
 		});
+
+		const havingClause = filterCriteria.map(criteria =>
+			Sequelize.literal(`COUNT(DISTINCT CASE WHEN "variableId" = ${criteria.variableId} AND "value" = '${criteria.value}' THEN 1 END) > 0`),
+		);
+
 		const matchingRecords = await this.variableMatrix.findAll({
 			where: {
 				[Op.or]: whereConditions,
 			},
 			attributes: ['userId'],
+			group: ['userId'],
+			having: {
+				[Op.and]: havingClause,
+			},
 		});
 
 		const matchingUserIds = Array.from(new Set(matchingRecords.map(record => record.userId)));
