@@ -9,7 +9,7 @@ import S3Services from '@/utils/services/s3.services';
 import { isValid, parse } from 'date-fns';
 import { BelongsTo, HasMany, Op, WhereOptions } from 'sequelize';
 import UserService from './user.service';
-import { ConteTypes } from '@/models/enums/contentType.enum';
+import { ContentStatus, ConteTypes } from '@/models/enums/contentType.enum';
 import { ScoringType } from '@/models/enums/assessment.enum';
 import { ContentModel } from '@/models/db/content.model';
 import { SortOrder } from '@/models/enums/sort-order.enum';
@@ -279,7 +279,7 @@ export class ContentService {
 				condition['type'] = filter.selectedValue;
 			}
 			if (filter.filterKey === FilterKey.ContentStatus && filter?.selectedValue) {
-				condition['status'] = filter.selectedValue;
+				condition['isPublish'] = filter.selectedValue == ContentStatus.Published ? true : false;
 			}
 		}
 	}

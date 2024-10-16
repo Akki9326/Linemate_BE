@@ -123,7 +123,7 @@ export class FilterService {
 						options: Object.values(ConteTypes)?.length ? FilterHelper.formatOptions(Object.values(ConteTypes)) : [],
 					});
 				}
-				if (field.filterKey === FilterKey.MediaType) {
+				if (field.filterKey === FilterKey.ContentStatus) {
 					filterResponse.push({
 						filterTitle: field.filterTitle,
 						filterKey: field.filterKey,
