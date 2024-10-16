@@ -937,8 +937,9 @@ class UserService {
 			const whereClause = {
 				tenantIds: {
 					[Op.contains]: [tenantId],
-					isDeleted: false,
 				},
+				isDeleted: false,
+				isActive: true,
 				[Op.or]: [],
 			};
 

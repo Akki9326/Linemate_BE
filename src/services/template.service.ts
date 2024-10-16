@@ -104,6 +104,10 @@ export class TemplateService {
 			}
 			template = new this.template();
 		}
+		if (templateDetails.description && templateDetails.description?.length > 250) {
+			throw new BadRequestException(`The description exceeds the maximum allowed length of 250 characters.`);
+		}
+
 		if (templateDetails?.body?.length > 1032) {
 			throw new BadRequestException('The body content exceeds the maximum allowed length of 1032 characters.');
 		}
@@ -213,6 +217,9 @@ export class TemplateService {
 				contentButton = new this.templateContentButtons();
 			}
 
+			if (buttonDetail.buttonDescription && buttonDetail.buttonDescription.length > 70) {
+				throw new BadRequestException(`buttonDescription exceeds the maximum length of 70 characters at index ${index}.`);
+			}
 			// Validate button type
 			if (firstButtonType === null) {
 				firstButtonType = buttonDetail.buttonType;
@@ -719,18 +726,20 @@ export class TemplateService {
 			if (!template?.providerTemplateId) {
 				if (template?.templateType === TemplateType.ExternalTemplate) {
 					const externalTemplateDetails = await TemplateGenerator.getExternalTemplate(template.name);
-					providerTemplateId = externalTemplateDetails.template_id;
+					providerTemplateId = externalTemplateDetails?.template_id;
 				} else {
 					const fynoTemplateDetails = await TemplateGenerator.getFynoTemplate(template.name);
-					providerTemplateId = fynoTemplateDetails.template_id;
+					providerTemplateId = fynoTemplateDetails?.template_id;
 				}
 			} else {
 				providerTemplateId = template.providerTemplateId;
 			}
 			if (template?.templateType === TemplateType.ExternalTemplate) {
-				await TemplateGenerator.deleteExternalTemplate(template.name, providerTemplateId, template.language);
-				if (template.status === TemplateStatus.APPROVED) {
-					await TemplateGenerator.deleteFynoTemplate(template.name);
+				if (providerTemplateId) {
+					await TemplateGenerator.deleteExternalTemplate(template.name, providerTemplateId, template.language);
+					if (template.status === TemplateStatus.APPROVED) {
+						await TemplateGenerator.deleteFynoTemplate(template.name);
+					}
 				}
 			} else {
 				await TemplateGenerator.deleteFynoTemplate(template.name);
