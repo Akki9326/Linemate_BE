@@ -555,6 +555,10 @@ class UserService {
 			isActive: true,
 		};
 
+		const totalUsersCount = await this.users.count({
+			where: condition,
+		});
+
 		if (pageModel.filter) {
 			condition['isActive'] = pageModel.filter.isActive ?? true;
 			if (pageModel.filter.dynamicFilter && pageModel.filter.dynamicFilter.length) {
@@ -566,10 +570,6 @@ class UserService {
 				[Op.contains]: [tenantId],
 			};
 		}
-
-		const totalUsersCount = await this.users.count({
-			where: condition,
-		});
 
 		const userList = await this.users.findAll({
 			where: condition,
