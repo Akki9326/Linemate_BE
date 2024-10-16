@@ -52,4 +52,18 @@ export class CampaignMasterDto {
 
 	@IsObject()
 	public reoccurenceDetails: object;
+
+	@IsArray()
+	@IsOptional()
+	public userIds: number[];
+}
+
+export class AssignCampaign {
+	@IsArray()
+	@IsOptional()
+	public userIds: number[];
+
+	@IsArray()
+	@IsNotEmpty()
+	public campaignId: number[];
 }

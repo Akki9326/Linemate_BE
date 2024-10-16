@@ -1,6 +1,6 @@
 import DB from '@/databases';
 import { Op, WhereOptions, BelongsTo } from 'sequelize';
-import { CampaignMasterDto } from '@/models/dtos/campaign.dto';
+import { AssignCampaign, CampaignMasterDto } from '@/models/dtos/campaign.dto';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { AppMessages, CampaignMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
 import { applyingCampaign } from '@/utils/helpers/cohort.helper';
@@ -9,10 +9,12 @@ import { CampaignMatrixDto } from '@/models/dtos/campaignMatrix.dto';
 import { ReoccurenceType, CampaignStatusType } from '@/models/enums/campaign.enums';
 import { CampaignMasterModel } from '@/models/db/campaignMastel';
 import { SortOrder } from '@/models/enums/sort-order.enum';
+import { AssignCampaignUserId } from '@/models/interfaces/assignCampaign';
 
 export class CampaignService {
 	private campaignMaster = DB.CampaignMaster;
 	private campaignMatrix = DB.CampaignMatrix;
+	private campaignUserMatrix = DB.CampaignUserMatrix;
 	private user = DB.Users;
 	private tenant = DB.Tenant;
 	constuructor() {}
@@ -59,6 +61,10 @@ export class CampaignService {
 
 		campaign = await campaign.save();
 
+		if (campaignDetails?.userIds?.length) {
+			await this.assignCampaign(campaign.id, campaignDetails, userId);
+		}
+
 		return { id: campaign.id };
 	}
 
@@ -99,7 +105,7 @@ export class CampaignService {
 			campaign.reoccurenceDetails = campaignDetails?.reoccurenceDetails;
 		}
 
-		const updatedCcampaign = await campaign.update(campaignDetails);
+		const updatedCcampaign = await campaign.save();
 
 		return { id: updatedCcampaign.id };
 	}
@@ -126,6 +132,29 @@ export class CampaignService {
 				'whatsappTemplateId',
 				'smsTemplateId',
 				'viberTemplateId',
+			],
+			include: [
+				{
+					model: this.campaignUserMatrix,
+					as: 'userMatrix',
+					where: { isDeleted: false },
+					attributes: ['userId'],
+					include: [
+						{
+							model: this.user,
+							attributes: ['firstName', 'lastName'],
+						},
+					],
+					required: false,
+				},
+				{
+					association: new BelongsTo(this.user, this.campaignMaster, { as: 'Creator', foreignKey: 'createdBy' }),
+					attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
+				},
+				{
+					association: new BelongsTo(this.user, this.campaignMaster, { as: 'Updater', foreignKey: 'updatedBy' }),
+					attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
+				},
 			],
 		});
 
@@ -350,5 +379,86 @@ export class CampaignService {
 		return {
 			id: campaign.id,
 		};
+	}
+
+	public async assignMultiCampaign(assignCampaignBody: AssignCampaign, userId: number) {
+		await Promise.all(
+			assignCampaignBody?.campaignId.map(async campaignId => {
+				const campaignDetails = {
+					userIds: assignCampaignBody?.userIds,
+				};
+				await this.assignCampaign(campaignId, campaignDetails, userId);
+			}),
+		);
+	}
+
+	public async assignCampaign(campaignId: number, campaignDetails: AssignCampaignUserId, creatorId: number) {
+		campaignDetails.userIds = Array.from(new Set(campaignDetails.userIds));
+		const existingUsers = await this.user.findAll({
+			where: {
+				id: {
+					[Op.in]: campaignDetails.userIds,
+				},
+			},
+			attributes: ['id'],
+		});
+
+		const existingUserIds = existingUsers.map(user => user.id);
+		const validUserIds = campaignDetails.userIds.filter(userId => existingUserIds.includes(userId));
+
+		if (validUserIds.length) {
+			const existingCampaignMatrixRecords = await this.campaignUserMatrix.findAll({
+				where: {
+					campaignId: campaignId,
+				},
+				attributes: ['userId', 'isDeleted'],
+			});
+
+			const existingCampaignMatrixUserIds = existingCampaignMatrixRecords.map(record => record.userId.toString());
+
+			const recordsToReactivate = existingCampaignMatrixRecords
+				.filter(record => validUserIds.includes(parseInt(record.userId)) && record.isDeleted === true)
+				.map(record => record.userId);
+
+			const recordsToDelete = existingCampaignMatrixRecords
+				.filter(record => !validUserIds.includes(parseInt(record.userId)) && record.isDeleted === false)
+				.map(record => record.userId);
+
+			const newUserIds = validUserIds.filter(userId => !existingCampaignMatrixUserIds.includes(userId.toString()));
+
+			if (recordsToReactivate.length) {
+				await this.campaignUserMatrix.update(
+					{ isDeleted: false, updatedBy: creatorId },
+					{
+						where: {
+							campaignId: campaignId,
+							userId: {
+								[Op.in]: recordsToReactivate,
+							},
+						},
+					},
+				);
+			}
+			if (recordsToDelete.length) {
+				await this.campaignUserMatrix.update(
+					{ isDeleted: true, updatedBy: creatorId },
+					{
+						where: {
+							campaignId: campaignId,
+							userId: {
+								[Op.in]: recordsToDelete,
+							},
+						},
+					},
+				);
+			}
+
+			const CampaignMatrixRecords = newUserIds.map(userId => ({
+				campaignId: campaignId,
+				userId: userId,
+				createdBy: creatorId, // Add the creatorId here
+			}));
+			await this.campaignUserMatrix.bulkCreate(CampaignMatrixRecords);
+		}
 	}
 }

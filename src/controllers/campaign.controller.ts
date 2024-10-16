@@ -1,4 +1,4 @@
-import { CampaignMasterDto } from '@/models/dtos/campaign.dto';
+import { AssignCampaign, CampaignMasterDto } from '@/models/dtos/campaign.dto';
 import { CampaignListDto } from '@/models/dtos/campaign-list.dto';
 import { CampaignService } from '@/services/campaign.service';
 import { NextFunction, Response, Request } from 'express-serve-static-core';
@@ -80,6 +80,16 @@ class CampaignController {
 			const userId = req.user.id as number;
 			const campaignResponce = await this.campaignService.cloneCampaign(campaignId, userId);
 			AppResponseHelper.sendSuccess(res, 'Success', campaignResponce);
+		} catch (ex) {
+			next(ex);
+		}
+	};
+	public assignMultiCampaign = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const assignCampaignBody = req.body as AssignCampaign;
+			const userId = req.user.id as number;
+			const campaignResponse = await this.campaignService.assignMultiCampaign(assignCampaignBody, userId);
+			AppResponseHelper.sendSuccess(res, 'Success', campaignResponse);
 		} catch (ex) {
 			next(ex);
 		}
