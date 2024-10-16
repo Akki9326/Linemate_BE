@@ -555,6 +555,10 @@ class UserService {
 			isActive: true,
 		};
 
+		const totalUsersCount = await this.users.count({
+			where: condition,
+		});
+
 		if (pageModel.filter) {
 			condition['isActive'] = pageModel.filter.isActive ?? true;
 			if (pageModel.filter.dynamicFilter && pageModel.filter.dynamicFilter.length) {
@@ -608,13 +612,13 @@ class UserService {
 
 			if (filteredRows && filteredRows.length) {
 				return {
-					count: filteredRows.length,
+					count: totalUsersCount,
 					rows: filteredRows,
 				};
 			}
 		}
 		return {
-			count: searchArray.length,
+			count: totalUsersCount,
 			rows: searchArray,
 		};
 	}
