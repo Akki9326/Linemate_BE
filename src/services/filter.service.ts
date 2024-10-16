@@ -4,10 +4,10 @@ import { Channel, TemplateStatus } from '@/models/enums/template.enum';
 import { FilterResponse } from '@/models/interfaces/filter.interface';
 import { AppMessages, FilterMessage } from '@/utils/helpers/app-message.helper';
 import { FilterHelper } from '@/utils/helpers/filter.helper';
-import moment from 'moment';
 import { CohortService } from './cohort.service';
 import { LanguageService } from './language.service';
 import VariableServices from './variable.service';
+import { ContentStatus, ConteTypes } from '@/models/enums/contentType.enum';
 
 export class FilterService {
 	private variableServices = new VariableServices();
@@ -45,8 +45,6 @@ export class FilterService {
 
 	private async generateFilterResponse(tenantId: number, filterFor: string): Promise<FilterResponse[]> {
 		const filterResponse: FilterResponse[] = [];
-		const startOfMonth = moment().startOf('month').toISOString();
-		const endOfMonth = moment().endOf('month').toISOString();
 		const filterConfig = commonFilterConfig.find(config => config.filterFor === filterFor);
 		if (!filterConfig) {
 			throw new BadRequestException(`Invalid filterFor value: ${filterFor}`);
@@ -58,8 +56,8 @@ export class FilterService {
 					filterTitle: field.filterTitle,
 					filterKey: field.filterKey,
 					filterType: field.filterType,
-					minValue: startOfMonth,
-					maxValue: endOfMonth,
+					minValue: '',
+					maxValue: '',
 				});
 			} else if (field.filterType === FiltersEnum.DropDown) {
 				if (field.filterKey === FilterKey.CustomFields) {
@@ -111,6 +109,24 @@ export class FilterService {
 						filterType: field.filterType,
 						selectedValue: '',
 						options: await FilterHelper.createdByOption(tenantId),
+					});
+				}
+				if (field.filterKey === FilterKey.MediaType) {
+					filterResponse.push({
+						filterTitle: field.filterTitle,
+						filterKey: field.filterKey,
+						filterType: field.filterType,
+						selectedValue: '',
+						options: Object.values(ConteTypes)?.length ? FilterHelper.formatOptions(Object.values(ConteTypes)) : [],
+					});
+				}
+				if (field.filterKey === FilterKey.ContentStatus) {
+					filterResponse.push({
+						filterTitle: field.filterTitle,
+						filterKey: field.filterKey,
+						filterType: field.filterType,
+						selectedValue: '',
+						options: Object.values(ContentStatus)?.length ? FilterHelper.formatOptions(Object.values(ContentStatus)) : [],
 					});
 				}
 			} else if (field.filterType === FiltersEnum.NumberRange) {

@@ -6,3 +6,7 @@ export enum ConteTypes {
 	Scorm = 'scorm',
 	Assessment = 'assessment',
 }
+export enum ContentStatus {
+	Published = 'Published',
+	Daft = 'Daft',
+}

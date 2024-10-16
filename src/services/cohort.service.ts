@@ -7,7 +7,7 @@ import { AssignCohortUserId } from '@/models/interfaces/assignCohort';
 import { FilterCondition, FilterResponse } from '@/models/interfaces/filter.interface';
 import { AppMessages, CohortMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
 import { applyingCohort } from '@/utils/helpers/cohort.helper';
-import { parseISO } from 'date-fns';
+import { isValid, parseISO } from 'date-fns';
 import { BelongsTo, Op, Sequelize, WhereOptions } from 'sequelize';
 import VariableServices from './variable.service';
 import { FilterKey } from '@/models/enums/filter.enum';
@@ -256,11 +256,20 @@ export class CohortService {
 				[Op.or]: [{ value: { [Op.like]: `%${criteria.value}%` } }, { value: { [Op.like]: `%${jsonStringValue}%` } }],
 			};
 		});
+
+		const havingClause = filterCriteria.map(criteria =>
+			Sequelize.literal(`COUNT(DISTINCT CASE WHEN "variableId" = ${criteria.variableId} AND "value" = '${criteria.value}' THEN 1 END) > 0`),
+		);
+
 		const matchingRecords = await this.variableMatrix.findAll({
 			where: {
 				[Op.or]: whereConditions,
 			},
 			attributes: ['userId'],
+			group: ['userId'],
+			having: {
+				[Op.and]: havingClause,
+			},
 		});
 
 		const matchingUserIds = Array.from(new Set(matchingRecords.map(record => record.userId)));
@@ -277,12 +286,11 @@ export class CohortService {
 
 		const cohortIds = cohortMatrixRecords.map(record => record.cohortId);
 		const combinedCohortIds = Array.from(new Set([...cohortIds, condition.id]));
-		if (cohortIds?.length) {
-			condition = {
-				...condition,
-				id: { [Op.in]: combinedCohortIds.filter(id => typeof id === 'number') },
-			};
-		}
+
+		condition = {
+			...condition,
+			id: { [Op.in]: combinedCohortIds.filter(id => typeof id === 'number') },
+		};
 		return condition;
 	}
 
@@ -296,11 +304,13 @@ export class CohortService {
 
 		for (const filter of dynamicFilter) {
 			if (filter.filterKey === FilterKey.JoiningDate) {
-				const parsedStartDate = parseISO(String(filter.minValue));
-				const parsedEndDate = parseISO(String(filter.maxValue));
-				condition['createdAt'] = {
-					[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
-				};
+				if (isValid(filter.minValue) && isValid(filter.maxValue)) {
+					const parsedStartDate = parseISO(String(filter.minValue));
+					const parsedEndDate = parseISO(String(filter.maxValue));
+					condition['createdAt'] = {
+						[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
+					};
+				}
 			}
 			if (filter.filterKey === FilterKey.Cohort && filter?.selectedValue) {
 				condition['id'] = filter?.selectedValue;
@@ -334,7 +344,10 @@ export class CohortService {
 		}
 		if (pageModel.filter) {
 			if (pageModel.filter.dynamicFilter && pageModel.filter.dynamicFilter.length) {
-				await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter);
+				condition = {
+					...condition,
+					...(await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter)),
+				};
 			}
 		}
 		const totalCohortCount = await this.cohortMaster.count({
