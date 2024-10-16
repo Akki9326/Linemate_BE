@@ -17,10 +17,12 @@ export enum FilterKey {
 	Cohort = 'cohort',
 	CreatedDate = 'createdDate',
 	UpdateDate = 'updateDate',
+	MediaType = 'mediaType',
 	Language = 'language',
 	Channel = 'channel',
 	TemplateStatus = 'templateStatus',
 	CreatedBy = 'createdBy',
+	ContentStatus = 'contentStatus',
 }
 export const commonFilterConfig = [
 	{
@@ -64,6 +66,16 @@ export const commonFilterConfig = [
 				filterTitle: 'Updated Date',
 				filterKey: FilterKey.UpdateDate,
 				filterType: FiltersEnum.DateRange,
+			},
+			{
+				filterTitle: 'Media Type',
+				filterKey: FilterKey.MediaType,
+				filterType: FiltersEnum.DropDown,
+			},
+			{
+				filterTitle: 'Status',
+				filterKey: FilterKey.ContentStatus,
+				filterType: FiltersEnum.DropDown,
 			},
 		],
 	},

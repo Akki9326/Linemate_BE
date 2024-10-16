@@ -1,5 +1,5 @@
-import { ContentListDto } from '@/models/dtos/content-list.dto';
 import { ContentDto } from '@/models/dtos/content.dto';
+import { ContentListRequestDto } from '@/models/dtos/list-request.dto';
 import { RequestWithUser } from '@/models/interfaces/auth.interface';
 import { ContentService } from '@/services/content.service';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
@@ -40,7 +40,7 @@ class ContentController {
 	};
 	public list = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
-			const pageModel = req.body as ContentListDto; // Provide the missing type argument
+			const pageModel = req.body as ContentListRequestDto; // Provide the missing type argument
 			const tenantId = req.tenantId as number;
 			const contentResponse = await this.contentService.all(pageModel, tenantId);
 			AppResponseHelper.sendSuccess(res, 'Success', contentResponse);

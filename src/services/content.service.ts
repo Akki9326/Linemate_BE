@@ -1,7 +1,6 @@
 import { AWS_S3_FILE_URL } from '@/config';
 import DB from '@/databases';
 import { BadRequestException } from '@/exceptions/BadRequestException';
-import { ContentListDto } from '@/models/dtos/content-list.dto';
 import { ContentDto } from '@/models/dtos/content.dto';
 import { FileDestination } from '@/models/enums/file-destination.enum';
 import { AppMessages, assessmentMessage, ContentMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
@@ -10,10 +9,14 @@ import S3Services from '@/utils/services/s3.services';
 import { isValid, parse } from 'date-fns';
 import { BelongsTo, HasMany, Op, WhereOptions } from 'sequelize';
 import UserService from './user.service';
-import { ConteTypes } from '@/models/enums/contentType.enum';
+import { ContentStatus, ConteTypes } from '@/models/enums/contentType.enum';
 import { ScoringType } from '@/models/enums/assessment.enum';
 import { ContentModel } from '@/models/db/content.model';
 import { SortOrder } from '@/models/enums/sort-order.enum';
+import { FilterResponse } from '@/models/interfaces/filter.interface';
+import { FilterKey } from '@/models/enums/filter.enum';
+import { parseISO } from 'date-fns';
+import { ContentListRequestDto } from '@/models/dtos/list-request.dto';
 
 export class ContentService {
 	private content = DB.Content;
@@ -256,7 +259,32 @@ export class ContentService {
 		return returnObj;
 	}
 
-	public async all(pageModel: ContentListDto, tenantId: number) {
+	private async mappingDynamicFilter(condition: object, dynamicFilter: FilterResponse[]) {
+		for (const filter of dynamicFilter) {
+			if (filter.filterKey === FilterKey.CreatedDate) {
+				const parsedStartDate = parseISO(String(filter.minValue));
+				const parsedEndDate = parseISO(String(filter.maxValue));
+				condition['createdAt'] = {
+					[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
+				};
+			}
+			if (filter.filterKey === FilterKey.UpdateDate) {
+				const parsedStartDate = parseISO(String(filter.minValue));
+				const parsedEndDate = parseISO(String(filter.maxValue));
+				condition['updatedAt'] = {
+					[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
+				};
+			}
+			if (filter.filterKey === FilterKey.MediaType && filter?.selectedValue) {
+				condition['type'] = filter.selectedValue;
+			}
+			if (filter.filterKey === FilterKey.ContentStatus && filter?.selectedValue) {
+				condition['isPublish'] = filter.selectedValue == ContentStatus.Published ? true : false;
+			}
+		}
+	}
+
+	public async all(pageModel: ContentListRequestDto, tenantId: number) {
 		const { page = 1, limit = 10 } = pageModel;
 		const validSortFields = Object.keys(ContentModel.rawAttributes);
 		const sortField = validSortFields.includes(pageModel.sortField) ? pageModel.sortField : 'id';
@@ -277,26 +305,29 @@ export class ContentService {
 		}
 
 		if (pageModel.filter) {
-			if (pageModel.filter?.archive !== undefined && pageModel.filter?.archive !== null) {
-				condition['isArchive'] = pageModel.filter.archive;
+			if (pageModel?.filter?.dynamicFilter && pageModel?.filter?.dynamicFilter?.length) {
+				await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter);
 			}
-			if (pageModel.filter?.isPublish !== undefined && pageModel.filter?.isPublish !== null) {
-				condition['isPublish'] = pageModel.filter.isPublish;
-			}
+			// if (pageModel.filter?.archive !== undefined && pageModel.filter?.archive !== null) {
+			// 	condition['isArchive'] = pageModel.filter.archive;
+			// }
+			// if (pageModel.filter?.isPublish !== undefined && pageModel.filter?.isPublish !== null) {
+			// 	condition['isPublish'] = pageModel.filter.isPublish;
+			// }
 
-			if (pageModel.filter.createdBetween) {
-				const { startDate, endDate } = pageModel.filter.createdBetween;
-				if (startDate && endDate) {
-					this.setDateRangeCondition('createdAt', startDate, endDate, condition);
-				}
-			}
+			// if (pageModel.filter.createdBetween) {
+			// 	const { startDate, endDate } = pageModel.filter.createdBetween;
+			// 	if (startDate && endDate) {
+			// 		this.setDateRangeCondition('createdAt', startDate, endDate, condition);
+			// 	}
+			// }
 
-			if (pageModel.filter.updatedBetween) {
-				const { startDate, endDate } = pageModel.filter.updatedBetween;
-				if (startDate && endDate) {
-					this.setDateRangeCondition('updatedAt', startDate, endDate, condition);
-				}
-			}
+			// if (pageModel.filter.updatedBetween) {
+			// 	const { startDate, endDate } = pageModel.filter.updatedBetween;
+			// 	if (startDate && endDate) {
+			// 		this.setDateRangeCondition('updatedAt', startDate, endDate, condition);
+			// 	}
+			// }
 		}
 		const contentResult = await this.content.findAndCountAll({
 			where: condition,
