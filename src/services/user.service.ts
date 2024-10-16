@@ -555,10 +555,6 @@ class UserService {
 			isActive: true,
 		};
 
-		const totalUsersCount = await this.users.count({
-			where: condition,
-		});
-
 		if (pageModel.filter) {
 			condition['isActive'] = pageModel.filter.isActive ?? true;
 			if (pageModel.filter.dynamicFilter && pageModel.filter.dynamicFilter.length) {
@@ -570,6 +566,10 @@ class UserService {
 				[Op.contains]: [tenantId],
 			};
 		}
+
+		const totalUsersCount = await this.users.count({
+			where: condition,
+		});
 
 		const userList = await this.users.findAll({
 			where: condition,
@@ -584,7 +584,7 @@ class UserService {
 		if (userList.length) {
 			const userRows = await Promise.all(
 				userList.map(async user => {
-					const tenantDetails = await this.findMultipleTenant(user.tenantIds);
+					const tenantDetails = (await this.findMultipleTenant(user.tenantIds)) || [];
 					const tenantVariableDetails = tenantId ? await VariableHelper.findTenantVariableDetails(user.id, tenantId) : [];
 					return {
 						...user.dataValues,
@@ -604,7 +604,10 @@ class UserService {
 				const emailMatches = regex.test(row.email);
 				const mobileNoMatches = regex.test(row.mobileNumber);
 				const employeeIdMatches = row.employeeId ? regex.test(row.employeeId) : false;
-				const tenantNameMatches = row.tenantDetails.some(tenant => regex.test(tenant.name));
+				const tenantNameMatches =
+					row.tenantDetails && row.tenantDetails.length > 0
+						? row.tenantDetails.some(tenant => tenant && tenant.name && regex.test(tenant.name))
+						: false;
 
 				// Return true if any of the fields match
 				return firstNameMatches || lastNameMatches || emailMatches || mobileNoMatches || employeeIdMatches || tenantNameMatches;
