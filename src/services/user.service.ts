@@ -939,6 +939,7 @@ class UserService {
 					[Op.contains]: [tenantId],
 				},
 				isDeleted: false,
+				isActive: true,
 				[Op.or]: [],
 			};
 
