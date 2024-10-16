@@ -7,7 +7,7 @@ import { AssignCohortUserId } from '@/models/interfaces/assignCohort';
 import { FilterCondition, FilterResponse } from '@/models/interfaces/filter.interface';
 import { AppMessages, CohortMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
 import { applyingCohort } from '@/utils/helpers/cohort.helper';
-import { parseISO } from 'date-fns';
+import { isValid, parseISO } from 'date-fns';
 import { BelongsTo, Op, Sequelize, WhereOptions } from 'sequelize';
 import VariableServices from './variable.service';
 import { FilterKey } from '@/models/enums/filter.enum';
@@ -304,11 +304,13 @@ export class CohortService {
 
 		for (const filter of dynamicFilter) {
 			if (filter.filterKey === FilterKey.JoiningDate) {
-				const parsedStartDate = parseISO(String(filter.minValue));
-				const parsedEndDate = parseISO(String(filter.maxValue));
-				condition['createdAt'] = {
-					[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
-				};
+				if (isValid(filter.minValue) && isValid(filter.maxValue)) {
+					const parsedStartDate = parseISO(String(filter.minValue));
+					const parsedEndDate = parseISO(String(filter.maxValue));
+					condition['createdAt'] = {
+						[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
+					};
+				}
 			}
 			if (filter.filterKey === FilterKey.Cohort && filter?.selectedValue) {
 				condition['id'] = filter?.selectedValue;

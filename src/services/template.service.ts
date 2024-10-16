@@ -14,7 +14,7 @@ import { ExternalTemplatePayload } from '@/models/interfaces/template.interface'
 import { AppMessages, TemplateMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
 import { TemplateGenerator } from '@/utils/helpers/template.helper';
 import S3Services from '@/utils/services/s3.services';
-import { parseISO } from 'date-fns';
+import { isValid, parseISO } from 'date-fns';
 import { BelongsTo, Op, Sequelize, Transaction, WhereOptions } from 'sequelize';
 
 export class TemplateService {
@@ -757,11 +757,13 @@ export class TemplateService {
 	private async mappingDynamicFilter(condition: object, dynamicFilter: FilterResponse[]) {
 		for (const filter of dynamicFilter) {
 			if (filter.filterKey === FilterKey.CreatedDate) {
-				const parsedStartDate = parseISO(String(filter.minValue));
-				const parsedEndDate = parseISO(String(filter.maxValue));
-				condition['createdAt'] = {
-					[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
-				};
+				if (isValid(filter.minValue) && isValid(filter.maxValue)) {
+					const parsedStartDate = parseISO(String(filter.minValue));
+					const parsedEndDate = parseISO(String(filter.maxValue));
+					condition['createdAt'] = {
+						[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
+					};
+				}
 			}
 			if (filter.filterKey === FilterKey.Language && filter?.selectedValue) {
 				condition['language'] = filter.selectedValue;
@@ -776,6 +778,7 @@ export class TemplateService {
 				condition['createdBy'] = filter.selectedValue;
 			}
 		}
+		return condition;
 	}
 
 	public async all(pageModel: TemplateListRequestDto, tenantId: number) {
@@ -792,7 +795,7 @@ export class TemplateService {
 			condition.isDeleted = pageModel?.filter?.isDeleted;
 		}
 		if (pageModel?.filter?.dynamicFilter && pageModel?.filter?.dynamicFilter?.length) {
-			await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter);
+			condition = { ...condition, ...(await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter)) };
 		}
 		if (tenantId) {
 			condition.tenantId = tenantId;
