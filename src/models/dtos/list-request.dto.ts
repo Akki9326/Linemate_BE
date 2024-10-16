@@ -1,5 +1,7 @@
-import { IsString, IsNotEmpty, IsOptional, IsEnum, IsObject } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsEnum, IsObject, IsDate, IsArray } from 'class-validator';
 import { SortOrder } from '../enums/sort-order.enum';
+import { ContentStatus, ConteTypes } from '../enums/contentType.enum';
+import { FilterResponse } from '../interfaces/filter.interface';
 
 export class ListRequestDto<T> {
 	@IsNotEmpty()
@@ -22,3 +24,22 @@ export class ListRequestDto<T> {
 	@IsEnum(SortOrder)
 	public sortOrder: SortOrder;
 }
+
+export class ContentListFilterDto {
+	@IsEnum(ContentStatus)
+	public status: ContentStatus;
+
+	@IsDate()
+	public startDate: Date;
+
+	@IsDate()
+	public endDate: Date;
+
+	@IsEnum(ConteTypes)
+	public mediaType: ConteTypes;
+
+	@IsArray()
+	dynamicFilter: FilterResponse[];
+}
+
+export class ContentListRequestDto extends ListRequestDto<ContentListFilterDto> {}
