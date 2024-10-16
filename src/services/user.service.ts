@@ -567,10 +567,6 @@ class UserService {
 			};
 		}
 
-		const totalUsersCount = await this.users.count({
-			where: condition,
-		});
-
 		const userList = await this.users.findAll({
 			where: condition,
 			attributes: ['id', 'firstName', 'lastName', 'email', 'userType', 'mobileNumber', 'createdAt', 'tenantIds', 'employeeId', 'profilePhoto'],
@@ -612,13 +608,13 @@ class UserService {
 
 			if (filteredRows && filteredRows.length) {
 				return {
-					count: totalUsersCount,
+					count: filteredRows.length,
 					rows: filteredRows,
 				};
 			}
 		}
 		return {
-			count: totalUsersCount,
+			count: searchArray.length,
 			rows: searchArray,
 		};
 	}
