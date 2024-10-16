@@ -8,6 +8,7 @@ import moment from 'moment';
 import { CohortService } from './cohort.service';
 import { LanguageService } from './language.service';
 import VariableServices from './variable.service';
+import { ContentStatus, ConteTypes } from '@/models/enums/contentType.enum';
 
 export class FilterService {
 	private variableServices = new VariableServices();
@@ -111,6 +112,24 @@ export class FilterService {
 						filterType: field.filterType,
 						selectedValue: '',
 						options: await FilterHelper.createdByOption(tenantId),
+					});
+				}
+				if (field.filterKey === FilterKey.MediaType) {
+					filterResponse.push({
+						filterTitle: field.filterTitle,
+						filterKey: field.filterKey,
+						filterType: field.filterType,
+						selectedValue: '',
+						options: Object.values(ConteTypes)?.length ? FilterHelper.formatOptions(Object.values(ConteTypes)) : [],
+					});
+				}
+				if (field.filterKey === FilterKey.MediaType) {
+					filterResponse.push({
+						filterTitle: field.filterTitle,
+						filterKey: field.filterKey,
+						filterType: field.filterType,
+						selectedValue: '',
+						options: Object.values(ContentStatus)?.length ? FilterHelper.formatOptions(Object.values(ContentStatus)) : [],
 					});
 				}
 			} else if (field.filterType === FiltersEnum.NumberRange) {
