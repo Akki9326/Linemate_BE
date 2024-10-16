@@ -19,7 +19,7 @@ import S3Services from '@/utils/services/s3.services';
 import ExcelService from '@/utils/helpers/error-excel.helper';
 import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.transaction';
 import DB from '@databases';
-import { parseISO } from 'date-fns';
+import { isValid, parseISO } from 'date-fns';
 import 'reflect-metadata';
 import { Op, Sequelize } from 'sequelize';
 import { CohortService } from './cohort.service';
@@ -538,11 +538,13 @@ class UserService {
 
 		for (const filter of dynamicFilter) {
 			if (filter.filterKey === FilterKey.JoiningDate) {
-				const parsedStartDate = parseISO(String(filter.minValue));
-				const parsedEndDate = parseISO(String(filter.maxValue));
-				condition['createdAt'] = {
-					[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
-				};
+				if (isValid(filter.minValue) && isValid(filter.maxValue)) {
+					const parsedStartDate = parseISO(String(filter.minValue));
+					const parsedEndDate = parseISO(String(filter.maxValue));
+					condition['createdAt'] = {
+						[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
+					};
+				}
 			}
 			if (filter.filterKey === FilterKey.Cohort) {
 				const userIds = await this.cohortService.getUserByCohortId(Number(filter?.selectedValue));
@@ -554,24 +556,24 @@ class UserService {
 		condition['id'] = {
 			[Op.in]: combinedUserIds,
 		};
+		return condition;
 	}
 	public async all(pageModel: UserListDto, tenantId: number) {
 		const validSortFields = Object.keys(UserModel.rawAttributes);
 		const orderByField = validSortFields.includes(pageModel.sortField) ? pageModel.sortField : 'id';
 		const sortDirection = Object.values(SortOrder).includes(pageModel.sortOrder as SortOrder) ? pageModel.sortOrder : SortOrder.ASC;
-		const condition = {
+		let condition = {
 			isDeleted: false,
 			isActive: true,
 		};
 
-		const totalUsersCount = await this.users.count({
-			where: condition,
-		});
-
 		if (pageModel.filter) {
 			condition['isActive'] = pageModel.filter.isActive ?? true;
 			if (pageModel.filter.dynamicFilter && pageModel.filter.dynamicFilter.length) {
-				await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter);
+				condition = {
+					...condition,
+					...(await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter)),
+				};
 			}
 		}
 		if (tenantId) {
@@ -579,7 +581,9 @@ class UserService {
 				[Op.contains]: [tenantId],
 			};
 		}
-
+		const totalUsersCount = await this.users.count({
+			where: condition,
+		});
 		const userList = await this.users.findAll({
 			where: condition,
 			attributes: ['id', 'firstName', 'lastName', 'email', 'userType', 'mobileNumber', 'createdAt', 'tenantIds', 'employeeId', 'profilePhoto'],
