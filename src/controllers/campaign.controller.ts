@@ -1,5 +1,5 @@
 import { AssignCampaign, CampaignMasterDto } from '@/models/dtos/campaign.dto';
-import { CampaignListDto } from '@/models/dtos/campaign-list.dto';
+import { CampaignListRequestDto } from '@/models/dtos/campaign-list.dto';
 import { CampaignService } from '@/services/campaign.service';
 import { NextFunction, Response, Request } from 'express-serve-static-core';
 import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
@@ -54,7 +54,7 @@ class CampaignController {
 
 	public list = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
-			const pageModel = req.body as CampaignListDto;
+			const pageModel = req.body as CampaignListRequestDto;
 			const tenantId = req.tenantId as number;
 			const campaigntResponse = await this.campaignService.all(pageModel, tenantId);
 			AppResponseHelper.sendSuccess(res, 'Success', campaigntResponse);
