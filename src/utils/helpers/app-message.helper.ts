@@ -84,4 +84,6 @@ export const CampaignMessage = {
 export const TemplateMessage = {
 	templateNotFound: 'template not found',
 	templateAlreadyExists: 'template already exists',
+	notFoundArchiveTemplate: 'not found archive template.',
+	notFoundUnArchiveTemplate: 'not found un archive template.',
 };

@@ -146,7 +146,10 @@ export class TemplateContentCardDto {
 	@IsOptional()
 	public buttonIds: number[];
 }
-
+export class TemplateActionDto {
+	@IsArray()
+	public templateIds: number[];
+}
 export class TemplateDto {
 	@IsNumber()
 	@IsOptional()
