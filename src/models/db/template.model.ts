@@ -1,6 +1,7 @@
 import { DataTypes, Sequelize } from 'sequelize';
 import { Channel, TemplateStatus, TemplateType } from '../enums/template.enum';
 import { AppDBModel, AppDB_Common_Fields } from './app-db.model';
+import { UserModel } from './users.model';
 
 export class TemplateModel extends AppDBModel {
 	public id: number;
@@ -95,6 +96,15 @@ export default function (sequelize: Sequelize): typeof TemplateModel {
 			sequelize,
 		},
 	);
+	TemplateModel.belongsTo(UserModel, {
+		foreignKey: 'createdBy',
+		as: 'Creator',
+	});
+
+	TemplateModel.belongsTo(UserModel, {
+		foreignKey: 'updatedBy',
+		as: 'Updater',
+	});
 
 	return TemplateModel;
 }

@@ -7,6 +7,8 @@ import { AppMessages, TenantMessage, VariableMessage } from '@/utils/helpers/app
 import DB from '@databases';
 import { VariableHelper } from '@/utils/helpers/variable.helper';
 import { Op } from 'sequelize';
+import { UserVariableMasterModel } from '@/models/db/userVariableMaster';
+import { SortOrder } from '@/models/enums/sort-order.enum';
 
 class VariableServices {
 	private variableMaster = DB.VariableMaster;
@@ -112,8 +114,9 @@ class VariableServices {
 		return { id: variable.id };
 	}
 	public async all(pageModel: variableListDto, tenantId: number) {
-		const orderByField = pageModel.sortField || 'id',
-			sortDirection = pageModel.sortOrder || 'ASC';
+		const validSortFields = Object.keys(UserVariableMasterModel.rawAttributes).concat(['createdBy']);
+		const sortField = validSortFields.includes(pageModel.sortField) ? pageModel.sortField : 'id';
+		const sortOrder = Object.values(SortOrder).includes(pageModel.sortOrder as SortOrder) ? pageModel.sortOrder : SortOrder.ASC;
 
 		const isPaginationEnabled = pageModel.page && pageModel.limit;
 		if (!tenantId) {
@@ -140,7 +143,7 @@ class VariableServices {
 		const validateList = await this.variableMaster.findAndCountAll({
 			where: { isDeleted: false, ...condition },
 			attributes: ['id', 'name', 'isMandatory', 'type', 'description', 'category', 'options', 'tenantId'],
-			order: [[orderByField, sortDirection]],
+			order: [[sortField, sortOrder]],
 			...(isPaginationEnabled && { limit: pageModel.limit, offset: (pageModel.page - 1) * pageModel.limit }), // Apply pagination if enabled
 		});
 		return validateList;

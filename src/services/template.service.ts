@@ -14,7 +14,7 @@ import { ExternalTemplatePayload } from '@/models/interfaces/template.interface'
 import { AppMessages, TemplateMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
 import { TemplateGenerator } from '@/utils/helpers/template.helper';
 import S3Services from '@/utils/services/s3.services';
-import { isValid, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
 import { BelongsTo, Op, Sequelize, Transaction, WhereOptions } from 'sequelize';
 
 export class TemplateService {
@@ -757,12 +757,14 @@ export class TemplateService {
 	private async mappingDynamicFilter(condition: object, dynamicFilter: FilterResponse[]) {
 		for (const filter of dynamicFilter) {
 			if (filter.filterKey === FilterKey.CreatedDate) {
-				if (isValid(filter.minValue) && isValid(filter.maxValue)) {
+				if (filter.minValue && filter.maxValue) {
 					const parsedStartDate = parseISO(String(filter.minValue));
 					const parsedEndDate = parseISO(String(filter.maxValue));
 					condition['createdAt'] = {
 						[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
 					};
+				} else {
+					throw new BadRequestException(AppMessages.InvalidFilterDate);
 				}
 			}
 			if (filter.filterKey === FilterKey.Language && filter?.selectedValue) {
@@ -782,7 +784,7 @@ export class TemplateService {
 	}
 
 	public async all(pageModel: TemplateListRequestDto, tenantId: number) {
-		const validSortFields = Object.keys(TemplateModel.rawAttributes);
+		const validSortFields = Object.keys(TemplateModel.rawAttributes).concat(['createdBy']);
 		const sortField = validSortFields.includes(pageModel.sortField) ? pageModel.sortField : 'id';
 		const sortOrder = Object.values(SortOrder).includes(pageModel.sortOrder as SortOrder) ? pageModel.sortOrder : SortOrder.ASC;
 		const isPaginationEnabled = pageModel.page && pageModel.limit;
@@ -813,7 +815,7 @@ export class TemplateService {
 		}
 		const templateResult = await this.template.findAndCountAll({
 			where: condition,
-			order: [[sortField, sortOrder]],
+			order: sortField === 'createdBy' ? [[{ model: this.users, as: 'Creator' }, 'firstName', sortOrder]] : [[sortField, sortOrder]],
 			attributes: ['id', 'name', 'description', 'channel', 'language', 'status', 'createdAt', 'updatedAt'],
 			include: [
 				{
