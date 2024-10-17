@@ -1,18 +1,18 @@
 import DB from '@/databases';
 import { BadRequestException } from '@/exceptions/BadRequestException';
+import { CohortMasterModel } from '@/models/db/cohortMaster.model';
 import { CohortListDto } from '@/models/dtos/cohort-list.dto';
 import { AssignCohort, CohortDto } from '@/models/dtos/cohort.dto';
 import { CohortRuleDataTypes, RuleOperators, RuleTypes } from '@/models/enums/cohort.enum';
+import { FilterKey } from '@/models/enums/filter.enum';
+import { SortOrder } from '@/models/enums/sort-order.enum';
 import { AssignCohortUserId } from '@/models/interfaces/assignCohort';
 import { FilterCondition, FilterResponse } from '@/models/interfaces/filter.interface';
 import { AppMessages, CohortMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
 import { applyingCohort } from '@/utils/helpers/cohort.helper';
-import { isValid, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
 import { BelongsTo, Op, Sequelize, WhereOptions } from 'sequelize';
 import VariableServices from './variable.service';
-import { FilterKey } from '@/models/enums/filter.enum';
-import { CohortMasterModel } from '@/models/db/cohortMaster.model';
-import { SortOrder } from '@/models/enums/sort-order.enum';
 
 export class CohortService {
 	private cohortMaster = DB.CohortMaster;
@@ -248,7 +248,7 @@ export class CohortService {
 		return cohortMaster.id;
 	}
 
-	private async getCohortIdsFromVariableMatrix(filterCriteria: { variableId: number; value: string }[], condition: FilterCondition) {
+	private async getCohortIdsFromVariableMatrix(filterCriteria: { variableId: number; value: string }[]) {
 		const whereConditions = filterCriteria.map(criteria => {
 			const jsonStringValue = JSON.stringify([criteria.value]);
 			return {
@@ -285,16 +285,11 @@ export class CohortService {
 		});
 
 		const cohortIds = cohortMatrixRecords.map(record => record.cohortId);
-		const combinedCohortIds = Array.from(new Set([...cohortIds, condition.id]));
-
-		condition = {
-			...condition,
-			id: { [Op.in]: combinedCohortIds.filter(id => typeof id === 'number') },
-		};
-		return condition;
+		return cohortIds;
 	}
 
 	private async mappingDynamicFilter(condition: FilterCondition, dynamicFilter: FilterResponse[]) {
+		const cohortUserIds = [];
 		const variableList = dynamicFilter
 			.filter(filter => 'variableId' in filter && 'selectedValue' in filter)
 			.map(filter => ({
@@ -304,25 +299,49 @@ export class CohortService {
 
 		for (const filter of dynamicFilter) {
 			if (filter.filterKey === FilterKey.JoiningDate) {
-				if (isValid(filter.minValue) && isValid(filter.maxValue)) {
+				if (filter.minValue && filter.maxValue) {
 					const parsedStartDate = parseISO(String(filter.minValue));
 					const parsedEndDate = parseISO(String(filter.maxValue));
 					condition['createdAt'] = {
 						[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
 					};
+				} else {
+					throw new BadRequestException(AppMessages.InvalidFilterDate);
 				}
 			}
 			if (filter.filterKey === FilterKey.Cohort && filter?.selectedValue) {
-				condition['id'] = filter?.selectedValue;
+				cohortUserIds.push(filter?.selectedValue);
 			}
 		}
-		condition = await this.getCohortIdsFromVariableMatrix(variableList, condition);
+		let combinedUserIds = [];
+		const variableMatrixUserIds = await this.getCohortIdsFromVariableMatrix(variableList);
+		if (variableMatrixUserIds.length && cohortUserIds.length) {
+			const cohortUserIdsSet = new Set(cohortUserIds);
+			combinedUserIds = variableMatrixUserIds.filter(userId => cohortUserIdsSet.has(userId));
+		} else {
+			if (variableMatrixUserIds.length) {
+				combinedUserIds = variableMatrixUserIds;
+				if (cohortUserIds.length) {
+					combinedUserIds = cohortUserIds;
+				}
+			} else {
+				if (!variableList?.length && cohortUserIds.length) {
+					combinedUserIds = cohortUserIds;
+				}
+			}
+		}
+		if (variableList.length || cohortUserIds?.length) {
+			condition['id'] = {
+				[Op.in]: combinedUserIds,
+			};
+		}
+
 		return condition;
 	}
 
 	public async all(pageModel: CohortListDto, tenantId: number) {
 		const { page = 1, limit = 10 } = pageModel;
-		const validSortFields = Object.keys(CohortMasterModel.rawAttributes).concat(['EnrolledUserCount']);
+		const validSortFields = Object.keys(CohortMasterModel.rawAttributes).concat(['EnrolledUserCount', 'createdBy']);
 		const sortField = validSortFields.includes(pageModel.sortField) ? pageModel.sortField : 'id';
 		const sortOrder = Object.values(SortOrder).includes(pageModel.sortOrder as SortOrder) ? pageModel.sortOrder : SortOrder.ASC;
 		const offset = (page - 1) * limit;
@@ -357,7 +376,7 @@ export class CohortService {
 			where: condition,
 			offset,
 			limit,
-			order: [[sortField, sortOrder]],
+			order: sortField === 'createdBy' ? [[{ model: this.users, as: 'Creator' }, 'firstName', sortOrder]] : [[sortField, sortOrder]],
 			attributes: [
 				'id',
 				'name',

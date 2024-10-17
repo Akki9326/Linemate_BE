@@ -1,8 +1,12 @@
 import { FRONTEND_URL, MAX_CHIEF } from '@/config';
 import { BadRequestException } from '@/exceptions/BadRequestException';
+import { ServerException } from '@/exceptions/ServerException';
+import { UserModel } from '@/models/db/users.model';
 import { UserListDto } from '@/models/dtos/user-list.dto';
 import { ChangePasswordDto, SelectUserData, UserActionDto, UserData, UserDto } from '@/models/dtos/user.dto';
 import { FileDestination } from '@/models/enums/file-destination.enum';
+import { FilterKey } from '@/models/enums/filter.enum';
+import { SortOrder } from '@/models/enums/sort-order.enum';
 import { UserType, getPermissionGroup } from '@/models/enums/user-types.enum';
 import { VariableCategories, VariableType } from '@/models/enums/variable.enum';
 import { FilterResponse } from '@/models/interfaces/filter.interface';
@@ -12,26 +16,22 @@ import { TenantVariables, variableValues } from '@/models/interfaces/variable.in
 import { AppMessages, RoleMessage, TenantMessage, VariableMessage } from '@/utils/helpers/app-message.helper';
 import { UserCaching } from '@/utils/helpers/caching-user.helper';
 import { findDefaultRole } from '@/utils/helpers/default.role.helper';
+import ExcelService from '@/utils/helpers/error-excel.helper';
 import { PasswordHelper } from '@/utils/helpers/password.helper';
 import { VariableHelper } from '@/utils/helpers/variable.helper';
 import { Email } from '@/utils/services/email';
 import S3Services from '@/utils/services/s3.services';
-import ExcelService from '@/utils/helpers/error-excel.helper';
 import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.transaction';
 import DB from '@databases';
-import { isValid, parseISO } from 'date-fns';
+import { plainToInstance } from 'class-transformer';
+import { ValidationError, validate } from 'class-validator';
+import { parseISO } from 'date-fns';
 import 'reflect-metadata';
 import { Op, Sequelize } from 'sequelize';
 import { CohortService } from './cohort.service';
+import { RoleService } from './role.service';
 import { TenantService } from './tenant.service';
 import VariableServices from './variable.service';
-import { ServerException } from '@/exceptions/ServerException';
-import { ValidationError, validate } from 'class-validator';
-import { plainToInstance } from 'class-transformer';
-import { FilterKey } from '@/models/enums/filter.enum';
-import { SortOrder } from '@/models/enums/sort-order.enum';
-import { UserModel } from '@/models/db/users.model';
-import { RoleService } from './role.service';
 
 class UserService {
 	private users = DB.Users;
@@ -538,12 +538,14 @@ class UserService {
 
 		for (const filter of dynamicFilter) {
 			if (filter.filterKey === FilterKey.JoiningDate) {
-				if (isValid(filter.minValue) && isValid(filter.maxValue)) {
+				if (filter.minValue && filter.maxValue) {
 					const parsedStartDate = parseISO(String(filter.minValue));
 					const parsedEndDate = parseISO(String(filter.maxValue));
 					condition['createdAt'] = {
 						[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
 					};
+				} else {
+					throw new BadRequestException(AppMessages.InvalidFilterDate);
 				}
 			}
 			if (filter.filterKey === FilterKey.Cohort) {
@@ -552,10 +554,28 @@ class UserService {
 			}
 		}
 		const variableMatrixUserIds = await this.getUserIdsFromVariableMatrix(variableList);
-		const combinedUserIds = Array.from(new Set([...cohortUserIds, ...variableMatrixUserIds]));
-		condition['id'] = {
-			[Op.in]: combinedUserIds,
-		};
+
+		let combinedUserIds = [];
+		if (variableMatrixUserIds.length && cohortUserIds.length) {
+			const cohortUserIdsSet = new Set(cohortUserIds);
+			combinedUserIds = variableMatrixUserIds.filter(userId => cohortUserIdsSet.has(userId));
+		} else {
+			if (variableMatrixUserIds.length) {
+				combinedUserIds = variableMatrixUserIds;
+				if (cohortUserIds.length) {
+					combinedUserIds = cohortUserIds;
+				}
+			} else {
+				if (!variableList?.length && cohortUserIds.length) {
+					combinedUserIds = cohortUserIds;
+				}
+			}
+		}
+		if (variableList.length || cohortUserIds?.length) {
+			condition['id'] = {
+				[Op.in]: combinedUserIds,
+			};
+		}
 		return condition;
 	}
 	public async all(pageModel: UserListDto, tenantId: number) {

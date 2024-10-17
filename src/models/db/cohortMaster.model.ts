@@ -1,5 +1,6 @@
 import { DataTypes, Sequelize } from 'sequelize';
 import { AppDB_Common_Fields, AppDBModel } from './app-db.model';
+import { UserModel } from './users.model';
 
 export class CohortMasterModel extends AppDBModel {
 	public id: number;
@@ -46,6 +47,15 @@ export default function (sequelize: Sequelize): typeof CohortMasterModel {
 			sequelize,
 		},
 	);
+	CohortMasterModel.belongsTo(UserModel, {
+		foreignKey: 'createdBy',
+		as: 'Creator',
+	});
+
+	CohortMasterModel.belongsTo(UserModel, {
+		foreignKey: 'updatedBy',
+		as: 'Updater',
+	});
 
 	return CohortMasterModel;
 }

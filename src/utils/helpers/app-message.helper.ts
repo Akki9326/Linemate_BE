@@ -23,6 +23,7 @@ export const AppMessages = {
 	headerTenantId: 'tenantId not found in header',
 	isRequired: 'is required.',
 	somethingWentWrong: 'Something went wrong, please try again',
+	InvalidFilterDate: 'Invalid Date',
 };
 
 export const RoleMessage = {
