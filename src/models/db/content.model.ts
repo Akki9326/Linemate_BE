@@ -1,6 +1,7 @@
 import { DataTypes, Sequelize } from 'sequelize';
 import { ConteTypes } from '../enums/contentType.enum';
 import { AppDB_Common_Fields, AppDBModel } from './app-db.model';
+import { UserModel } from './users.model';
 
 export class ContentModel extends AppDBModel {
 	public id: number;
@@ -66,6 +67,8 @@ export default function (sequelize: Sequelize): typeof ContentModel {
 			sequelize,
 		},
 	);
+	ContentModel.belongsTo(UserModel, { foreignKey: 'createdBy', as: 'Creator' });
+	UserModel.hasOne(ContentModel, { foreignKey: 'id' });
 
 	return ContentModel;
 }

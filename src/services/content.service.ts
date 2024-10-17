@@ -1,7 +1,7 @@
 import { AWS_S3_FILE_URL } from '@/config';
 import DB from '@/databases';
 import { BadRequestException } from '@/exceptions/BadRequestException';
-import { ContentDto } from '@/models/dtos/content.dto';
+import { ContentActionDto, ContentDto } from '@/models/dtos/content.dto';
 import { FileDestination } from '@/models/enums/file-destination.enum';
 import { AppMessages, assessmentMessage, ContentMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
 import { FileHelper } from '@/utils/helpers/file.helper';
@@ -305,12 +305,13 @@ export class ContentService {
 		}
 
 		if (pageModel.filter) {
+			if (pageModel.filter?.isArchive !== undefined && pageModel.filter?.isArchive !== null) {
+				condition['isArchive'] = pageModel.filter.isArchive;
+			}
+
 			if (pageModel?.filter?.dynamicFilter && pageModel?.filter?.dynamicFilter?.length) {
 				await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter);
 			}
-			// if (pageModel.filter?.archive !== undefined && pageModel.filter?.archive !== null) {
-			// 	condition['isArchive'] = pageModel.filter.archive;
-			// }
 			// if (pageModel.filter?.isPublish !== undefined && pageModel.filter?.isPublish !== null) {
 			// 	condition['isPublish'] = pageModel.filter.isPublish;
 			// }
@@ -336,6 +337,15 @@ export class ContentService {
 			order: [[sortField, sortOrder]],
 			attributes: ['id', 'name', 'createdAt', 'tenantId', 'type', 'description'],
 			include: [
+				// {
+				// 	model: this.user,
+				// 	as: 'Creator', // Use the correct alias
+				// 	attributes: ['id', 'firstName', 'lastName'],
+				// 	where: {
+				// 		firstName: { [Op.iLike]: `%${pageModel.search}%` }, // Search by creator's first name
+				// 	},
+				// 	required: false, // Use required: true if you only want contents with a matching creator
+				// },
 				{
 					association: new BelongsTo(this.user, this.content, { as: 'Creator', foreignKey: 'createdBy' }),
 					attributes: ['id', 'firstName', 'lastName'],
@@ -415,5 +425,49 @@ export class ContentService {
 
 		await content.save();
 		return content.id;
+	}
+	public async changeArchiveStatus(contentId: ContentActionDto, userId: number) {
+		const contents = await this.content.findAll({
+			where: {
+				id: {
+					[Op.in]: contentId,
+				},
+				isDeleted: false,
+			},
+		});
+
+		if (!contents.length) {
+			throw new BadRequestException(ContentMessage.notFoundArchiveContent);
+		}
+
+		for (const content of contents) {
+			content.isArchive = true;
+			content.updatedBy = userId;
+			await content.save();
+		}
+
+		return contents.map(content => ({ id: content.id }));
+	}
+	public async unArchiveContent(contentId: ContentActionDto, userId: number) {
+		const contents = await this.content.findAll({
+			where: {
+				id: {
+					[Op.in]: contentId,
+				},
+				isDeleted: false,
+			},
+		});
+
+		if (!contents.length) {
+			throw new BadRequestException(ContentMessage.notFoundUnArchiveContent);
+		}
+
+		for (const content of contents) {
+			content.isArchive = false;
+			content.updatedBy = userId;
+			await content.save();
+		}
+
+		return contents.map(content => ({ id: content.id }));
 	}
 }
