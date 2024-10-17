@@ -3888,7 +3888,73 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserSelectionResponse'
-        
+
+  /template/v1/archive:
+    post:
+      summary: Archive a Template
+      description: Archives a template based on its ID.
+      tags:
+        - Templates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                templateIds:
+                  type: array
+                  items:
+                    type: integer
+                  example: [78]
+      responses:
+        '200':
+          description: Template archived successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Template archived successfully"
+
+  /template/v1/un-archive:
+    post:
+      summary: Archive a Template
+      description: Un Archives a template based on its ID.
+      tags:
+        - Templates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                templateIds:
+                  type: array
+                  items:
+                    type: integer
+                  example: [78]
+      responses:
+        '200':
+          description: Template un archived successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Template un archived successfully"
+
   /user/v1/change-password:
     post:
       summary: Change Password for Bulk Users

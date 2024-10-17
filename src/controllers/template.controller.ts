@@ -1,5 +1,5 @@
 import { FileDto, FileMediaType } from '@/models/dtos/file.dto';
-import { TemplateDto } from '@/models/dtos/template-dto';
+import { TemplateActionDto, TemplateDto } from '@/models/dtos/template-dto';
 import { TemplateListRequestDto } from '@/models/dtos/template-list.dto';
 import { RequestWitFile, RequestWithUser } from '@/models/interfaces/auth.interface';
 import { TemplateService } from '@/services/template.service';
@@ -65,6 +65,26 @@ class TemplateController {
 			const templateId = parseInt(req.params.id);
 			const template = await this.templateService.update(templateDetails, templateId, userId);
 			AppResponseHelper.sendSuccess(res, 'Success', template);
+		} catch (ex) {
+			next(ex);
+		}
+	};
+	public archiveTemplate = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const templateIds = req.body.templateIds as TemplateActionDto;
+			const userId: number = req.user.id;
+			const userResponse = await this.templateService.archive(templateIds, userId);
+			AppResponseHelper.sendSuccess(res, 'Success', userResponse);
+		} catch (ex) {
+			next(ex);
+		}
+	};
+	public unArchiveTemplate = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const userIds = req.body.templateIds as TemplateActionDto;
+			const userId: number = req.user.id;
+			const userResponse = await this.templateService.unArchive(userIds, userId);
+			AppResponseHelper.sendSuccess(res, 'Success', userResponse);
 		} catch (ex) {
 			next(ex);
 		}

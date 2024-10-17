@@ -1,3 +1,4 @@
+import { TemplateActionDto } from '@/models/dtos/template-dto';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import DB from '@/databases';
 import { BadRequestException } from '@/exceptions/BadRequestException';
@@ -793,8 +794,8 @@ export class TemplateService {
 		if (!tenantId) {
 			throw new BadRequestException(AppMessages.headerTenantId);
 		}
-		if (pageModel?.filter?.isDeleted) {
-			condition.isDeleted = pageModel?.filter?.isDeleted;
+		if (pageModel?.filter?.isArchive) {
+			condition.isArchive = pageModel?.filter?.isArchive;
 		}
 		if (pageModel?.filter?.dynamicFilter && pageModel?.filter?.dynamicFilter?.length) {
 			condition = { ...condition, ...(await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter)) };
@@ -855,5 +856,45 @@ export class TemplateService {
 			file: s3Response?.imageUrl,
 			sample: response?.file.split('uploads/')[1] || '',
 		};
+	}
+	public async unArchive(templateIds: TemplateActionDto, userId: number) {
+		const templateToUnArchive = await this.template.findAll({
+			where: {
+				id: {
+					[Op.in]: templateIds,
+				},
+				isDeleted: false,
+			},
+		});
+		if (!templateToUnArchive.length) {
+			throw new BadRequestException(TemplateMessage.notFoundUnArchiveTemplate);
+		}
+		for (const template of templateToUnArchive) {
+			template.isArchive = false;
+			template.updatedBy = userId;
+			await template.save();
+		}
+		return templateToUnArchive.map(template => ({ id: template.id }));
+	}
+	public async archive(templateIds: TemplateActionDto, userId: number) {
+		const templateToArchive = await this.template.findAll({
+			where: {
+				id: {
+					[Op.in]: templateIds,
+				},
+				isDeleted: false,
+			},
+		});
+		console.log('templateToArchive', templateToArchive);
+		if (!templateToArchive.length) {
+			throw new BadRequestException(TemplateMessage.notFoundArchiveTemplate);
+		}
+		for (const template of templateToArchive) {
+			template.isArchive = true;
+			template.updatedBy = userId;
+			await template.save();
+		}
+		console.log('templateToArchive', templateToArchive);
+		return templateToArchive.map(template => ({ id: template.id }));
 	}
 }

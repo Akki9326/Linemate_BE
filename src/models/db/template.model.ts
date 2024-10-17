@@ -19,6 +19,7 @@ export class TemplateModel extends AppDBModel {
 	public providerTemplateId: string;
 	public notificationTemplateId: string;
 	public status: string;
+	public isArchive: boolean;
 }
 
 export default function (sequelize: Sequelize): typeof TemplateModel {
@@ -89,6 +90,11 @@ export default function (sequelize: Sequelize): typeof TemplateModel {
 			notificationTemplateId: {
 				type: DataTypes.STRING,
 				allowNull: true,
+			},
+			isArchive: {
+				type: DataTypes.BOOLEAN,
+				allowNull: false,
+				defaultValue: false,
 			},
 		},
 		{
