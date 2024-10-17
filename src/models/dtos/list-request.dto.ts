@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsEnum, IsObject, IsDate, IsArray } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsEnum, IsObject, IsDate, IsArray, IsBoolean } from 'class-validator';
 import { SortOrder } from '../enums/sort-order.enum';
 import { ContentStatus, ConteTypes } from '../enums/contentType.enum';
 import { FilterResponse } from '../interfaces/filter.interface';
@@ -40,6 +40,9 @@ export class ContentListFilterDto {
 
 	@IsArray()
 	dynamicFilter: FilterResponse[];
+
+	@IsBoolean()
+	isArchive: boolean;
 }
 
 export class ContentListRequestDto extends ListRequestDto<ContentListFilterDto> {}

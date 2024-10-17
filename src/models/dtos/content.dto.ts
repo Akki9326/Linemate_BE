@@ -50,3 +50,8 @@ export class ContentDto {
 	@IsEnum(timeType)
 	public timeType: timeType;
 }
+
+export class ContentActionDto {
+	@IsArray()
+	public contentIds: number[];
+}

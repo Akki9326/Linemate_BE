@@ -1,4 +1,4 @@
-import { ContentDto } from '@/models/dtos/content.dto';
+import { ContentActionDto, ContentDto } from '@/models/dtos/content.dto';
 import { ContentListRequestDto } from '@/models/dtos/list-request.dto';
 import { RequestWithUser } from '@/models/interfaces/auth.interface';
 import { ContentService } from '@/services/content.service';
@@ -53,6 +53,26 @@ class ContentController {
 			const contentId = parseInt(req.params.id);
 			const userId = req.user.id as number;
 			const contentResponse = await this.contentService.remove(contentId, userId);
+			AppResponseHelper.sendSuccess(res, 'Success', contentResponse);
+		} catch (ex) {
+			next(ex);
+		}
+	};
+	public archiveContent = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const contentId = req.body.contentIds as ContentActionDto;
+			const userId: number = req.user.id;
+			const contentResponse = await this.contentService.changeArchiveStatus(contentId, userId);
+			AppResponseHelper.sendSuccess(res, 'Success', contentResponse);
+		} catch (ex) {
+			next(ex);
+		}
+	};
+	public unArchiveContent = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const contentId = req.body.contentIds as ContentActionDto;
+			const userId: number = req.user.id;
+			const contentResponse = await this.contentService.unArchiveContent(contentId, userId);
 			AppResponseHelper.sendSuccess(res, 'Success', contentResponse);
 		} catch (ex) {
 			next(ex);

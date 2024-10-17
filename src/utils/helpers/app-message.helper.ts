@@ -56,6 +56,8 @@ export const CommonMessage = {
 };
 export const ContentMessage = {
 	contentNotFound: 'content not found',
+	notFoundArchiveContent: 'not found archive content.',
+	notFoundUnArchiveContent: 'not found un archive content.',
 };
 
 export const assessmentMessage = {

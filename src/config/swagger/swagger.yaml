@@ -4343,6 +4343,72 @@ paths:
               schema:
                 $ref: '#/components/schemas/ListContentsResponse'
 
+  /content/v1/archive:
+    post:
+      summary: Archive a content
+      description: Archives a content based on its ID.
+      tags:
+        - Content
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contentIds:
+                  type: array
+                  items:
+                    type: integer
+                  example: [1]
+      responses:
+        '200':
+          description: content archived successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "content archived successfully"
+
+  /content/v1/un-archive:
+    post:
+      summary: Archive a content
+      description: Un Archives a content based on its ID.
+      tags:
+        - Content
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contentIds:
+                  type: array
+                  items:
+                    type: integer
+                  example: [1]
+      responses:
+        '200':
+          description: content un archived successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "content un archived successfully"
+
   /filters/v1/list:
     get:
       summary: List Filters

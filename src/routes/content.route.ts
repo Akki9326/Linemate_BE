@@ -21,6 +21,8 @@ class ContentRoute implements Routes {
 		this.router.get(`${this.path}/v1/:id`, authMiddleware, this.contentController.getById);
 		this.router.post(`${this.path}/v1/list`, authMiddleware, headerMiddleware, this.contentController.list);
 		this.router.delete(`${this.path}/v1/:id`, authMiddleware, this.contentController.delete);
+		this.router.post(`${this.path}/v1/archive`, authMiddleware, this.contentController.archiveContent);
+		this.router.post(`${this.path}/v1/un-archive`, authMiddleware, this.contentController.unArchiveContent);
 	}
 }
 
