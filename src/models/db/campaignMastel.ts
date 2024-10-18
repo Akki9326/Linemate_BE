@@ -18,6 +18,7 @@ export class CampaignMasterModel extends AppDBModel {
 	public reoccurenceType: string;
 	public reoccurenceDetails: object;
 	public deliveryStatus: number;
+	public UploadId: string;
 }
 
 export default function (sequelize: Sequelize): typeof CampaignMasterModel {
@@ -85,6 +86,10 @@ export default function (sequelize: Sequelize): typeof CampaignMasterModel {
 			deliveryStatus: {
 				type: DataTypes.INTEGER,
 				defaultValue: 0,
+			},
+			UploadId: {
+				type: DataTypes.STRING,
+				allowNull: false,
 			},
 		},
 		{

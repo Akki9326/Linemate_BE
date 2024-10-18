@@ -1,5 +1,5 @@
 import DB from '@/databases';
-import { Op, WhereOptions, BelongsTo } from 'sequelize';
+import { Op, WhereOptions, BelongsTo, Sequelize } from 'sequelize';
 import { AssignCampaign, CampaignMasterDto } from '@/models/dtos/campaign.dto';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { AppMessages, CampaignMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
@@ -10,6 +10,7 @@ import { ReoccurenceType, CampaignStatusType } from '@/models/enums/campaign.enu
 import { CampaignMasterModel } from '@/models/db/campaignMastel';
 import { SortOrder } from '@/models/enums/sort-order.enum';
 import { AssignCampaignUserId } from '@/models/interfaces/assignCampaign';
+import { createCampaignOnFyno, generateCsvFile } from '@/utils/helpers/campaign.helper';
 
 export class CampaignService {
 	private campaignMaster = DB.CampaignMaster;
@@ -34,6 +35,26 @@ export class CampaignService {
 			campaignDetails['userIds'] = (await applyingCampaign(campaignDetails?.rules)) || [];
 		}
 
+		// Get all the campaign with same rules
+		const existingCampaigns = await this.campaignUserMatrix.findAll({
+			where: {
+				isDeleted: false, // Optional if you want to exclude deleted records
+			},
+			attributes: ['userId', 'campaignId', [Sequelize.fn('COUNT', Sequelize.col('campaignId')), 'campaignCount']],
+			group: ['campaignId', 'userId'],
+			raw: true,
+		});
+
+		const fynoCampaignUploadId = await generateCsvFile(existingCampaigns);
+		if (!fynoCampaignUploadId) {
+			throw new BadRequestException(CampaignMessage.cannotCreateCampaign);
+		}
+
+		const fynoCampaign = await createCampaignOnFyno(fynoCampaignUploadId, campaignDetails.name);
+		if (!fynoCampaign) {
+			throw new BadRequestException(CampaignMessage.cannotCreateCampaign);
+		}
+
 		let campaign = new this.campaignMaster();
 		campaign.name = campaignDetails.name;
 		campaign.description = campaignDetails.description;
@@ -47,6 +68,7 @@ export class CampaignService {
 		campaign.rules = campaignDetails.rules;
 		campaign.tenantId = campaignDetails.tenantId;
 		campaign.deliveryStatus = campaignDetails.deliveryStatus;
+		campaign.UploadId = fynoCampaign.upload_id;
 		campaign.createdBy = userId;
 
 		if (campaignDetails?.reoccurenceType === ReoccurenceType.custom) {
