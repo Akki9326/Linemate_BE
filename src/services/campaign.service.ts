@@ -4,13 +4,16 @@ import { AssignCampaign, CampaignMasterDto } from '@/models/dtos/campaign.dto';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { AppMessages, CampaignMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
 import { applyingCampaign } from '@/utils/helpers/cohort.helper';
-import { CampaignListDto } from '@/models/dtos/campaign-list.dto';
+import { CampaignListRequestDto } from '@/models/dtos/campaign-list.dto';
 import { CampaignMatrixDto } from '@/models/dtos/campaignMatrix.dto';
 import { ReoccurenceType, CampaignStatusType } from '@/models/enums/campaign.enums';
 import { CampaignMasterModel } from '@/models/db/campaignMastel';
 import { SortOrder } from '@/models/enums/sort-order.enum';
 import { AssignCampaignUserId } from '@/models/interfaces/assignCampaign';
 import { createCampaignOnFyno, generateCsvFile } from '@/utils/helpers/campaign.helper';
+import { FilterResponse } from '@/models/interfaces/filter.interface';
+import { FilterKey } from '@/models/enums/filter.enum';
+import { parseISO } from 'date-fns';
 
 export class CampaignService {
 	private campaignMaster = DB.CampaignMaster;
@@ -215,7 +218,34 @@ export class CampaignService {
 		return campaignMaster.id;
 	}
 
-	public async all(pageModel: CampaignListDto, tenantId: number) {
+	private async mappingDynamicFilter(condition: object, dynamicFilter: FilterResponse[]) {
+		for (const filter of dynamicFilter) {
+			if (filter.filterKey === FilterKey.LastTrigger) {
+				const parsedStartDate = parseISO(String(filter.minValue));
+				const parsedEndDate = parseISO(String(filter.maxValue));
+				condition['reoccurenceDetails.startDate'] = {
+					[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
+				};
+			}
+			if (filter.filterKey === FilterKey.NextTrigger) {
+				const parsedStartDate = parseISO(String(filter.minValue));
+				const parsedEndDate = parseISO(String(filter.maxValue));
+				condition['reoccurenceDetails.endDate'] = {
+					[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
+				};
+			}
+			if (filter.filterKey === FilterKey.Status && filter?.selectedValue) {
+				condition['status'] = filter.selectedValue;
+			}
+			if (filter.filterKey === FilterKey.Channel && filter?.selectedValue) {
+				condition['channel'] = {
+					[Op.in]: filter.selectedValue,
+				};
+			}
+		}
+	}
+
+	public async all(pageModel: CampaignListRequestDto, tenantId: number) {
 		const { page = 1, limit = 10 } = pageModel;
 		const validSortFields = Object.keys(CampaignMasterModel.rawAttributes);
 		const sortField = validSortFields.includes(pageModel.sortField) ? pageModel.sortField : 'id';
@@ -240,18 +270,10 @@ export class CampaignService {
 		}
 
 		if (pageModel?.filter) {
-			const { tags, channel, status, isArchived } = pageModel.filter;
-
-			condition = {
-				...condition,
-				...(tags && { tags: { [Op.contains]: tags } }),
-				...(channel && { channel: { [Op.contains]: channel } }),
-				...(status && { status }),
-				...(isArchived !== undefined && { isArchived }),
-				// Trigger filters pending
-			};
+			if (pageModel?.filter?.dynamicFilter && pageModel?.filter?.dynamicFilter?.length) {
+				await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter);
+			}
 		}
-
 		const campaignResule = await this.campaignMaster.findAll({
 			where: condition,
 			offset,

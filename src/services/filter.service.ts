@@ -8,6 +8,7 @@ import { CohortService } from './cohort.service';
 import { LanguageService } from './language.service';
 import VariableServices from './variable.service';
 import { ContentStatus, ConteTypes } from '@/models/enums/contentType.enum';
+import { CampaignStatusType } from '@/models/enums/campaign.enums';
 
 export class FilterService {
 	private variableServices = new VariableServices();
@@ -81,6 +82,15 @@ export class FilterService {
 						filterType: field.filterType,
 						selectedValue: '',
 						options: Object.values(Channel)?.length ? FilterHelper.formatOptions(Object.values(Channel)) : [],
+					});
+				}
+				if (field.filterKey === FilterKey.Status) {
+					filterResponse.push({
+						filterTitle: field.filterTitle,
+						filterKey: field.filterKey,
+						filterType: field.filterType,
+						selectedValue: '',
+						options: Object.values(CampaignStatusType)?.length ? FilterHelper.formatOptions(Object.values(CampaignStatusType)) : [],
 					});
 				}
 				if (field.filterKey === FilterKey.TemplateStatus) {
