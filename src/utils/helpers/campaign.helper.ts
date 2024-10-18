@@ -67,7 +67,7 @@ const uploadCsvOfFynoCampaign = async form => {
 		} else {
 			logger.error('Error:', error.message);
 		}
-		throw error;
+		throw error.response.data;
 	}
 };
 
@@ -87,6 +87,25 @@ export const createCampaignOnFyno = async (uploadId: string, campaignName: strin
 			},
 		);
 		return response.data;
+	} catch (error) {
+		if (axios.isAxiosError(error)) {
+			logger.error('Error response data:', error.response?.data);
+			logger.error('Error status code:', error.response?.status);
+		} else {
+			logger.error('Error:', error.message);
+		}
+		throw error;
+	}
+};
+
+export const removeCampaign = async (fynoCampaignId: string) => {
+	try {
+		const responst = await axios.delete(`${FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/uploads/${fynoCampaignId}`, {
+			headers: {
+				Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
+			},
+		});
+		return responst.data;
 	} catch (error) {
 		if (axios.isAxiosError(error)) {
 			logger.error('Error response data:', error.response?.data);
