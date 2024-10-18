@@ -39,7 +39,6 @@ export const generateCsvFile = async campaigns => {
 	xlsx.utils.book_new();
 	const worksheet = xlsx.utils.aoa_to_sheet(csvContent);
 	const csvData = xlsx.utils.sheet_to_csv(worksheet);
-	console.log(csvData);
 
 	const form = new FormData();
 	form.append('file', Buffer.from(csvData), {
@@ -47,6 +46,10 @@ export const generateCsvFile = async campaigns => {
 		contentType: 'text/csv',
 	});
 
+	return await uploadCsvOfFynoCampaign(form);
+};
+
+const uploadCsvOfFynoCampaign = async form => {
 	// eslint-disable-next-line no-useless-catch
 	try {
 		// Call the Fyno API
@@ -56,9 +59,14 @@ export const generateCsvFile = async campaigns => {
 				Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
 			},
 		});
-
-		return response.data.upload_id;
+		return response.data;
 	} catch (error) {
+		if (axios.isAxiosError(error)) {
+			logger.error('Error response data:', error.response?.data);
+			logger.error('Error status code:', error.response?.status);
+		} else {
+			logger.error('Error:', error.message);
+		}
 		throw error;
 	}
 };

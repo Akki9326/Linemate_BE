@@ -53,7 +53,7 @@ export class CampaignService {
 			throw new BadRequestException(CampaignMessage.cannotCreateCampaign);
 		}
 
-		const fynoCampaign = await createCampaignOnFyno(fynoCampaignUploadId, campaignDetails.name);
+		const fynoCampaign = await createCampaignOnFyno(fynoCampaignUploadId.upload_id, campaignDetails.name);
 		if (!fynoCampaign) {
 			throw new BadRequestException(CampaignMessage.cannotCreateCampaign);
 		}
@@ -71,7 +71,7 @@ export class CampaignService {
 		campaign.rules = campaignDetails.rules;
 		campaign.tenantId = campaignDetails.tenantId;
 		campaign.deliveryStatus = campaignDetails.deliveryStatus;
-		campaign.UploadId = fynoCampaign.upload_id;
+		campaign.fynoCampaignId = fynoCampaign.upload_id;
 		campaign.createdBy = userId;
 
 		if (campaignDetails?.reoccurenceType === ReoccurenceType.custom) {

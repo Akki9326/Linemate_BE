@@ -59,7 +59,7 @@ export class CampaignMasterDto {
 
 	@IsString()
 	@IsOptional()
-	UploadId: string;
+	fynoCampaignId: string;
 }
 
 export class AssignCampaign {
