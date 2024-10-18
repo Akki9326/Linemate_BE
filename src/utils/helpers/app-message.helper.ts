@@ -84,6 +84,10 @@ export const CampaignMessage = {
 	campaignNotFound: 'campaign not found',
 	campaignInProgress: 'campaign not found or in progress',
 };
+export const CommunicationMessage = {
+	communicationNotFound: 'communication not found',
+	communicationAlreadyExists: 'communication already exists',
+};
 export const TemplateMessage = {
 	templateNotFound: 'template not found',
 	templateAlreadyExists: 'template already exists',

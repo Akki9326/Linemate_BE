@@ -885,7 +885,6 @@ export class TemplateService {
 				isDeleted: false,
 			},
 		});
-		console.log('templateToArchive', templateToArchive);
 		if (!templateToArchive.length) {
 			throw new BadRequestException(TemplateMessage.notFoundArchiveTemplate);
 		}
@@ -894,7 +893,6 @@ export class TemplateService {
 			template.updatedBy = userId;
 			await template.save();
 		}
-		console.log('templateToArchive', templateToArchive);
 		return templateToArchive.map(template => ({ id: template.id }));
 	}
 }

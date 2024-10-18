@@ -11,6 +11,7 @@ import { TenantMessage } from '@/utils/helpers/app-message.helper';
 import { FileDestination } from '@/models/enums/file-destination.enum';
 import { UserType } from '@/models/enums/user-types.enum';
 import { TenantModel } from '@/models/db/tenant.model';
+import { CommunicationHelper } from '@/utils/helpers/communication.helper';
 
 export class TenantService {
 	private tenantModel = DB.Tenant;
@@ -43,6 +44,7 @@ export class TenantService {
 			createdBy: userId,
 		});
 		await insertDefaultRoles(tenant.id, userId);
+		await CommunicationHelper.createWorkSpace(tenantDetails.name, tenant.id);
 		if (tenantDetails?.logo) {
 			const fileDestination = `${FileDestination.Tenant}/${tenant.id}`;
 			const movedUrl = await this.s3Service.moveFileByUrl(tenantDetails.logo, fileDestination);
