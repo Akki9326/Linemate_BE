@@ -3,6 +3,9 @@ export enum VariableType {
 	MultiSelect = 'multiSelect',
 	Numeric = 'numeric',
 	SingleSelect = 'singleSelect',
+	Email = 'email',
+	PhoneNumber = 'phoneNumber',
+	Date = 'date',
 }
 
 export enum VariableCategories {
