@@ -2956,26 +2956,6 @@ components:
           type: string
           example: "whatsapp"
           description: "Channel where the template will be used"
-        # businessNumber:
-        #   type: string
-        #   example: "9913221018"
-        #   description: "Business contact number"
-        # ISDCode:
-        #   type: string
-        #   example: "+91"
-        #   description: "International Subscriber Dialing (ISD) code"
-        # HSMPassword:
-        #   type: string
-        #   example: "123456"
-        #   description: "HSM password"
-        # HSMUserId:
-        #   type: string
-        #   example: "12"
-        #   description: "HSM user ID"
-        # clientTemplateId:
-        #   type: string
-        #   example: "9876"
-        #   description: "Client's template ID"
         contentType:
           type: string
           example: "carousel"
@@ -3105,26 +3085,6 @@ components:
           $ref: '#/components/schemas/TemplateType'
         channel:
           $ref: '#/components/schemas/Channel'
-        # businessNumber:
-        #   type: string
-        #   example: "9913221018"
-        #   description: "Business contact number"
-        # ISDCode:
-        #   type: string
-        #   example: "+91"
-        #   description: "International Subscriber Dialing (ISD) code"
-        # HSMPassword:
-        #   type: string
-        #   example: "123456"
-        #   description: "HSM password"
-        # HSMUserId:
-        #   type: string
-        #   example: "12"
-        #   description: "HSM user ID"
-        # clientTemplateId:
-        #   type: string
-        #   example: "9876"
-        #   description: "Client's template ID"
         contentType:
           $ref: '#/components/schemas/ContentType'
         isPreviewUrl:

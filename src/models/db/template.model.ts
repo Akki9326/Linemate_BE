@@ -9,11 +9,6 @@ export class TemplateModel extends AppDBModel {
 	public description: string;
 	public channel: string;
 	public templateType: string;
-	// public clientTemplateId: string;
-	// public HSMUserId: string;
-	// public HSMPassword: string;
-	// public ISDCode: string;
-	// public businessContactNumber: string;
 	public language: string;
 	public tenantId: number;
 	public providerTemplateId: string;
