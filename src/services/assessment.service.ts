@@ -160,6 +160,9 @@ class AssessmentServices {
 		};
 		await this.validateQuestion(assessmentData);
 		await this.storeQuestion(questionData, assessment.id);
+
+		content.isPublish = true;
+		content.save();
 	}
 }
 
