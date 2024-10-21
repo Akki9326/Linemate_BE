@@ -35,6 +35,10 @@ export class ContentListFilterDto {
 	@IsDate()
 	public endDate: Date;
 
+	@IsOptional()
+	@IsBoolean()
+	public archive: boolean;
+
 	@IsEnum(ConteTypes)
 	public mediaType: ConteTypes;
 
