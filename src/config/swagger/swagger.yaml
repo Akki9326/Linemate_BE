@@ -4437,6 +4437,38 @@ paths:
                   message:
                     type: string
                     example: "content un archived successfully"
+  /content/v1/publish:
+    post:
+      summary: Publish contents
+      description: Publish Contents.
+      tags:
+        - Content
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contentIds:
+                  type: array
+                  items:
+                    type: integer
+                  example: [1]
+      responses:
+        '200':
+          description: content published successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "content published successfully"
 
   /filters/v1/list:
     get:
