@@ -1,7 +1,6 @@
 import { FYNO_AUTH_TOKEN, FYNO_BASE_URL, FYNO_WHATSAPP_WORKSPACE_ID } from '@/config';
 import axios from 'axios';
 import FormData from 'form-data';
-// import fs from 'fs';
 import xlsx from 'xlsx';
 import { UserModel } from '@models/db/users.model';
 import { logger } from '../services/logger';
@@ -123,6 +122,26 @@ export const renameFyonCampaign = async (fynoCampaignId: string, campaignName: s
 				},
 			},
 		);
+		return response.data;
+	} catch (error) {
+		if (axios.isAxiosError(error)) {
+			logger.error('Error response data:', error.response?.data);
+			logger.error('Error status code:', error.response?.status);
+		} else {
+			logger.error('Error:', error.message);
+		}
+		throw error;
+	}
+};
+
+export const fireCampaign = async (fynoCampaignId: string) => {
+	try {
+		const response = await axios.post(`{$FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/uploads/fireevent/${fynoCampaignId}`, {
+			headers: {
+				Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
+			},
+		});
+
 		return response.data;
 	} catch (error) {
 		if (axios.isAxiosError(error)) {
