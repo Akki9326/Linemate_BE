@@ -1,4 +1,5 @@
 import { TemplateActionDto } from '@/models/dtos/template-dto';
+import { CommunicationResponse } from './../models/interfaces/communication.interface';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import DB from '@/databases';
 import { BadRequestException } from '@/exceptions/BadRequestException';
@@ -7,6 +8,7 @@ import { TemplateContentCardsModel } from '@/models/db/templateContentCard.model
 import { FileDto, FileMediaType } from '@/models/dtos/file.dto';
 import { TemplateButtonDto, TemplateDto } from '@/models/dtos/template-dto';
 import { TemplateListRequestDto } from '@/models/dtos/template-list.dto';
+import { Channel } from '@/models/enums/campaign.enums';
 import { FilterKey } from '@/models/enums/filter.enum';
 import { SortOrder } from '@/models/enums/sort-order.enum';
 import { ButtonType, MediaType, TemplateStatus, TemplateType } from '@/models/enums/template.enum';
@@ -17,6 +19,7 @@ import { TemplateGenerator } from '@/utils/helpers/template.helper';
 import S3Services from '@/utils/services/s3.services';
 import { parseISO } from 'date-fns';
 import { BelongsTo, Op, Sequelize, Transaction, WhereOptions } from 'sequelize';
+import { CommunicationService } from './communication.service';
 
 export class TemplateService {
 	public users = DB.Users;
@@ -26,6 +29,7 @@ export class TemplateService {
 	public templateContentCards = DB.TemplateContentCards;
 	public templateContentButtons = DB.TemplateContentButtons;
 	public s3Service = new S3Services();
+	public communicationService = new CommunicationService();
 	private sequelize: Sequelize;
 	constructor() {
 		this.sequelize = DB.sequelizeConnect;
@@ -80,16 +84,19 @@ export class TemplateService {
 				},
 				transaction,
 			});
-			if (!template.providerTemplateId) {
-				let providerTemplate;
-				if (templateDetails?.templateType === TemplateType.ExternalTemplate) {
-					const externalTemplateDetails = await TemplateGenerator.getExternalTemplate(templateDetails.name);
-					providerTemplate = externalTemplateDetails.template_id;
-				} else {
-					const fynoTemplateDetails = await TemplateGenerator.getFynoTemplate(templateDetails.name);
-					providerTemplate = fynoTemplateDetails.template_id;
+			const communication = await this.communicationService.findIntegrationDetails(template.tenantId, Channel.whatsapp);
+			if (communication) {
+				if (!template.providerTemplateId) {
+					let providerTemplate;
+					if (templateDetails?.templateType === TemplateType.ExternalTemplate) {
+						const externalTemplateDetails = await TemplateGenerator.getExternalTemplate(templateDetails.name, communication);
+						providerTemplate = externalTemplateDetails.template_id;
+					} else {
+						const fynoTemplateDetails = await TemplateGenerator.getFynoTemplate(templateDetails.name, communication);
+						providerTemplate = fynoTemplateDetails.template_id;
+					}
+					await template.update({ providerTemplateId: providerTemplate }, { where: { id: templateDetails.id, isDeleted: false } });
 				}
-				await template.update({ providerTemplateId: providerTemplate }, { where: { id: templateDetails.id, isDeleted: false } });
 			}
 
 			if (existingTemplate) {
@@ -119,11 +126,11 @@ export class TemplateService {
 		Object.assign(template, {
 			name: templateDetails.name,
 			description: templateDetails.description,
-			clientTemplateId: templateDetails.clientTemplateId,
-			HSMUserId: templateDetails.HSMUserId,
-			HSMPassword: templateDetails.HSMPassword,
-			ISDCode: templateDetails.ISDCode,
-			businessContactNumber: templateDetails.businessContactNumber,
+			// clientTemplateId: templateDetails.clientTemplateId,
+			// HSMUserId: templateDetails.HSMUserId,
+			// HSMPassword: templateDetails.HSMPassword,
+			// ISDCode: templateDetails.ISDCode,
+			// businessContactNumber: templateDetails.businessContactNumber,
 			channel: templateDetails.channel,
 			templateType: templateDetails.templateType,
 			language: templateDetails.language,
@@ -398,23 +405,30 @@ export class TemplateService {
 
 	private async generateTemplate(templateDetails: TemplateDto, template: TemplateModel, transaction: Transaction) {
 		let payload = {};
-
-		if (templateDetails.templateType === TemplateType.ExternalTemplate) {
-			payload = TemplateGenerator.externalTemplatePayload(templateDetails, template?.providerTemplateId);
-			const response = await TemplateGenerator.createExternalTemplate(payload);
-			await this.handleExternalTemplateResponse(response, transaction, template, templateDetails, payload as ExternalTemplatePayload);
-		} else {
-			payload = TemplateGenerator.fynoTemplatePayload(templateDetails, template?.providerTemplateId);
-			const response = {};
-			if (templateDetails.id) {
-				await TemplateGenerator.updateFynoTemplate(payload, template.name);
+		const communication = await this.communicationService.findIntegrationDetails(templateDetails.tenantId, Channel.whatsapp);
+		if (communication) {
+			if (templateDetails.templateType === TemplateType.ExternalTemplate) {
+				payload = TemplateGenerator.externalTemplatePayload(templateDetails, template?.providerTemplateId);
+				const response = await TemplateGenerator.createExternalTemplate(payload, communication);
+				await this.handleExternalTemplateResponse(
+					response,
+					transaction,
+					template,
+					templateDetails,
+					payload as ExternalTemplatePayload,
+					communication,
+				);
 			} else {
-				await TemplateGenerator.createFynoTemplate(payload);
+				payload = TemplateGenerator.fynoTemplatePayload(templateDetails, template?.providerTemplateId);
+				const response = {};
+				if (templateDetails.id) {
+					await TemplateGenerator.updateFynoTemplate(payload, template.name, communication);
+				} else {
+					await TemplateGenerator.createFynoTemplate(payload, communication);
+				}
+				await this.handleFynoTemplateResponse(response, template, transaction);
 			}
-			await this.handleFynoTemplateResponse(response, template, transaction);
 		}
-
-		return payload;
 	}
 
 	private async handleExternalTemplateResponse(
@@ -423,6 +437,7 @@ export class TemplateService {
 		template: TemplateModel,
 		templateDetails: TemplateDto,
 		payload: ExternalTemplatePayload,
+		communication: CommunicationResponse,
 	) {
 		let notificationPayload = {};
 		if (response[0].status === TemplateStatus.ERROR) {
@@ -441,10 +456,10 @@ export class TemplateService {
 						payload as ExternalTemplatePayload,
 						templateData.notificationTemplateId,
 					);
-					await TemplateGenerator.updateFynoTemplate(notificationPayload, template.name);
+					await TemplateGenerator.updateFynoTemplate(notificationPayload, template.name, communication);
 				} else {
 					notificationPayload = TemplateGenerator.externalNotificationPayload(template, payload as ExternalTemplatePayload, null);
-					const notificationDetail = await TemplateGenerator.createFynoTemplate(notificationPayload);
+					const notificationDetail = await TemplateGenerator.createFynoTemplate(notificationPayload, communication);
 					template.notificationTemplateId = notificationDetail.event?.event_flow?.template;
 				}
 			}
@@ -466,21 +481,7 @@ export class TemplateService {
 	public async one(templateId: number) {
 		const template = await this.template.findOne({
 			where: { id: templateId, isDeleted: false },
-			attributes: [
-				'id',
-				'name',
-				'description',
-				'templateType',
-				'clientTemplateId',
-				'HSMUserId',
-				'HSMPassword',
-				'ISDCode',
-				'businessContactNumber',
-				'language',
-				'channel',
-				'status',
-				'tenantId',
-			],
+			attributes: ['id', 'name', 'description', 'templateType', 'language', 'channel', 'status', 'tenantId'],
 			include: [
 				{
 					model: this.templateContent,
@@ -724,12 +725,13 @@ export class TemplateService {
 				},
 			);
 			let providerTemplateId: string;
+			const communication = await this.communicationService.findIntegrationDetails(template.tenantId, Channel.whatsapp);
 			if (!template?.providerTemplateId) {
 				if (template?.templateType === TemplateType.ExternalTemplate) {
-					const externalTemplateDetails = await TemplateGenerator.getExternalTemplate(template.name);
+					const externalTemplateDetails = await TemplateGenerator.getExternalTemplate(template.name, communication);
 					providerTemplateId = externalTemplateDetails?.template_id;
 				} else {
-					const fynoTemplateDetails = await TemplateGenerator.getFynoTemplate(template.name);
+					const fynoTemplateDetails = await TemplateGenerator.getFynoTemplate(template.name, communication);
 					providerTemplateId = fynoTemplateDetails?.template_id;
 				}
 			} else {
@@ -737,13 +739,13 @@ export class TemplateService {
 			}
 			if (template?.templateType === TemplateType.ExternalTemplate) {
 				if (providerTemplateId) {
-					await TemplateGenerator.deleteExternalTemplate(template.name, providerTemplateId, template.language);
+					await TemplateGenerator.deleteExternalTemplate(template.name, providerTemplateId, template.language, communication);
 					if (template.status === TemplateStatus.APPROVED) {
-						await TemplateGenerator.deleteFynoTemplate(template.name);
+						await TemplateGenerator.deleteFynoTemplate(template.name, communication);
 					}
 				}
 			} else {
-				await TemplateGenerator.deleteFynoTemplate(template.name);
+				await TemplateGenerator.deleteFynoTemplate(template.name, communication);
 			}
 
 			await transaction.commit();
@@ -850,12 +852,15 @@ export class TemplateService {
 		const s3Response: { imageUrl: string; id?: number } = {
 			imageUrl,
 		};
-		const response = await TemplateGenerator.uploadFynoFile(file);
-		return {
-			handler: response?.meta_handler,
-			file: s3Response?.imageUrl,
-			sample: response?.file.split('uploads/')[1] || '',
-		};
+		const communication = await this.communicationService.findIntegrationDetails(requestBody?.tenantId, Channel.whatsapp);
+		if (communication) {
+			const response = await TemplateGenerator.uploadFynoFile(file, communication);
+			return {
+				handler: response?.meta_handler,
+				file: s3Response?.imageUrl,
+				sample: response?.file.split('uploads/')[1] || '',
+			};
+		}
 	}
 	public async unArchive(templateIds: TemplateActionDto, userId: number) {
 		const templateToUnArchive = await this.template.findAll({

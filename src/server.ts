@@ -27,6 +27,7 @@ import ViberRoute from './routes/viber.route';
 import CampaignRoute from './routes/campaign.route';
 import TemplateRoute from './routes/template.route';
 import LanguageRoute from './routes/language.route';
+import CommunicationRoute from './routes/communicationRoute';
 
 validateEnv();
 
@@ -47,6 +48,7 @@ const app = new App([
 	new CampaignRoute(),
 	new TemplateRoute(),
 	new LanguageRoute(),
+	new CommunicationRoute(),
 ]);
 
 app.init();
