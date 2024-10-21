@@ -452,4 +452,27 @@ export class ContentService {
 
 		return contents.map(content => ({ id: content.id }));
 	}
+
+	public async publishContent(contentId: ContentActionDto, userId: number) {
+		const contents = await this.content.findAll({
+			where: {
+				id: {
+					[Op.in]: contentId,
+				},
+				isDeleted: false,
+			},
+		});
+
+		if (!contents.length) {
+			throw new BadRequestException(ContentMessage.notFoundUnArchiveContent);
+		}
+
+		for (const content of contents) {
+			content.isPublish = true;
+			content.updatedBy = userId;
+			await content.save();
+		}
+
+		return contents.map(content => ({ id: content.id }));
+	}
 }

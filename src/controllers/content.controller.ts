@@ -78,6 +78,17 @@ class ContentController {
 			next(ex);
 		}
 	};
+
+	public publishContent = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const contentId = req.body.contentIds as ContentActionDto;
+			const userId: number = req.user.id;
+			const contentResponse = await this.contentService.publishContent(contentId, userId);
+			AppResponseHelper.sendSuccess(res, 'Success', contentResponse);
+		} catch (ex) {
+			next(ex);
+		}
+	};
 }
 
 export default ContentController;
