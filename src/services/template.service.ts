@@ -794,11 +794,11 @@ export class TemplateService {
 		if (!tenantId) {
 			throw new BadRequestException(AppMessages.headerTenantId);
 		}
-		if (pageModel?.filter?.isArchive) {
-			condition.isArchive = pageModel?.filter?.isArchive;
-		}
 		if (pageModel?.filter?.dynamicFilter && pageModel?.filter?.dynamicFilter?.length) {
 			condition = { ...condition, ...(await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter)) };
+		}
+		if (pageModel?.filter?.isArchive == true || pageModel?.filter?.isArchive == false) {
+			condition.isArchive = pageModel?.filter?.isArchive;
 		}
 		if (tenantId) {
 			condition.tenantId = tenantId;
@@ -885,7 +885,6 @@ export class TemplateService {
 				isDeleted: false,
 			},
 		});
-		console.log('templateToArchive', templateToArchive);
 		if (!templateToArchive.length) {
 			throw new BadRequestException(TemplateMessage.notFoundArchiveTemplate);
 		}
@@ -894,7 +893,6 @@ export class TemplateService {
 			template.updatedBy = userId;
 			await template.save();
 		}
-		console.log('templateToArchive', templateToArchive);
 		return templateToArchive.map(template => ({ id: template.id }));
 	}
 }

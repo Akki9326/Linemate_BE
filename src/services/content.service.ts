@@ -308,33 +308,16 @@ export class ContentService {
 			if (pageModel?.filter?.dynamicFilter && pageModel?.filter?.dynamicFilter?.length) {
 				await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter);
 			}
-			if (pageModel.filter?.isArchive !== undefined && pageModel.filter?.isArchive !== null) {
+			if (pageModel?.filter?.isArchive == true || pageModel?.filter?.isArchive == false) {
 				condition['isArchive'] = pageModel.filter.isArchive;
 			}
-			// if (pageModel.filter?.isPublish !== undefined && pageModel.filter?.isPublish !== null) {
-			// 	condition['isPublish'] = pageModel.filter.isPublish;
-			// }
-
-			// if (pageModel.filter.createdBetween) {
-			// 	const { startDate, endDate } = pageModel.filter.createdBetween;
-			// 	if (startDate && endDate) {
-			// 		this.setDateRangeCondition('createdAt', startDate, endDate, condition);
-			// 	}
-			// }
-
-			// if (pageModel.filter.updatedBetween) {
-			// 	const { startDate, endDate } = pageModel.filter.updatedBetween;
-			// 	if (startDate && endDate) {
-			// 		this.setDateRangeCondition('updatedAt', startDate, endDate, condition);
-			// 	}
-			// }
 		}
 		const contentResult = await this.content.findAndCountAll({
 			where: condition,
 			offset,
 			limit: limit,
 			order: [[sortField, sortOrder]],
-			attributes: ['id', 'name', 'createdAt', 'tenantId', 'type', 'description'],
+			attributes: ['id', 'name', 'createdAt', 'tenantId', 'type', 'description', 'updatedAt'],
 			include: [
 				// {
 				// 	model: this.user,
