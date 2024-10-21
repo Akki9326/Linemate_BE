@@ -84,6 +84,7 @@ export const FilterMessage = {
 export const CampaignMessage = {
 	campaignNotFound: 'campaign not found',
 	campaignInProgress: 'campaign not found or in progress',
+	cannotCreateCampaign: 'error create campaign',
 };
 export const CommunicationMessage = {
 	communicationNotFound: 'communication not found',

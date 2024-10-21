@@ -56,6 +56,10 @@ export class CampaignMasterDto {
 	@IsArray()
 	@IsOptional()
 	public userIds: number[];
+
+	@IsString()
+	@IsOptional()
+	fynoCampaignId: string;
 }
 
 export class AssignCampaign {

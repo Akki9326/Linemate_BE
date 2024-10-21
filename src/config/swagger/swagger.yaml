@@ -2376,7 +2376,7 @@ components:
           type: object
           description: Filters to apply to the list of contents
           properties:
-            archive:
+            isArchive:
               type: boolean
               description: Filter by archived content
               example: true
