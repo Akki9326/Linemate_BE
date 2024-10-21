@@ -308,8 +308,8 @@ export class ContentService {
 			if (pageModel?.filter?.dynamicFilter && pageModel?.filter?.dynamicFilter?.length) {
 				await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter);
 			}
-			if (pageModel.filter?.archive !== undefined && pageModel.filter?.archive !== null) {
-				condition['isArchive'] = pageModel.filter.archive;
+			if (pageModel.filter?.isArchive !== undefined && pageModel.filter?.isArchive !== null) {
+				condition['isArchive'] = pageModel.filter.isArchive;
 			}
 			// if (pageModel.filter?.isPublish !== undefined && pageModel.filter?.isPublish !== null) {
 			// 	condition['isPublish'] = pageModel.filter.isPublish;
