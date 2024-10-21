@@ -206,11 +206,12 @@ export class CommunicationService {
 				waba_id: communication.wabaId,
 			},
 		};
-		return await CommunicationHelper.testIntegrationConfig(payload, communication.integrationId, workSpace.fynoWorkSpaceId);
+		await CommunicationHelper.testIntegrationConfig(payload, communication.integrationId, workSpace.fynoWorkSpaceId);
+		return { integrationId: communication.integrationId, fynoWorkSpaceId: workSpace.fynoWorkSpaceId };
 	}
 
 	public async one(tenantId: number, channel: Channel) {
-		const attributes = ['fromNumber', 'wabaId', 'channel', 'viberProvider', 'domain', 'sender', 'accessToken'];
+		const attributes = ['id', 'fromNumber', 'wabaId', 'channel', 'viberProvider', 'domain', 'sender', 'accessToken'];
 		const workSpace = await this.getWorkSpaceDetails(tenantId);
 		const communication = await this.getCommunicationDetails(tenantId, attributes, workSpace, channel);
 		return communication;

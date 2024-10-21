@@ -726,26 +726,28 @@ export class TemplateService {
 			);
 			let providerTemplateId: string;
 			const communication = await this.communicationService.findIntegrationDetails(template.tenantId, Channel.whatsapp);
-			if (!template?.providerTemplateId) {
-				if (template?.templateType === TemplateType.ExternalTemplate) {
-					const externalTemplateDetails = await TemplateGenerator.getExternalTemplate(template.name, communication);
-					providerTemplateId = externalTemplateDetails?.template_id;
-				} else {
-					const fynoTemplateDetails = await TemplateGenerator.getFynoTemplate(template.name, communication);
-					providerTemplateId = fynoTemplateDetails?.template_id;
-				}
-			} else {
-				providerTemplateId = template.providerTemplateId;
-			}
-			if (template?.templateType === TemplateType.ExternalTemplate) {
-				if (providerTemplateId) {
-					await TemplateGenerator.deleteExternalTemplate(template.name, providerTemplateId, template.language, communication);
-					if (template.status === TemplateStatus.APPROVED) {
-						await TemplateGenerator.deleteFynoTemplate(template.name, communication);
+			if (communication) {
+				if (!template?.providerTemplateId) {
+					if (template?.templateType === TemplateType.ExternalTemplate) {
+						const externalTemplateDetails = await TemplateGenerator.getExternalTemplate(template.name, communication);
+						providerTemplateId = externalTemplateDetails?.template_id;
+					} else {
+						const fynoTemplateDetails = await TemplateGenerator.getFynoTemplate(template.name, communication);
+						providerTemplateId = fynoTemplateDetails?.template_id;
 					}
+				} else {
+					providerTemplateId = template.providerTemplateId;
 				}
-			} else {
-				await TemplateGenerator.deleteFynoTemplate(template.name, communication);
+				if (template?.templateType === TemplateType.ExternalTemplate) {
+					if (providerTemplateId) {
+						await TemplateGenerator.deleteExternalTemplate(template.name, providerTemplateId, template.language, communication);
+						if (template.status === TemplateStatus.APPROVED) {
+							await TemplateGenerator.deleteFynoTemplate(template.name, communication);
+						}
+					}
+				} else {
+					await TemplateGenerator.deleteFynoTemplate(template.name, communication);
+				}
 			}
 
 			await transaction.commit();
