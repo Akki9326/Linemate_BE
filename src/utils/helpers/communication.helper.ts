@@ -8,7 +8,7 @@ import { WorkSpaceModel } from '@/models/db/workSpace.model';
 export const CommunicationHelper = {
 	createWorkSpace: async (name: string, tenantId: number) => {
 		const workSpaceModel = new WorkSpaceModel();
-		const workSpaceName = `${name.trim().toLowerCase().replace(/\s+/g, '-')}` + `${await CommonHelper.generateRandomId(4)}`;
+		const workSpaceName = `${name.trim().toLowerCase().replace(/\s+/g, '-')}` + '-' + `${await CommonHelper.generateRandomId(4)}`;
 		const workSpace = await CommunicationHelper.createWorkSpaceInFyno(workSpaceName);
 		workSpaceModel.fynoWorkSpaceName = workSpace.workspace_name;
 		workSpaceModel.fynoWorkSpaceId = workSpace.wsid;
