@@ -484,7 +484,6 @@ export const TemplateGenerator = {
 		return payload;
 	},
 	createExternalTemplate: async (payload: unknown, communication: CommunicationResponse) => {
-		console.log('payload', payload);
 		try {
 			const response = await axios.post(`${FYNO_BASE_URL}/${communication?.fynoWorkSpaceId}/external-template/create`, payload, {
 				headers: {
