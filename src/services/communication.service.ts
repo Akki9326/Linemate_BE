@@ -1,14 +1,14 @@
 import DB from '@/databases';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { CommunicationModel } from '@/models/db/communication.mode';
-import { TenantModel } from '@/models/db/tenant.model';
 import { CommunicationDto } from '@/models/dtos/communication.dto';
 import { Channel } from '@/models/enums/campaign.enums';
 import { CommunicationPayload } from '@/models/interfaces/communication.interface';
-import { TenantMessage } from '@/utils/helpers/app-message.helper';
+import { CommunicationMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
 import { CommonHelper } from '@/utils/helpers/common.helper';
 import { CommunicationHelper } from '@/utils/helpers/communication.helper';
 import { TenantService } from './tenant.service';
+import { WorkSpaceModel } from '@/models/db/workSpace.model';
 
 export class CommunicationService {
 	private communication = DB.CommunicationModel;
@@ -33,10 +33,10 @@ export class CommunicationService {
 			where: { workSpaceId: workSpaceDetails?.id, channel: communicationDetails.channel, isDeleted: false },
 		});
 		if (existingCommunication) {
-			throw new BadRequestException(`${communicationDetails.channel} Communication already exists for this tenant`);
+			throw new BadRequestException(`${communicationDetails.channel} communication already exists for this tenant`);
 		} else {
-			const customName = `${tenantDetails?.name.trim().toLowerCase().replace(/\s+/g, '-')}` + `${await CommonHelper.generateRandomId(4)}`;
-			const payloadResponse = await this.buildCommunicationPayload(tenantDetails, communicationDetails, workSpaceDetails.workSpaceId, customName);
+			const customName = `${tenantDetails?.name.trim().toLowerCase().replace(/\s+/g, '_')}` + `${await CommonHelper.generateRandomId(4)}`;
+			const payloadResponse = await this.buildCommunicationPayload(communicationDetails, workSpaceDetails.workSpaceId, customName);
 			const integrationResponse = await CommunicationHelper.createOrUpdateIntegration(payloadResponse);
 			const communicationModel = new this.communication();
 			const communication = await this.createUpdateCommunicationRecord(
@@ -51,18 +51,16 @@ export class CommunicationService {
 	}
 
 	public async update(communicationDetails: CommunicationDto, communicationId: number, userId: number) {
-		const tenantDetails = await this.validateTenant(communicationDetails?.tenantId);
 		const existingCommunication = await this.communication.findOne({
 			where: { id: communicationId, channel: communicationDetails.channel, isDeleted: false },
 		});
+		if (!existingCommunication) {
+			throw new BadRequestException(`${communicationDetails.channel} communication not exists for this tenant`);
+		}
 		const fynoWorkSpaceDetails = await this.workSpaceModel.findOne({
 			where: { id: existingCommunication?.workSpaceId, isDeleted: false },
 		});
-		if (!existingCommunication) {
-			throw new BadRequestException(`${communicationDetails.channel} Communication not exists for this tenant`);
-		}
 		const payloadResponse = await this.buildCommunicationPayload(
-			tenantDetails,
 			communicationDetails,
 			fynoWorkSpaceDetails.fynoWorkSpaceId,
 			existingCommunication?.customName,
@@ -80,7 +78,7 @@ export class CommunicationService {
 
 	private async validateTenant(tenantId: number) {
 		if (!tenantId) {
-			throw new BadRequestException(TenantMessage.tenantNotFound);
+			throw new BadRequestException(TenantMessage.requiredTenantId);
 		}
 		const tenantDetails = await this.tenantService.one(tenantId);
 		if (!tenantDetails) {
@@ -89,19 +87,22 @@ export class CommunicationService {
 		return tenantDetails;
 	}
 
-	private async buildCommunicationPayload(
-		tenantDetails: TenantModel,
-		communicationDetails: CommunicationDto,
-		workSpaceId: string,
-		customName: string,
-	) {
+	private async validateRequiredFields(fields: { [key: string]: string }) {
+		for (const [key, value] of Object.entries(fields)) {
+			if (!value) {
+				throw new BadRequestException(`${key} is required`);
+			}
+		}
+	}
+
+	private async buildCommunicationPayload(communicationDetails: CommunicationDto, workSpaceId: string, customName: string) {
 		let payload = {} as CommunicationPayload;
 		switch (communicationDetails?.channel) {
 			case Channel.whatsapp:
-				payload = await this.populateWhatsAppPayload(tenantDetails, communicationDetails, workSpaceId, customName);
+				payload = await this.populateWhatsAppPayload(communicationDetails, workSpaceId, customName);
 				break;
 			case Channel.viber:
-				payload = await this.populateViberPayload(tenantDetails, communicationDetails, workSpaceId, customName);
+				payload = await this.populateViberPayload(communicationDetails, workSpaceId, customName);
 				break;
 			default:
 				throw new BadRequestException('Unsupported communication channel');
@@ -109,7 +110,12 @@ export class CommunicationService {
 		return payload;
 	}
 
-	private async populateWhatsAppPayload(tenantDetails: TenantModel, communicationDetails: CommunicationDto, workSpaceId: string, customName: string) {
+	private async populateWhatsAppPayload(communicationDetails: CommunicationDto, workSpaceId: string, customName: string) {
+		await this.validateRequiredFields({
+			fromNumber: communicationDetails.fromNumber,
+			wabaId: communicationDetails.wabaId,
+			accessToken: communicationDetails.accessToken,
+		});
 		const payload: CommunicationPayload = {
 			config: {
 				from: communicationDetails.fromNumber,
@@ -124,7 +130,13 @@ export class CommunicationService {
 		return payload;
 	}
 
-	private async populateViberPayload(tenantDetails: TenantModel, communicationDetails: CommunicationDto, workSpaceId: string, customName: string) {
+	private async populateViberPayload(communicationDetails: CommunicationDto, workSpaceId: string, customName: string) {
+		await this.validateRequiredFields({
+			viberProvider: communicationDetails.viberProvider,
+			domain: communicationDetails.domain,
+			sender: communicationDetails.sender,
+			accessToken: communicationDetails.accessToken,
+		});
 		const payload: CommunicationPayload = {
 			config: {
 				provider: communicationDetails.viberProvider,
@@ -161,5 +173,46 @@ export class CommunicationService {
 		communicationModel.updatedBy = userId;
 		await communicationModel.save();
 		return communicationModel;
+	}
+
+	public async getWorkSpaceDetails(tenantId: number) {
+		const workSpace = await this.workSpaceModel.findOne({ where: { tenantId: tenantId, isDeleted: false } });
+		if (!workSpace) {
+			throw new BadRequestException(CommunicationMessage.workSpaceNotFound);
+		}
+		return workSpace;
+	}
+	public async getCommunicationDetails(tenantId: number, attributes: string[], workSpace: WorkSpaceModel, channel: Channel) {
+		const communication = await this.communication.findOne({
+			where: {
+				workSpaceId: workSpace.id,
+				isDeleted: false,
+				channel,
+			},
+			attributes,
+		});
+		if (!communication) {
+			throw new BadRequestException(`${channel} communication not exists for this tenant`);
+		}
+		return communication;
+	}
+	public async findIntegrationDetails(tenantId: number, channel: Channel) {
+		const attributes = ['fromNumber', 'wabaId', 'channel', 'viberProvider', 'domain', 'sender', 'accessToken', 'integrationId', 'customName'];
+		const workSpace = await this.getWorkSpaceDetails(tenantId);
+		const communication = await this.getCommunicationDetails(tenantId, attributes, workSpace, channel);
+		const payload: CommunicationPayload = {
+			config: {
+				from: communication.fromNumber,
+				waba_id: communication.wabaId,
+			},
+		};
+		return await CommunicationHelper.testIntegrationConfig(payload, communication.integrationId, workSpace.fynoWorkSpaceId);
+	}
+
+	public async one(tenantId: number, channel: Channel) {
+		const attributes = ['fromNumber', 'wabaId', 'channel', 'viberProvider', 'domain', 'sender', 'accessToken'];
+		const workSpace = await this.getWorkSpaceDetails(tenantId);
+		const communication = await this.getCommunicationDetails(tenantId, attributes, workSpace, channel);
+		return communication;
 	}
 }

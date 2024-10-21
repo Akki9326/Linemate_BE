@@ -27,6 +27,16 @@ class CommunicationController {
 			next(ex);
 		}
 	};
+	public getByTenantId = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const tenantId = parseInt(req.params.tenantId);
+			const channel = req.body.channel;
+			const cohortResponse = await this.communicationService.one(tenantId, channel);
+			AppResponseHelper.sendSuccess(res, 'Success', cohortResponse);
+		} catch (ex) {
+			next(ex);
+		}
+	};
 }
 
 export default CommunicationController;

@@ -11,7 +11,7 @@ export class CommunicationDto {
 	public wabaId: string;
 
 	@IsString()
-	@IsOptional()
+	@IsNotEmpty()
 	public accessToken: string;
 
 	@IsString()
@@ -37,4 +37,10 @@ export class CommunicationDto {
 	@IsNumber()
 	@IsNotEmpty()
 	public tenantId: number;
+}
+
+export class ChannelDto {
+	@IsEnum(Channel)
+	@IsNotEmpty()
+	public channel: Channel;
 }

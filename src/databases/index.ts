@@ -26,6 +26,8 @@ import UserModel from '@/models/db/users.model';
 import CampaignUserMatrixModel from '@/models/db/campaignUserMatrix.model';
 import { DB_DATABASE, DB_HOST, DB_PASSWORD, DB_PORT, DB_USER } from '@config';
 import Sequelize from 'sequelize';
+import CommunicationModel from '@/models/db/communication.mode';
+import WorkSpaceModel from '@/models/db/workSpace.model';
 
 export const sequelizeConnect = new Sequelize.Sequelize(DB_DATABASE, DB_USER, DB_PASSWORD, {
 	dialect: 'postgres',
@@ -74,6 +76,8 @@ const DB = {
 	CampaignMaster: CampaignMaster(sequelizeConnect),
 	CampaignMatrix: CampaignMatrix(sequelizeConnect),
 	CampaignUserMatrix: CampaignUserMatrixModel(sequelizeConnect),
+	CommunicationModel: CommunicationModel(sequelizeConnect),
+	WorkSpaceModel: WorkSpaceModel(sequelizeConnect),
 	sequelizeConnect, // connection instance (RAW queries)
 	Sequelize, // library
 };

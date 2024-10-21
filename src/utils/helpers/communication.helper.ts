@@ -46,4 +46,16 @@ export const CommunicationHelper = {
 			throw new BadRequestException(error.response ? error.response.data._message : 'failed to create  integration');
 		}
 	},
+	testIntegrationConfig: async (payload: CommunicationPayload, integrationId: string, workSpaceId: string) => {
+		try {
+			const response = await axios.post(`${FYNO_BASE_URL}/${workSpaceId}/integrations/${integrationId}/test`, payload, {
+				headers: {
+					Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
+				},
+			});
+			return response.data;
+		} catch (error) {
+			throw new BadRequestException('invalid communication config');
+		}
+	},
 };

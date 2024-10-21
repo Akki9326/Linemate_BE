@@ -10,9 +10,14 @@ export interface Config {
 
 // Define the interface for the payload object
 export interface CommunicationPayload {
-	integration_id: string;
-	config: Config;
-	custom_name: string;
-	edited_enc_keys: string[];
-	workSpaceId: string;
+	integration_id?: string;
+	config?: Config;
+	custom_name?: string;
+	edited_enc_keys?: string[];
+	workSpaceId?: string;
+	integrationId?: string;
+}
+export interface CommunicationResponse {
+	fynoWorkSpaceId?: string;
+	integrationId?: string;
 }

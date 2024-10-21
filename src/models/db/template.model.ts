@@ -9,11 +9,11 @@ export class TemplateModel extends AppDBModel {
 	public description: string;
 	public channel: string;
 	public templateType: string;
-	public clientTemplateId: string;
-	public HSMUserId: string;
-	public HSMPassword: string;
-	public ISDCode: string;
-	public businessContactNumber: string;
+	// public clientTemplateId: string;
+	// public HSMUserId: string;
+	// public HSMPassword: string;
+	// public ISDCode: string;
+	// public businessContactNumber: string;
 	public language: string;
 	public tenantId: number;
 	public providerTemplateId: string;
@@ -55,26 +55,26 @@ export default function (sequelize: Sequelize): typeof TemplateModel {
 				type: DataTypes.ENUM,
 				values: Object.values(TemplateType),
 			},
-			clientTemplateId: {
-				allowNull: true,
-				type: DataTypes.STRING,
-			},
-			HSMUserId: {
-				allowNull: true,
-				type: DataTypes.STRING,
-			},
-			HSMPassword: {
-				allowNull: true,
-				type: DataTypes.STRING,
-			},
-			ISDCode: {
-				allowNull: true,
-				type: DataTypes.STRING,
-			},
-			businessContactNumber: {
-				allowNull: true,
-				type: DataTypes.STRING,
-			},
+			// clientTemplateId: {
+			// 	allowNull: true,
+			// 	type: DataTypes.STRING,
+			// },
+			// HSMUserId: {
+			// 	allowNull: true,
+			// 	type: DataTypes.STRING,
+			// },
+			// HSMPassword: {
+			// 	allowNull: true,
+			// 	type: DataTypes.STRING,
+			// },
+			// ISDCode: {
+			// 	allowNull: true,
+			// 	type: DataTypes.STRING,
+			// },
+			// businessContactNumber: {
+			// 	allowNull: true,
+			// 	type: DataTypes.STRING,
+			// },
 			language: {
 				allowNull: false,
 				type: DataTypes.STRING,

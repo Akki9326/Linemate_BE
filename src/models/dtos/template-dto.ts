@@ -166,20 +166,20 @@ export class TemplateDto {
 	@IsString()
 	description: string;
 
-	@IsString()
-	public clientTemplateId: string;
+	// @IsString()
+	// public clientTemplateId: string;
 
-	@IsString()
-	public HSMUserId: string;
+	// @IsString()
+	// public HSMUserId: string;
 
-	@IsString()
-	public HSMPassword: string;
+	// @IsString()
+	// public HSMPassword: string;
 
-	@IsString()
-	public ISDCode: string;
+	// @IsString()
+	// public ISDCode: string;
 
-	@IsString()
-	public businessContactNumber: string;
+	// @IsString()
+	// public businessContactNumber: string;
 
 	@IsEnum(Channel)
 	public channel: Channel;

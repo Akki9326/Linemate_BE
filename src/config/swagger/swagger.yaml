@@ -2956,26 +2956,26 @@ components:
           type: string
           example: "whatsapp"
           description: "Channel where the template will be used"
-        businessNumber:
-          type: string
-          example: "9913221018"
-          description: "Business contact number"
-        ISDCode:
-          type: string
-          example: "+91"
-          description: "International Subscriber Dialing (ISD) code"
-        HSMPassword:
-          type: string
-          example: "123456"
-          description: "HSM password"
-        HSMUserId:
-          type: string
-          example: "12"
-          description: "HSM user ID"
-        clientTemplateId:
-          type: string
-          example: "9876"
-          description: "Client's template ID"
+        # businessNumber:
+        #   type: string
+        #   example: "9913221018"
+        #   description: "Business contact number"
+        # ISDCode:
+        #   type: string
+        #   example: "+91"
+        #   description: "International Subscriber Dialing (ISD) code"
+        # HSMPassword:
+        #   type: string
+        #   example: "123456"
+        #   description: "HSM password"
+        # HSMUserId:
+        #   type: string
+        #   example: "12"
+        #   description: "HSM user ID"
+        # clientTemplateId:
+        #   type: string
+        #   example: "9876"
+        #   description: "Client's template ID"
         contentType:
           type: string
           example: "carousel"
@@ -3105,26 +3105,26 @@ components:
           $ref: '#/components/schemas/TemplateType'
         channel:
           $ref: '#/components/schemas/Channel'
-        businessNumber:
-          type: string
-          example: "9913221018"
-          description: "Business contact number"
-        ISDCode:
-          type: string
-          example: "+91"
-          description: "International Subscriber Dialing (ISD) code"
-        HSMPassword:
-          type: string
-          example: "123456"
-          description: "HSM password"
-        HSMUserId:
-          type: string
-          example: "12"
-          description: "HSM user ID"
-        clientTemplateId:
-          type: string
-          example: "9876"
-          description: "Client's template ID"
+        # businessNumber:
+        #   type: string
+        #   example: "9913221018"
+        #   description: "Business contact number"
+        # ISDCode:
+        #   type: string
+        #   example: "+91"
+        #   description: "International Subscriber Dialing (ISD) code"
+        # HSMPassword:
+        #   type: string
+        #   example: "123456"
+        #   description: "HSM password"
+        # HSMUserId:
+        #   type: string
+        #   example: "12"
+        #   description: "HSM user ID"
+        # clientTemplateId:
+        #   type: string
+        #   example: "9876"
+        #   description: "Client's template ID"
         contentType:
           $ref: '#/components/schemas/ContentType'
         isPreviewUrl:
@@ -3293,7 +3293,76 @@ components:
           - success
           - code
           - message
+    
+    CreateCommunicationRequest:
+      type: object
+      required:
+        - tenantId
+        - channel
+        - accessToken
+        - fromNumber
+        - wabaId
+      properties:
+        tenantId:
+          type: integer
+          example: 5
+        channel:
+          type: string
+          example: "whatsapp"
+        accessToken:
+          type: string
+          example: "765567ufdf64"
+        fromNumber:
+          type: string
+          example: "+91 98786 09098"
+        wabaId:
+          type: string
+          example: "4403750773496403"
 
+    CreateCommunicationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Communication channel added successfully"
+
+    UpdateCommunicationRequest:
+      type: object
+      required:
+        - tenantId
+        - channel
+        - accessToken
+        - fromNumber
+        - wabaId
+      properties:
+        tenantId:
+          type: integer
+          example: 3
+        channel:
+          type: string
+          example: "whatsapp"
+        accessToken:
+          type: string
+          example: "98765678"
+        fromNumber:
+          type: string
+          example: "87654"
+        wabaId:
+          type: string
+          example: "0987654"
+
+    UpdateCommunicationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Communication channel updated successfully"
 paths:
   /permission/v1/add:
     post:
@@ -5246,6 +5315,86 @@ paths:
               schema:
                 $ref: '#/components/schemas/UploadResponse' 
 
+  /Communication/v1/add:
+    post:
+      summary: Add communication channel
+      description: Adds a communication channel like WhatsApp with the necessary details
+      tags:
+        - Communication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCommunicationRequest' # Reference the schema here
+      responses:
+        '200':
+          description: Successfully added communication channel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateCommunicationResponse' # Reference the schema here  
+
+  /Communication/v1/{id}:
+    put:
+      summary: Update communication channel
+      description: Updates a specific communication channel by its ID
+      tags:
+        - Communication
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the communication channel to be updated
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCommunicationRequest'
+      responses:
+        '200':
+          description: Successfully updated communication channel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateCommunicationResponse'  
+
+  /Communication/v1/{tenantId}:
+    post:
+      summary: Get communication channel
+      description: Get a specific communication channel by its ID
+      tags:
+        - Communication
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the specific tenant 
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                channel:
+                  type: string
+                  enum: [whatsapp, viber, sms]
+                  description: The type of the channel.
+                  example: whatsapp
+      responses:
+        '200':
+          description: Success
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error         
+
   
 tags:
   - name: Permission
@@ -5274,3 +5423,5 @@ tags:
     description: Endpoints for receiving content from viber.
   - name: Campaign
     description: Endpoints for creating and managing Campaigns
+  - name: Communication
+    description: Endpoints for communication and managing Communication
