@@ -11,6 +11,7 @@ import { TenantMessage } from '@/utils/helpers/app-message.helper';
 import { FileDestination } from '@/models/enums/file-destination.enum';
 import { UserType } from '@/models/enums/user-types.enum';
 import { TenantModel } from '@/models/db/tenant.model';
+import { CommunicationHelper } from '@/utils/helpers/communication.helper';
 
 export class TenantService {
 	private tenantModel = DB.Tenant;
@@ -37,12 +38,15 @@ export class TenantService {
 			const trademarkExists = await this.tenantModel.findOne({ where: { trademark: tenantDetails.trademark } });
 			if (trademarkExists) throw new BadRequestException(TenantMessage.trademarkIsAlreadyExists);
 		}
-
+		if (tenantDetails?.name.length > 25) {
+			throw new BadRequestException(TenantMessage.tenantNameLength);
+		}
 		const tenant = await this.tenantModel.create({
 			...tenantDetails,
 			createdBy: userId,
 		});
 		await insertDefaultRoles(tenant.id, userId);
+		await CommunicationHelper.createWorkSpace(tenantDetails.name, tenant.id);
 		if (tenantDetails?.logo) {
 			const fileDestination = `${FileDestination.Tenant}/${tenant.id}`;
 			const movedUrl = await this.s3Service.moveFileByUrl(tenantDetails.logo, fileDestination);

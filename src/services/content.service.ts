@@ -308,33 +308,16 @@ export class ContentService {
 			if (pageModel?.filter?.dynamicFilter && pageModel?.filter?.dynamicFilter?.length) {
 				await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter);
 			}
-			if (pageModel.filter?.isArchive !== undefined && pageModel.filter?.isArchive !== null) {
+			if (pageModel?.filter?.isArchive == true || pageModel?.filter?.isArchive == false) {
 				condition['isArchive'] = pageModel.filter.isArchive;
 			}
-			// if (pageModel.filter?.isPublish !== undefined && pageModel.filter?.isPublish !== null) {
-			// 	condition['isPublish'] = pageModel.filter.isPublish;
-			// }
-
-			// if (pageModel.filter.createdBetween) {
-			// 	const { startDate, endDate } = pageModel.filter.createdBetween;
-			// 	if (startDate && endDate) {
-			// 		this.setDateRangeCondition('createdAt', startDate, endDate, condition);
-			// 	}
-			// }
-
-			// if (pageModel.filter.updatedBetween) {
-			// 	const { startDate, endDate } = pageModel.filter.updatedBetween;
-			// 	if (startDate && endDate) {
-			// 		this.setDateRangeCondition('updatedAt', startDate, endDate, condition);
-			// 	}
-			// }
 		}
 		const contentResult = await this.content.findAndCountAll({
 			where: condition,
 			offset,
 			limit: limit,
 			order: [[sortField, sortOrder]],
-			attributes: ['id', 'name', 'createdAt', 'tenantId', 'type', 'description'],
+			attributes: ['id', 'name', 'createdAt', 'tenantId', 'type', 'description', 'updatedAt', 'uploadedFileIds'],
 			include: [
 				// {
 				// 	model: this.user,
@@ -376,6 +359,21 @@ export class ContentService {
 			],
 			distinct: true,
 		});
+		for (let i = 0; i < contentResult.rows.length; i++) {
+			const uploadedFiles = [];
+			const content = contentResult.rows[i];
+			if (content.uploadedFileIds && content.uploadedFileIds.length) {
+				const allFiles = await this.findAllFile(content.uploadedFileIds);
+				if (allFiles.length) {
+					const filePromises = allFiles.map(async file => {
+						const fileUrl = FileHelper.getContentUrl(content.tenantId, content.id, file.name);
+						return fileUrl;
+					});
+					uploadedFiles.push(...(await Promise.all(filePromises)));
+					content['uploadedFileIds'] = uploadedFiles;
+				}
+			}
+		}
 
 		return contentResult;
 	}
@@ -463,6 +461,29 @@ export class ContentService {
 
 		for (const content of contents) {
 			content.isArchive = false;
+			content.updatedBy = userId;
+			await content.save();
+		}
+
+		return contents.map(content => ({ id: content.id }));
+	}
+
+	public async publishContent(contentId: ContentActionDto, userId: number) {
+		const contents = await this.content.findAll({
+			where: {
+				id: {
+					[Op.in]: contentId,
+				},
+				isDeleted: false,
+			},
+		});
+
+		if (!contents.length) {
+			throw new BadRequestException(ContentMessage.notFoundUnArchiveContent);
+		}
+
+		for (const content of contents) {
+			content.isPublish = true;
 			content.updatedBy = userId;
 			await content.save();
 		}

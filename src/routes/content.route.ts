@@ -17,6 +17,7 @@ class ContentRoute implements Routes {
 
 	private initializeRoutes() {
 		this.router.post(`${this.path}/v1/add`, validationMiddleware(ContentDto, 'body'), authMiddleware, this.contentController.add);
+		this.router.post(`${this.path}/v1/publish`, authMiddleware, this.contentController.publishContent);
 		this.router.put(`${this.path}/v1/:id`, validationMiddleware(ContentDto, 'body'), authMiddleware, this.contentController.update);
 		this.router.get(`${this.path}/v1/:id`, authMiddleware, this.contentController.getById);
 		this.router.post(`${this.path}/v1/list`, authMiddleware, headerMiddleware, this.contentController.list);

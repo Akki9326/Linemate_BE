@@ -5,9 +5,9 @@ import {
 	FYNO_WHATSAPP_INTEGRATION_ID,
 	FYNO_WHATSAPP_PROVIDER_ID,
 	FYNO_WHATSAPP_PROVIDER_NAME,
-	FYNO_WHATSAPP_WORKSPACE_ID,
 } from '@/config';
 import { BadRequestException } from '@/exceptions/BadRequestException';
+import { TemplateModel } from '@/models/db/template.model';
 import { FileDto } from '@/models/dtos/file.dto';
 import { TemplateButtonDto, TemplateContentCardDto, TemplateDto } from '@/models/dtos/template-dto';
 import { FileMimeType } from '@/models/enums/file-type.enums';
@@ -23,6 +23,7 @@ import {
 	TemplateCategory,
 	TemplateType,
 } from '@/models/enums/template.enum';
+import { CommunicationResponse } from '@/models/interfaces/communication.interface';
 import {
 	ButtonPayload,
 	CardPayload,
@@ -34,9 +35,8 @@ import {
 } from '@/models/interfaces/template.interface';
 import axios from 'axios';
 import FormData from 'form-data';
-import { v4 as uuidv4 } from 'uuid';
 import { Readable } from 'stream';
-import { TemplateModel } from '@/models/db/template.model';
+import { v4 as uuidv4 } from 'uuid';
 
 export const TemplateGenerator = {
 	isValidUrl: (url: string) => {
@@ -483,9 +483,9 @@ export const TemplateGenerator = {
 		};
 		return payload;
 	},
-	createExternalTemplate: async (payload: unknown) => {
+	createExternalTemplate: async (payload: unknown, communication: CommunicationResponse) => {
 		try {
-			const response = await axios.post(`${FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/external-template/create`, payload, {
+			const response = await axios.post(`${FYNO_BASE_URL}/${communication?.fynoWorkSpaceId}/external-template/create`, payload, {
 				headers: {
 					Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
 				},
@@ -495,10 +495,10 @@ export const TemplateGenerator = {
 			throw new BadRequestException('Failed to call Fyno API');
 		}
 	},
-	createFynoTemplate: async (payload: unknown) => {
+	createFynoTemplate: async (payload: unknown, communication: CommunicationResponse) => {
 		try {
 			const request = await payload;
-			const response = await axios.post(`${FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/notification`, request, {
+			const response = await axios.post(`${FYNO_BASE_URL}/${communication?.fynoWorkSpaceId}/notification`, request, {
 				headers: {
 					Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
 					'Content-Type': 'application/json',
@@ -506,14 +506,13 @@ export const TemplateGenerator = {
 			});
 			return response.data;
 		} catch (error) {
-			console.error('Error:', error?.response?.data);
-			return error?.response?.data;
+			throw new BadRequestException(error?.response?.data?._message);
 		}
 	},
-	updateFynoTemplate: async (payload: unknown, name: string) => {
+	updateFynoTemplate: async (payload: unknown, name: string, communication: CommunicationResponse) => {
 		try {
 			const request = await payload;
-			const response = await axios.put(`${FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/notification/${name}`, request, {
+			const response = await axios.put(`${FYNO_BASE_URL}/${communication?.fynoWorkSpaceId}/notification/${name}`, request, {
 				headers: {
 					Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
 					'Content-Type': 'application/json',
@@ -521,8 +520,7 @@ export const TemplateGenerator = {
 			});
 			return response.data;
 		} catch (error) {
-			console.error('Error:', error?.response?.data);
-			return error?.response?.data;
+			throw new BadRequestException(error?.response?.data?._message);
 		}
 	},
 	bufferToStream: (buffer: Buffer) => {
@@ -531,7 +529,7 @@ export const TemplateGenerator = {
 		stream.push(null);
 		return stream;
 	},
-	uploadFynoFile: async (file: FileDto) => {
+	uploadFynoFile: async (file: FileDto, communication: CommunicationResponse) => {
 		try {
 			const formData = new FormData();
 			const fileStream = TemplateGenerator.bufferToStream(file.data);
@@ -539,8 +537,8 @@ export const TemplateGenerator = {
 				filename: file.name,
 				contentType: file.mimetype,
 			});
-			formData.append('integration_id', FYNO_WHATSAPP_INTEGRATION_ID);
-			const response = await axios.post(`${FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/external-template/meta/upload`, formData, {
+			formData.append('integration_id', communication?.integrationId);
+			const response = await axios.post(`${FYNO_BASE_URL}/${communication?.fynoWorkSpaceId}/external-template/meta/upload`, formData, {
 				headers: {
 					...formData.getHeaders(),
 					Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
@@ -551,9 +549,9 @@ export const TemplateGenerator = {
 			throw new BadRequestException('Failed to call Fyno API');
 		}
 	},
-	getFynoTemplate: async (name: string) => {
+	getFynoTemplate: async (name: string, communication: CommunicationResponse) => {
 		try {
-			const response = await axios.get(`${FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/notification/${name}`, {
+			const response = await axios.get(`${FYNO_BASE_URL}/${communication?.fynoWorkSpaceId}/notification/${name}`, {
 				headers: {
 					Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
 				},
@@ -563,10 +561,10 @@ export const TemplateGenerator = {
 			throw new BadRequestException(error?.response?.data);
 		}
 	},
-	getExternalTemplate: async (name: string) => {
+	getExternalTemplate: async (name: string, communication: CommunicationResponse) => {
 		try {
 			const response = await axios.get(
-				`${FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/external-template/edit/${FYNO_WHATSAPP_INTEGRATION_ID}/${name}`,
+				`${FYNO_BASE_URL}/${communication?.fynoWorkSpaceId}/external-template/edit/${communication?.integrationId}/${name}`,
 				{
 					headers: {
 						Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
@@ -628,33 +626,33 @@ export const TemplateGenerator = {
 		};
 		return payload;
 	},
-	deleteExternalTemplate: async (name: string, templateId: string, language: string) => {
+	deleteExternalTemplate: async (name: string, templateId: string, language: string, communication: CommunicationResponse) => {
 		try {
 			const payload = {
 				template_id: templateId,
 				integration_id: FYNO_WHATSAPP_INTEGRATION_ID,
 				language,
 			};
-			const response = await axios.post(`${FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/external-template/${name}/delete`, payload, {
+			const response = await axios.post(`${FYNO_BASE_URL}/${communication?.fynoWorkSpaceId}/external-template/${name}/delete`, payload, {
 				headers: {
 					Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
 				},
 			});
 			return response;
 		} catch (error) {
-			throw new BadRequestException(error?.response?.data);
+			throw new BadRequestException(error?.response?.data?._message);
 		}
 	},
-	deleteFynoTemplate: async (name: string) => {
+	deleteFynoTemplate: async (name: string, communication: CommunicationResponse) => {
 		try {
-			const response = await axios.delete(`${FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/notification/${name}`, {
+			const response = await axios.delete(`${FYNO_BASE_URL}/${communication?.fynoWorkSpaceId}/notification/${name}`, {
 				headers: {
 					Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
 				},
 			});
 			return response;
 		} catch (error) {
-			throw new BadRequestException(error?.response?.data);
+			throw new BadRequestException(error?.response?.data?._message);
 		}
 	},
 };

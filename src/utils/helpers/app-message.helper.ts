@@ -39,6 +39,8 @@ export const TenantMessage = {
 	invalidGstNumber: 'Invalid Gst number',
 	gstNumberIsAlreadyExists: 'Gst number is already exists in our system',
 	companyNameIsAlreadyExists: 'Company name is already exists in our system',
+	tenantNameLength: 'Company name length should be greater than 25',
+	workSpaceNotFound: 'Work space not found in this tenant',
 };
 export const VariableMessage = {
 	variableNotFound: 'variable not found',
@@ -84,6 +86,11 @@ export const CampaignMessage = {
 	campaignNotFound: 'campaign not found',
 	campaignInProgress: 'campaign not found or in progress',
 	cannotCreateCampaign: 'error create campaign',
+};
+export const CommunicationMessage = {
+	communicationNotFound: 'communication not found',
+	communicationAlreadyExists: 'communication already exists',
+	workSpaceNotFound: 'communication workSpace not found',
 };
 export const TemplateMessage = {
 	templateNotFound: 'template not found',
