@@ -317,7 +317,7 @@ export class ContentService {
 			offset,
 			limit: limit,
 			order: [[sortField, sortOrder]],
-			attributes: ['id', 'name', 'createdAt', 'tenantId', 'type', 'description', 'updatedAt'],
+			attributes: ['id', 'name', 'createdAt', 'tenantId', 'type', 'description', 'updatedAt', 'uploadedFileIds'],
 			include: [
 				// {
 				// 	model: this.user,
@@ -359,6 +359,21 @@ export class ContentService {
 			],
 			distinct: true,
 		});
+		for (let i = 0; i < contentResult.rows.length; i++) {
+			const uploadedFiles = [];
+			const content = contentResult.rows[i];
+			if (content.uploadedFileIds && content.uploadedFileIds.length) {
+				const allFiles = await this.findAllFile(content.uploadedFileIds);
+				if (allFiles.length) {
+					const filePromises = allFiles.map(async file => {
+						const fileUrl = FileHelper.getContentUrl(content.tenantId, content.id, file.name);
+						return fileUrl;
+					});
+					uploadedFiles.push(...(await Promise.all(filePromises)));
+					content['uploadedFileIds'] = uploadedFiles;
+				}
+			}
+		}
 
 		return contentResult;
 	}
