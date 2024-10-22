@@ -38,7 +38,9 @@ export class TenantService {
 			const trademarkExists = await this.tenantModel.findOne({ where: { trademark: tenantDetails.trademark } });
 			if (trademarkExists) throw new BadRequestException(TenantMessage.trademarkIsAlreadyExists);
 		}
-
+		if (tenantDetails?.name.length > 25) {
+			throw new BadRequestException(TenantMessage.tenantNameLength);
+		}
 		const tenant = await this.tenantModel.create({
 			...tenantDetails,
 			createdBy: userId,
