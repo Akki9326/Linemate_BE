@@ -4,7 +4,7 @@ import { Channel } from './../enums/campaign.enums';
 export class CommunicationDto {
 	@IsString()
 	@IsOptional()
-	public fromNumber: string;
+	public fromNumberId: string;
 
 	@IsString()
 	@IsOptional()

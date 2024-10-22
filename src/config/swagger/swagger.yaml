@@ -3260,7 +3260,7 @@ components:
         - tenantId
         - channel
         - accessToken
-        - fromNumber
+        - fromNumberId
         - wabaId
       properties:
         tenantId:
@@ -3272,7 +3272,7 @@ components:
         accessToken:
           type: string
           example: "765567ufdf64"
-        fromNumber:
+        fromNumberId:
           type: string
           example: "+91 98786 09098"
         wabaId:
@@ -3295,7 +3295,7 @@ components:
         - tenantId
         - channel
         - accessToken
-        - fromNumber
+        - fromNumberId
         - wabaId
       properties:
         tenantId:
@@ -3307,7 +3307,7 @@ components:
         accessToken:
           type: string
           example: "98765678"
-        fromNumber:
+        fromNumberId:
           type: string
           example: "87654"
         wabaId:
