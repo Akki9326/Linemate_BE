@@ -164,6 +164,7 @@ export class TemplateDto {
 	public name: string;
 
 	@IsString()
+	@IsOptional()
 	description: string;
 
 	@IsEnum(Channel)
