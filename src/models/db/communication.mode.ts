@@ -4,7 +4,7 @@ import { Channel } from '../enums/template.enum';
 
 export class CommunicationModel extends AppDBModel {
 	public id: number;
-	public fromNumber: string;
+	public fromNumberId: string;
 	public wabaId: string;
 	public workSpaceName: string;
 	public workSpaceId: number;
@@ -26,7 +26,7 @@ export default function (sequelize: Sequelize): typeof CommunicationModel {
 				primaryKey: true,
 				type: DataTypes.INTEGER,
 			},
-			fromNumber: {
+			fromNumberId: {
 				allowNull: true,
 				type: DataTypes.STRING,
 			},

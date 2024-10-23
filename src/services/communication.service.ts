@@ -112,13 +112,13 @@ export class CommunicationService {
 
 	private async populateWhatsAppPayload(communicationDetails: CommunicationDto, workSpaceId: string, customName: string) {
 		await this.validateRequiredFields({
-			fromNumber: communicationDetails.fromNumber,
+			fromNumberId: communicationDetails.fromNumberId,
 			wabaId: communicationDetails.wabaId,
 			accessToken: communicationDetails.accessToken,
 		});
 		const payload: CommunicationPayload = {
 			config: {
-				from: communicationDetails.fromNumber,
+				from: communicationDetails.fromNumberId,
 				waba_id: communicationDetails.wabaId,
 				'access-token': communicationDetails.accessToken,
 			},
@@ -159,7 +159,7 @@ export class CommunicationService {
 		userId: number,
 		communicationModel: CommunicationModel,
 	) {
-		communicationModel.fromNumber = communicationDetails.fromNumber;
+		communicationModel.fromNumberId = communicationDetails.fromNumberId;
 		communicationModel.wabaId = communicationDetails.wabaId;
 		communicationModel.viberProvider = communicationDetails.viberProvider;
 		communicationModel.domain = communicationDetails.domain;
@@ -197,12 +197,12 @@ export class CommunicationService {
 		return communication;
 	}
 	public async findIntegrationDetails(tenantId: number, channel: Channel) {
-		const attributes = ['fromNumber', 'wabaId', 'channel', 'viberProvider', 'domain', 'sender', 'accessToken', 'integrationId', 'customName'];
+		const attributes = ['fromNumberId', 'wabaId', 'channel', 'viberProvider', 'domain', 'sender', 'accessToken', 'integrationId', 'customName'];
 		const workSpace = await this.getWorkSpaceDetails(tenantId);
 		const communication = await this.getCommunicationDetails(tenantId, attributes, workSpace, channel);
 		const payload: CommunicationPayload = {
 			config: {
-				from: communication.fromNumber,
+				from: communication.fromNumberId,
 				waba_id: communication.wabaId,
 			},
 		};
@@ -211,7 +211,7 @@ export class CommunicationService {
 	}
 
 	public async one(tenantId: number, channel: Channel) {
-		const attributes = ['id', 'fromNumber', 'wabaId', 'channel', 'viberProvider', 'domain', 'sender', 'accessToken'];
+		const attributes = ['id', 'fromNumberId', 'wabaId', 'channel', 'viberProvider', 'domain', 'sender', 'accessToken'];
 		const workSpace = await this.getWorkSpaceDetails(tenantId);
 		const communication = await this.getCommunicationDetails(tenantId, attributes, workSpace, channel);
 		return communication;
