@@ -95,7 +95,7 @@ export class TemplateService {
 						const fynoTemplateDetails = await TemplateGenerator.getFynoTemplate(templateDetails.name, communication);
 						providerTemplate = fynoTemplateDetails.template_id;
 					}
-					await template.update({ providerTemplateId: providerTemplate }, { where: { id: templateDetails.id, isDeleted: false } });
+					await template.update({ providerTemplateId: providerTemplate }, { where: { id: templateDetails.id, isDeleted: false }, transaction });
 				}
 			}
 
@@ -449,7 +449,7 @@ export class TemplateService {
 				template.providerTemplateId = response[0]?.message?.id;
 			}
 			if (template.status === TemplateStatus.APPROVED || template.status === TemplateStatus.PENDING) {
-				const templateData = await this.template.findOne({ where: { id: template.id } });
+				const templateData = await this.template.findOne({ where: { id: template.id }, transaction });
 				if (templateData?.notificationTemplateId) {
 					notificationPayload = TemplateGenerator.externalNotificationPayload(
 						template,
