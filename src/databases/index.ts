@@ -43,6 +43,11 @@ export const sequelizeConnect = new Sequelize.Sequelize(DB_DATABASE, DB_USER, DB
 			rejectUnauthorized: false,
 		},
 	},
+	pool: {
+		max: 10,
+		min: 1,
+		acquire: 30000,
+	},
 	benchmark: false,
 	logging: false,
 });
