@@ -2,29 +2,30 @@
 import { CacheService } from '../../services/cache.service';
 
 export const UserCaching = {
-	async getSessions(email: string): Promise<any[]> {
-		const sessions: any[] = await CacheService.instance.getJson(email);
+	async getSessions(sessionName: string): Promise<any[]> {
+		console.log('sessionName', sessionName);
+		const sessions: any[] = await CacheService.instance.getJson(sessionName);
+		console.log('sessions', sessions);
 		return sessions;
 	},
 
-	async getActiveSessions(email: string): Promise<any[]> {
-		const sessionsPromise: Promise<any[]> = UserCaching.getSessions(email);
+	async getActiveSessions(sessionName: string): Promise<any[]> {
+		const sessionsPromise: Promise<any[]> = UserCaching.getSessions(sessionName);
 		const sessions: any[] = await sessionsPromise;
 
 		if (sessions?.length) {
 			const activeSessions = sessions.filter(f => f['expiry'] > new Date());
-
 			return activeSessions;
 		}
 		return [];
 	},
 
-	async pushSession(email: string, sessionArr: any[]) {
-		CacheService.instance.setJson(email, sessionArr);
+	async pushSession(sessionName: string, sessionArr: any[]) {
+		CacheService.instance.setJson(sessionName, sessionArr);
 	},
 
-	async isValidSession(email: string, sessionId: string): Promise<boolean> {
-		const sessionsPromise: Promise<any[]> = UserCaching.getSessions(email);
+	async isValidSession(sessionName: string, sessionId: string): Promise<boolean> {
+		const sessionsPromise: Promise<any[]> = UserCaching.getSessions(sessionName);
 		const sessions: any[] = await sessionsPromise;
 
 		if (sessions?.length) {
@@ -38,18 +39,18 @@ export const UserCaching = {
 		return false;
 	},
 
-	async deleteAllSessions(email: string) {
-		CacheService.instance.setJson(email, []);
+	async deleteAllSessions(sessionName: string) {
+		CacheService.instance.setJson(sessionName, []);
 	},
 
-	async deleteParticularSession(email: string, sessionId: string) {
-		const sessionsPromise: Promise<any[]> = UserCaching.getSessions(email);
+	async deleteParticularSession(sessionName: string, sessionId: string) {
+		const sessionsPromise: Promise<any[]> = UserCaching.getSessions(sessionName);
 		const sessions: any[] = await sessionsPromise;
 
 		if (sessions?.length) {
 			const updatedSessions = sessions.filter(f => f['sessionId'] != sessionId);
 
-			await CacheService.instance.setJson(email, updatedSessions);
+			await CacheService.instance.setJson(sessionName, updatedSessions);
 
 			return true;
 		}

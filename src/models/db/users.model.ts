@@ -19,6 +19,9 @@ export class UserModel extends AppDBModel {
 	public countryCode: string;
 	public employeeId: string;
 	public profilePhoto: string;
+	public joiningDate: Date;
+	public role: string;
+	public reportToId: number;
 
 	hashPassword() {
 		this.password = PasswordHelper.hashPassword(this.password);
@@ -39,7 +42,7 @@ export default function (sequelize: Sequelize): typeof UserModel {
 				type: DataTypes.INTEGER,
 			},
 			email: {
-				allowNull: false,
+				allowNull: true,
 				type: DataTypes.STRING,
 			},
 			password: {
@@ -51,7 +54,7 @@ export default function (sequelize: Sequelize): typeof UserModel {
 				type: DataTypes.STRING,
 			},
 			lastName: {
-				allowNull: false,
+				allowNull: true,
 				type: DataTypes.STRING,
 			},
 			failedLoginAttempts: {
@@ -94,6 +97,18 @@ export default function (sequelize: Sequelize): typeof UserModel {
 			},
 			profilePhoto: {
 				type: DataTypes.STRING(255),
+				allowNull: true,
+			},
+			reportToId: {
+				type: DataTypes.INTEGER,
+				allowNull: true,
+			},
+			joiningDate: {
+				type: DataTypes.DATE,
+				allowNull: true,
+			},
+			role: {
+				type: DataTypes.STRING,
 				allowNull: true,
 			},
 		},

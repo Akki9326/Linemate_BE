@@ -7,4 +7,5 @@ export interface JwtTokenData {
 	id: number;
 	userType: UserType;
 	sessionId: string;
+	mobileNumber: string;
 }
