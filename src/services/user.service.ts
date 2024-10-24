@@ -24,14 +24,15 @@ import S3Services from '@/utils/services/s3.services';
 import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.transaction';
 import DB from '@databases';
 import { plainToInstance } from 'class-transformer';
-import { ValidationError, validate } from 'class-validator';
+import { ValidationError, isEmail, isNumber, isPhoneNumber, validate } from 'class-validator';
 import { parseISO } from 'date-fns';
 import 'reflect-metadata';
-import { Op, Sequelize } from 'sequelize';
+import { BelongsTo, Op, Sequelize } from 'sequelize';
 import { CohortService } from './cohort.service';
 import { RoleService } from './role.service';
 import { TenantService } from './tenant.service';
 import VariableServices from './variable.service';
+import moment from 'moment';
 
 class UserService {
 	private users = DB.Users;
@@ -153,6 +154,47 @@ class UserService {
 		}
 		return tenantDetails;
 	}
+	private async validateValue(value, type: string, options: string[], variableName: string, tenantName: string) {
+		switch (type) {
+			case VariableType.Text:
+				if (typeof value !== 'string' || value.trim() === '') {
+					throw new BadRequestException(`Tenant "${tenantName}" Invalid value for field: ${variableName}`);
+				}
+				break;
+			case VariableType.SingleSelect:
+				if (!options.includes(value)) {
+					throw new BadRequestException(`Tenant "${tenantName}" select value from given options for field: ${variableName}`);
+				}
+				break;
+			case VariableType.MultiSelect:
+				if (!Array.isArray(value) || value.some(v => !options.includes(v))) {
+					throw new BadRequestException(`Tenant "${tenantName}" Invalid value for for field: ${variableName}`);
+				}
+				break;
+			case VariableType.Numeric:
+				if (!isNumber(value)) {
+					throw new BadRequestException(`Tenant "${tenantName}" Invalid value for field: ${variableName}`);
+				}
+				break;
+			case VariableType.Email:
+				if (!isEmail(value)) {
+					throw new BadRequestException(`Tenant "${tenantName}" Invalid value for field: ${variableName}`);
+				}
+				break;
+			case VariableType.PhoneNumber:
+				if (!isPhoneNumber(value)) {
+					throw new BadRequestException(`Tenant "${tenantName}" Invalid value for field: ${variableName}`);
+				}
+				break;
+			case VariableType.Date:
+				if (!moment(value, moment.ISO_8601, true).isValid()) {
+					throw new BadRequestException(`Tenant "${tenantName}" Invalid value for field: ${variableName}`);
+				}
+				break;
+			default:
+				break;
+		}
+	}
 	private async validateTenantVariable(tenantVariables: TenantVariables[], tenantId?: number) {
 		for (const variable of tenantVariables) {
 			const tenantDetails = await this.tenant.findOne({
@@ -176,14 +218,31 @@ class UserService {
 			const missingMandatoryVariables = mandatoryVariables.filter(mandatoryVariable => {
 				const value = userVariablesMap.get(mandatoryVariable.id);
 				if (Array.isArray(value)) {
-					return value.length === 0 || value.every(item => item.trim() === '');
+					return (
+						value.length === 0 ||
+						value.every(item => {
+							if (typeof item === 'string') {
+								return item.trim() === '';
+							}
+							return item === undefined || item === null;
+						})
+					);
 				} else {
-					return value === undefined || value === null || value.trim() === '';
+					if (typeof value === 'string') {
+						return value.trim() === '';
+					}
+					return value === undefined || value === null;
 				}
 			});
 			if (missingMandatoryVariables.length > 0) {
 				const missingFieldsNames = missingMandatoryVariables.map(variable => variable.name).join(', ');
 				throw new BadRequestException(`Tenant "${tenantDetails.name}" Missing mandatory fields: ${missingFieldsNames}`);
+			}
+			for (const variable of variableMaster) {
+				const value = userVariablesMap.get(variable.id);
+				if (value !== undefined && value !== null) {
+					await this.validateValue(value, variable.type, variable.options, variable.name, tenantDetails.name);
+				}
 			}
 		}
 	}
@@ -279,12 +338,22 @@ class UserService {
 		);
 	}
 	public async add(userData: UserDto, createdUser: JwtTokenData) {
+		const conditions: { isDeleted: boolean; email?: string; mobileNumber?: string }[] = [];
+
+		if (userData.email) {
+			conditions.push({ isDeleted: false, email: userData.email });
+		}
+
+		if (userData.mobileNumber) {
+			conditions.push({ isDeleted: false, mobileNumber: userData.mobileNumber });
+		}
+
 		let user = await this.users.findOne({
 			where: {
 				[Op.and]: [
 					{ isDeleted: false },
 					{
-						[Op.or]: [{ email: userData.email }, { mobileNumber: userData.mobileNumber }],
+						[Op.or]: conditions,
 					},
 				],
 			},
@@ -336,6 +405,9 @@ class UserService {
 		user.countryCode = userData?.countyCode;
 		user.employeeId = userData?.employeeId;
 		user.profilePhoto = userData?.profilePhoto;
+		user.role = userData?.profilePhoto;
+		user.joiningDate = userData?.joiningDate;
+		user.reportToId = userData?.reportToId;
 		user = await user.save();
 		if (userData.userType !== UserType.ChiefAdmin) {
 			this.mapUserTypeToRole(user.dataValues?.userType, user.id, userData.tenantIds);
@@ -378,6 +450,9 @@ class UserService {
 				'countryCode',
 				'employeeId',
 				'profilePhoto',
+				'reportToId',
+				'joiningDate',
+				'role',
 			],
 		});
 		if (!user) {
@@ -463,6 +538,9 @@ class UserService {
 		user.countryCode = userData.countyCode;
 		user.employeeId = userData.employeeId;
 		user.profilePhoto = userData.profilePhoto;
+		user.role = userData?.profilePhoto;
+		user.joiningDate = userData?.joiningDate;
+		user.reportToId = userData?.reportToId;
 
 		if (userData.email || userData.mobileNumber) {
 			user.email = userData.email;
@@ -541,7 +619,7 @@ class UserService {
 				if (filter.minValue && filter.maxValue) {
 					const parsedStartDate = parseISO(String(filter.minValue));
 					const parsedEndDate = parseISO(String(filter.maxValue));
-					condition['createdAt'] = {
+					condition['joiningDate'] = {
 						[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
 					};
 				} else {
@@ -606,10 +684,30 @@ class UserService {
 		});
 		const userList = await this.users.findAll({
 			where: condition,
-			attributes: ['id', 'firstName', 'lastName', 'email', 'userType', 'mobileNumber', 'createdAt', 'tenantIds', 'employeeId', 'profilePhoto'],
+			attributes: [
+				'id',
+				'firstName',
+				'lastName',
+				'email',
+				'userType',
+				'mobileNumber',
+				'createdAt',
+				'tenantIds',
+				'employeeId',
+				'profilePhoto',
+				'joiningDate',
+				'role',
+				'reportToId',
+			],
 			order: [[orderByField, sortDirection]],
 			offset: pageModel.page ? (pageModel.page - 1) * pageModel.limit : undefined,
 			limit: pageModel.limit || undefined, // Apply pagination if enabled
+			include: [
+				{
+					association: new BelongsTo(this.users, this.users, { as: 'ReportTo', foreignKey: 'reportToId' }),
+					attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
+				},
+			],
 		});
 
 		let searchArray = [];
@@ -716,7 +814,7 @@ class UserService {
 			user.isTemporaryPassword = true;
 			user.password = PasswordHelper.hashPassword(temporaryPassword);
 			user.save();
-			UserCaching.deleteAllSessions(user.email);
+			UserCaching.deleteAllSessions(user.email || user.mobileNumber);
 			const tenantDetail = await this.tenantService.one(changePasswordUsers.tenantId);
 			const emailSubject = await EmailSubjects.accountActivationSubject(tenantDetail.name);
 			const emailBody = EmailTemplates.accountActivationEmail(

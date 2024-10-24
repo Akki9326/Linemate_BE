@@ -1,27 +1,40 @@
-import { IsArray, IsDefined, IsEmail, IsEnum, IsMobilePhone, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import {
+	IsArray,
+	IsDefined,
+	IsEmail,
+	IsEnum,
+	IsISO8601,
+	IsMobilePhone,
+	IsNotEmpty,
+	IsNumber,
+	IsOptional,
+	IsString,
+	ValidateNested,
+} from 'class-validator';
 import { UserType } from '../enums/user-types.enum';
 import { TenantVariables, variableValues } from '../interfaces/variable.interface';
-import { Transform, Type } from 'class-transformer';
 
 export class UserDto {
 	@IsString()
 	public firstName: string;
 
 	@IsString()
+	@IsOptional()
 	public lastName: string;
 
 	@IsEmail()
+	@IsOptional()
 	public email: string;
 
 	@IsEnum(UserType)
-	@IsOptional()
 	public userType: UserType = UserType.User;
 
 	@IsMobilePhone()
+	@IsNotEmpty()
 	public mobileNumber: string;
 
 	@IsArray()
-	@IsOptional()
 	public tenantIds: number[];
 
 	@IsString()
@@ -39,6 +52,18 @@ export class UserDto {
 	@IsArray()
 	@IsOptional()
 	public tenantVariables: TenantVariables[];
+
+	@IsNumber()
+	@IsOptional()
+	public reportToId: number;
+
+	@IsString()
+	@IsOptional()
+	public role: string;
+
+	@IsOptional()
+	@IsISO8601()
+	public joiningDate: Date;
 }
 
 export class AdminDto {
