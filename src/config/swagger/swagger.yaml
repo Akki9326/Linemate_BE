@@ -4917,6 +4917,27 @@ paths:
         400:
           description: Bad Request
         500:
+          description: Internal Server Error
+
+  /campaign/v1/fire-campaign/{id}:
+    post:
+      summary: Fire Campaign
+      tags:
+        - Campaign
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddCohortResponse'            
+        400:
+          description: Bad Request
+        500:
           description: Internal Server Error      
 
   /campaign/v1/{id}:
@@ -4939,29 +4960,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/GetCampaignResponse'            
-        400:
-          description: Bad Request
-        500:
-          description: Internal Server Error
-    post:
-      summary: Clone Campaign By Id
-      tags:
-        - Campaign
-      security:
-        - BearerAuth: []      
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AddCohortResponse'            
         400:
           description: Bad Request
         500:
@@ -5093,6 +5091,31 @@ paths:
           description: Bad Request
         500:
           description: Internal Server Error  
+
+  /campaign/v1/{id}/clone:
+    post:
+      summary: Clone Campaign By Id
+      tags:
+        - Campaign
+      security:
+        - BearerAuth: []      
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddCohortResponse'            
+        400:
+          description: Bad Request
+        500:
+          description: Internal Server Error
 
   /campaign/v1/assign-campaign:
     post:
