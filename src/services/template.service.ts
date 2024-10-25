@@ -4,6 +4,7 @@ import { CommunicationResponse } from './../models/interfaces/communication.inte
 import DB from '@/databases';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { TemplateModel } from '@/models/db/template.model';
+import { TemplateContentModel } from '@/models/db/templateContent.model';
 import { TemplateContentCardsModel } from '@/models/db/templateContentCard.model';
 import { FileDto, FileMediaType } from '@/models/dtos/file.dto';
 import { TemplateButtonDto, TemplateDto } from '@/models/dtos/template-dto';
@@ -11,7 +12,7 @@ import { TemplateListRequestDto } from '@/models/dtos/template-list.dto';
 import { Channel } from '@/models/enums/campaign.enums';
 import { FilterKey } from '@/models/enums/filter.enum';
 import { SortOrder } from '@/models/enums/sort-order.enum';
-import { ButtonType, MediaType, TemplateStatus, TemplateType } from '@/models/enums/template.enum';
+import { ButtonType, ContentType, DefaultLanguage, MediaType, TemplateStatus, TemplateType, ViberContentType } from '@/models/enums/template.enum';
 import { FilterResponse } from '@/models/interfaces/filter.interface';
 import { ExternalTemplatePayload } from '@/models/interfaces/template.interface';
 import { AppMessages, TemplateMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
@@ -41,9 +42,12 @@ export class TemplateService {
 			const template = await this.createOrUpdateTemplate(templateDetails, userId, transaction);
 			const templateContent = await this.createOrUpdateTemplateContent(templateDetails, template.id, userId, transaction);
 			await this.addOrUpdatedButtonsToTemplateContent(templateDetails, templateContent.id, userId, transaction);
-			await this.addOrUpdateContentCards(templateDetails, templateContent.id, userId, transaction);
-			await this.generateTemplate(templateDetails, template, transaction);
-
+			if (templateDetails?.channel === Channel.whatsapp) {
+				await this.addOrUpdateContentCards(templateDetails, templateContent.id, userId, transaction);
+				await this.generateTemplate(templateDetails, template, transaction);
+			} else if (templateDetails?.channel === Channel.viber) {
+				await this.generateViber(templateDetails, templateContent.id, userId, transaction);
+			}
 			await transaction.commit();
 			return { id: template.id };
 		} catch (error) {
@@ -116,24 +120,12 @@ export class TemplateService {
 			throw new BadRequestException(`The description exceeds the maximum allowed length of 250 characters.`);
 		}
 
-		if (templateDetails?.body?.length > 1032) {
-			throw new BadRequestException('The body content exceeds the maximum allowed length of 1032 characters.');
-		}
-		if (templateDetails?.footer?.length > 60) {
-			throw new BadRequestException('The footer content exceeds the maximum allowed length of 60 characters.');
-		}
-
 		Object.assign(template, {
 			name: templateDetails.name,
 			description: templateDetails.description,
-			// clientTemplateId: templateDetails.clientTemplateId,
-			// HSMUserId: templateDetails.HSMUserId,
-			// HSMPassword: templateDetails.HSMPassword,
-			// ISDCode: templateDetails.ISDCode,
-			// businessContactNumber: templateDetails.businessContactNumber,
 			channel: templateDetails.channel,
 			templateType: templateDetails.templateType,
-			language: templateDetails.language,
+			language: templateDetails.language || DefaultLanguage.EN,
 			tenantId: templateDetails.tenantId,
 			createdBy: userId,
 		});
@@ -142,8 +134,26 @@ export class TemplateService {
 		return template;
 	}
 
+	private async generateViber(templateDetails: TemplateDto, template: TemplateModel, transaction: Transaction) {
+		let payload = {};
+		const communication = await this.communicationService.findIntegrationDetails(templateDetails.tenantId, Channel.viber);
+		if (communication) {
+			let response = {};
+			payload = TemplateGenerator.viberPayload(templateDetails, template?.providerTemplateId, communication);
+			response = await TemplateGenerator.createFynoTemplate(payload, communication);
+			console.log('result', response);
+		}
+	}
+
 	private async createOrUpdateTemplateContent(templateDetails: TemplateDto, templateId: number, userId: number, transaction: Transaction) {
-		let templateContent;
+		let templateContent: TemplateContentModel;
+
+		if (templateDetails?.body?.length > 1032) {
+			throw new BadRequestException('The body content exceeds the maximum allowed length of 1032 characters.');
+		}
+		if (templateDetails?.footer?.length > 60) {
+			throw new BadRequestException('The footer content exceeds the maximum allowed length of 60 characters.');
+		}
 
 		if (templateDetails.id) {
 			templateContent = await this.templateContent.findOne({
@@ -160,7 +170,7 @@ export class TemplateService {
 			templateContent = new this.templateContent();
 			templateContent.createdBy = userId;
 		}
-		if (templateDetails?.headerMediaType && templateDetails?.headerMediaType !== MediaType.Location) {
+		if (templateDetails.channel === Channel.whatsapp && templateDetails?.headerMediaType && templateDetails?.headerMediaType !== MediaType.Location) {
 			if (!templateDetails.headerMediaUrl) {
 				throw new BadRequestException('headerMediaUrl is required.');
 			}
@@ -169,6 +179,18 @@ export class TemplateService {
 			}
 			if (!templateDetails.headerMediaHandle) {
 				throw new BadRequestException('headerMediaHandle is required.');
+			}
+		}
+		if (templateDetails?.channel === Channel.whatsapp) {
+			if (!templateDetails.templateType || !Object.values(TemplateType).includes(templateDetails.templateType as TemplateType)) {
+				throw new BadRequestException(`TemplateType must be one of the following values: ${Object.values(TemplateType).join(', ')}`);
+			}
+			if (templateDetails.contentType && !Object.values(ContentType).includes(templateDetails.contentType as ContentType)) {
+				throw new BadRequestException(`contentType must be one of the following values: ${Object.values(ContentType).join(', ')}`);
+			}
+		} else {
+			if (!templateDetails.contentType || !Object.values(ViberContentType).includes(templateDetails.contentType as ViberContentType)) {
+				throw new BadRequestException(`contentType must be one of the following values: ${Object.values(ViberContentType).join(', ')}`);
 			}
 		}
 		Object.assign(templateContent, {
@@ -195,6 +217,8 @@ export class TemplateService {
 			contentUrl: templateDetails.contentUrl,
 			messageType: templateDetails.messageType,
 			contentSubType: templateDetails.contentSubType,
+			thumbnailUrl: templateDetails.thumbnailUrl,
+			mediaDuration: templateDetails.mediaDuration,
 			templateId: templateId,
 		});
 
@@ -408,7 +432,7 @@ export class TemplateService {
 		const communication = await this.communicationService.findIntegrationDetails(templateDetails.tenantId, Channel.whatsapp);
 		if (communication) {
 			if (templateDetails.templateType === TemplateType.ExternalTemplate) {
-				payload = TemplateGenerator.externalTemplatePayload(templateDetails, template?.providerTemplateId);
+				payload = TemplateGenerator.externalTemplatePayload(templateDetails, template?.providerTemplateId, communication);
 				const response = await TemplateGenerator.createExternalTemplate(payload, communication);
 				await this.handleExternalTemplateResponse(
 					response,
@@ -419,7 +443,7 @@ export class TemplateService {
 					communication,
 				);
 			} else {
-				payload = TemplateGenerator.fynoTemplatePayload(templateDetails, template?.providerTemplateId);
+				payload = TemplateGenerator.fynoTemplatePayload(templateDetails, template?.providerTemplateId, communication);
 				const response = {};
 				if (templateDetails.id) {
 					await TemplateGenerator.updateFynoTemplate(payload, template.name, communication);
@@ -455,10 +479,11 @@ export class TemplateService {
 						template,
 						payload as ExternalTemplatePayload,
 						templateData.notificationTemplateId,
+						communication,
 					);
 					await TemplateGenerator.updateFynoTemplate(notificationPayload, template.name, communication);
 				} else {
-					notificationPayload = TemplateGenerator.externalNotificationPayload(template, payload as ExternalTemplatePayload, null);
+					notificationPayload = TemplateGenerator.externalNotificationPayload(template, payload as ExternalTemplatePayload, null, communication);
 					const notificationDetail = await TemplateGenerator.createFynoTemplate(notificationPayload, communication);
 					template.notificationTemplateId = notificationDetail.event?.event_flow?.template;
 				}

@@ -16,9 +16,7 @@ import {
 	ActionType,
 	ButtonType,
 	CardMediaType,
-	Channel,
 	ContentSubType,
-	ContentType,
 	FlowType,
 	HeaderType,
 	MediaType,
@@ -27,6 +25,7 @@ import {
 	TemplateType,
 } from '../enums/template.enum';
 import { Type } from 'class-transformer';
+import { Channel } from '../enums/campaign.enums';
 
 export class TemplateButtonDto {
 	@IsNumber()
@@ -175,12 +174,12 @@ export class TemplateDto {
 	public tenantId: number;
 
 	@IsEnum(TemplateType)
-	@IsNotEmpty()
+	@IsOptional()
 	public templateType: TemplateType;
 
-	@IsEnum(ContentType)
+	@IsString()
 	@IsOptional()
-	public contentType: ContentType;
+	public contentType: string;
 
 	@IsEnum(HeaderType)
 	@IsOptional()
@@ -211,7 +210,7 @@ export class TemplateDto {
 	public headerMediaSample: string;
 
 	@IsString()
-	@IsNotEmpty()
+	@IsOptional()
 	public language: string;
 
 	@IsArray()
@@ -229,6 +228,14 @@ export class TemplateDto {
 	@IsString()
 	@IsOptional()
 	public footer: string;
+
+	@IsString()
+	@IsOptional()
+	public thumbnailUrl: string;
+
+	@IsString()
+	@IsOptional()
+	public mediaDuration: string;
 
 	@IsBoolean()
 	@IsOptional()

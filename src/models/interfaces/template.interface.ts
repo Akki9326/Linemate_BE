@@ -71,7 +71,8 @@ export interface FynoTemplatePayload {
 	template: {
 		template_id: string;
 		channels: {
-			whatsapp: FynoContentPayload;
+			whatsapp?: FynoContentPayload;
+			viber?: FynoContentPayload;
 		};
 		placeholders: object;
 	};

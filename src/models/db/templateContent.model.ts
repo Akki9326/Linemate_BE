@@ -151,6 +151,14 @@ export default function (sequelize: Sequelize): typeof TemplateContentModel {
 				allowNull: true,
 				type: DataTypes.STRING,
 			},
+			thumbnailUrl: {
+				type: DataTypes.STRING,
+				allowNull: true,
+			},
+			mediaDuration: {
+				type: DataTypes.STRING,
+				allowNull: true,
+			},
 			templateId: {
 				allowNull: false,
 				type: DataTypes.INTEGER,
