@@ -537,6 +537,15 @@ components:
         profilePhoto:
           type: string
           example: ''
+        reportToId:
+          type: number
+          example: ''
+        joiningDate:
+          type: date
+          example: ''
+        role:
+          type: string
+          example: ''
         tenantVariables:
           type: array
           items:
@@ -622,6 +631,15 @@ components:
               type: array
               items:
                 type: object
+            reportToId:
+              type: number
+              example: ''
+            joiningDate:
+              type: date
+              example: ''
+            role:
+              type: string
+              example: ''
             tenantVariableDetail:
               type: array
               items:
@@ -666,6 +684,15 @@ components:
           type: string
           example: ''
         profilePhoto:
+          type: string
+          example: ''
+        reportToId:
+          type: number
+          example: ''
+        joiningDate:
+          type: date
+          example: ''
+        role:
           type: string
           example: ''
         tenantVariables:

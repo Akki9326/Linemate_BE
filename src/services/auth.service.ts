@@ -137,7 +137,8 @@ export default class AuthService {
 			await user.save();
 			throw new BadRequestException(AppMessages.accountLocked);
 		}
-		const getActiveSessions = await UserCaching.getActiveSessions(user.email);
+		const sessionName = user.email || user.mobileNumber;
+		const getActiveSessions = await UserCaching.getActiveSessions(sessionName);
 
 		const sessionId: string = uuidv4();
 
@@ -148,6 +149,7 @@ export default class AuthService {
 			id: user.id,
 			sessionId,
 			userType: user.userType,
+			mobileNumber: user.mobileNumber,
 		});
 		let allTenants = [];
 		if (user.userType !== UserType.ChiefAdmin) {
@@ -197,6 +199,7 @@ export default class AuthService {
 				access: (await this.roleService.getAccessByRoleIds(
 					{
 						email: user.email,
+						mobileNumber: user.mobileNumber,
 						firstName: user.firstName,
 						lastName: user.lastName,
 						id: user.id,
@@ -224,7 +227,7 @@ export default class AuthService {
 			expiry: ExpiryTime.sessionExpiry(+SESSION_EXPIRY_MINS),
 		});
 
-		UserCaching.pushSession(user.email, getActiveSessions);
+		UserCaching.pushSession(sessionName, getActiveSessions);
 		return loginResponse;
 	}
 	public async sendResetPasswordOTP(forgotPasswordDto: ForgotPasswordDto): Promise<void> {
@@ -241,7 +244,7 @@ export default class AuthService {
 		await this.saveTokenInDB(user.id, TokenTypes.FORGOT_PASSWORD, otp);
 		await this.triggerLoginOTPs(user, otp);
 	}
-	public async verifyOtp(otp: string): Promise<{ email: string }> {
+	public async verifyOtp(otp: string): Promise<{ email: string; mobileNumber: string }> {
 		const userToken = await this.userToken.findOne({
 			where: {
 				isActive: true,
@@ -258,9 +261,10 @@ export default class AuthService {
 		}
 		return {
 			email: userDetails.email,
+			mobileNumber: userDetails.mobileNumber,
 		};
 	}
-	public async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<{ email: string }> {
+	public async resetPassword(resetPasswordDto: ResetPasswordDto): Promise<{ email: string; mobileNumber: string }> {
 		const userToken = await this.userToken.findOne({
 			where: {
 				isActive: true,
@@ -305,7 +309,10 @@ export default class AuthService {
 		await user.save();
 		await userToken.save();
 
-		return { email: user.email };
+		return {
+			email: user.email,
+			mobileNumber: user.mobileNumber,
+		};
 	}
 	public async validateMimeType(mimetype: string) {
 		const allowedExtensions = [...Object.values(FileMimeType)];

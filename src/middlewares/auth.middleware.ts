@@ -9,25 +9,27 @@ import { verify } from 'jsonwebtoken';
 
 const authMiddleware = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 	try {
-		const Authorization = req.header('Authorization') ? req.header('Authorization').split('Bearer ')[1] : null;
-		if (Authorization) {
-			const secretKey: string = SECRET_KEY;
-			const verificationResponse = verify(Authorization, secretKey) as JwtTokenData;
-			const emailId = verificationResponse.email;
+			const Authorization = req.header('Authorization') ? req.header('Authorization').split('Bearer ')[1] : null;
+			if (Authorization) {
+				const secretKey: string = SECRET_KEY;
+				const verificationResponse = verify(Authorization, secretKey) as JwtTokenData;
 
-			const isValidSession = await UserCaching.isValidSession(verificationResponse.email, verificationResponse.sessionId);
+				const isValidSession = await UserCaching.isValidSession(
+					verificationResponse.email || verificationResponse.mobileNumber,
+					verificationResponse.sessionId,
+				);
 
-			if (!isValidSession) next(new HttpException(401, 'Invalid session.'));
+				if (!isValidSession) next(new HttpException(401, 'Invalid session.'));
 
-			if (!emailId) {
-				next(new HttpException(HttpStatusCode.UNAUTHORIZED, 'Invalid authentication token'));
+				if (!verificationResponse.email && !verificationResponse.mobileNumber) {
+					next(new HttpException(HttpStatusCode.UNAUTHORIZED, 'Invalid authentication token'));
+				} else {
+					req.user = verificationResponse;
+					next();
+				}
 			} else {
-				req.user = verificationResponse;
-				next();
+				next(new HttpException(HttpStatusCode.UNAUTHORIZED, 'Unauthorized access'));
 			}
-		} else {
-			next(new HttpException(HttpStatusCode.UNAUTHORIZED, 'Unauthorized access'));
-		}
 	} catch (error) {
 		next(new HttpException(HttpStatusCode.UNAUTHORIZED, 'Wrong authentication token'));
 	}
