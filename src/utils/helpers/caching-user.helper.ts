@@ -3,9 +3,7 @@ import { CacheService } from '../../services/cache.service';
 
 export const UserCaching = {
 	async getSessions(sessionName: string): Promise<any[]> {
-		console.log('sessionName', sessionName);
 		const sessions: any[] = await CacheService.instance.getJson(sessionName);
-		console.log('sessions', sessions);
 		return sessions;
 	},
 

@@ -52,8 +52,6 @@ export class FilterService {
 			throw new BadRequestException(`Invalid filterFor value: ${filterFor}`);
 		}
 
-		console.log(tenantId);
-
 		for (const field of filterConfig.filterFields) {
 			if (field.filterType === FiltersEnum.DateRange) {
 				filterResponse.push({
