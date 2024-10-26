@@ -31,7 +31,6 @@ export const FilterHelper = {
 			},
 			attributes: ['id', 'name'],
 		});
-		console.log('tenantList', tenantList);
 		return tenantList.map(tenant => ({
 			id: tenant.id,
 			name: `${tenant.name}`,

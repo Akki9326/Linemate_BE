@@ -42,7 +42,7 @@ export const commonFilterConfig = [
 			},
 			{
 				filterTitle: 'Custom Fields',
-				filterKey: FilterKey.AssignedCompanies,
+				filterKey: FilterKey.CustomFields,
 				filterType: FiltersEnum.DropDown,
 			},
 			{
