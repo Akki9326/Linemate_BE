@@ -10,6 +10,7 @@ export enum FilterFor {
 	Cohort = 'cohort',
 	Template = 'template',
 	Campaign = 'campaign',
+	User = 'user',
 }
 export enum FilterKey {
 	JoiningDate = 'joiningDate',
@@ -27,6 +28,8 @@ export enum FilterKey {
 	Status = 'status',
 	LastTrigger = 'lastTrigger',
 	NextTrigger = 'nextTrigger',
+	UserType = 'userType',
+	AssignedCompanies = 'assignedCompanies',
 }
 export const commonFilterConfig = [
 	{
@@ -39,7 +42,7 @@ export const commonFilterConfig = [
 			},
 			{
 				filterTitle: 'Custom Fields',
-				filterKey: FilterKey.CustomFields,
+				filterKey: FilterKey.AssignedCompanies,
 				filterType: FiltersEnum.DropDown,
 			},
 			{
@@ -52,6 +55,26 @@ export const commonFilterConfig = [
 				filterKey: FilterKey.Cohort,
 				filterType: FiltersEnum.DropDown,
 			},
+		],
+	},
+	{
+		filterFor: FilterFor.User,
+		filterFields: [
+			{
+				filterTitle: 'User Type',
+				filterKey: FilterKey.UserType,
+				filterType: FiltersEnum.DropDown,
+			},
+			{
+				filterTitle: 'Assigned Companies',
+				filterKey: FilterKey.AssignedCompanies,
+				filterType: FiltersEnum.DropDown,
+			},
+			// {
+			// 	filterTitle: 'Cohort',
+			// 	filterKey: FilterKey.Cohort,
+			// 	filterType: FiltersEnum.DropDown,
+			// },
 		],
 	},
 	{
