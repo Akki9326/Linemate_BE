@@ -9,6 +9,7 @@ import { LanguageService } from './language.service';
 import VariableServices from './variable.service';
 import { ContentStatus, ConteTypes } from '@/models/enums/contentType.enum';
 import { CampaignStatusType } from '@/models/enums/campaign.enums';
+import { UserType } from '@/models/enums/user-types.enum';
 
 export class FilterService {
 	private variableServices = new VariableServices();
@@ -50,6 +51,8 @@ export class FilterService {
 		if (!filterConfig) {
 			throw new BadRequestException(`Invalid filterFor value: ${filterFor}`);
 		}
+
+		console.log(tenantId);
 
 		for (const field of filterConfig.filterFields) {
 			if (field.filterType === FiltersEnum.DateRange) {
@@ -137,6 +140,24 @@ export class FilterService {
 						filterType: field.filterType,
 						selectedValue: '',
 						options: Object.values(ContentStatus)?.length ? FilterHelper.formatOptions(Object.values(ContentStatus)) : [],
+					});
+				}
+				if (field.filterKey === FilterKey.UserType) {
+					filterResponse.push({
+						filterTitle: field.filterTitle,
+						filterKey: field.filterKey,
+						filterType: field.filterType,
+						selectedValue: '',
+						options: Object.values(UserType)?.length ? FilterHelper.formatOptions(Object.values(UserType)) : [],
+					});
+				}
+				if (field.filterKey === FilterKey.AssignedCompanies) {
+					filterResponse.push({
+						filterTitle: field.filterTitle,
+						filterKey: field.filterKey,
+						filterType: field.filterType,
+						selectedValue: '',
+						options: await FilterHelper.assignedCompaniesOption(),
 					});
 				}
 			} else if (field.filterType === FiltersEnum.NumberRange) {
