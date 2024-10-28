@@ -45,7 +45,7 @@ export class FilterService {
 		}
 	}
 
-	private async generateFilterResponse(tenantId: number, filterFor: string): Promise<FilterResponse[]> {
+	private async generateFilterResponse(tenantId: number | null, filterFor: string): Promise<FilterResponse[]> {
 		const filterResponse: FilterResponse[] = [];
 		const filterConfig = commonFilterConfig.find(config => config.filterFor === filterFor);
 		if (!filterConfig) {
@@ -175,6 +175,9 @@ export class FilterService {
 	public async list(tenantId: number, filterFor: FilterFor) {
 		if (!filterFor) {
 			throw new BadRequestException(FilterMessage.filterForNotFound);
+		}
+		if (filterFor === FilterFor.User) {
+			return await this.generateFilterResponse(null, filterFor);
 		}
 		if (!tenantId) {
 			throw new BadRequestException(AppMessages.headerTenantId);
