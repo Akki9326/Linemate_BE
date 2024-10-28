@@ -30,6 +30,7 @@ export enum FilterKey {
 	NextTrigger = 'nextTrigger',
 	UserType = 'userType',
 	AssignedCompanies = 'assignedCompanies',
+	UserStatus = 'userStatus',
 }
 export const commonFilterConfig = [
 	{
@@ -70,11 +71,11 @@ export const commonFilterConfig = [
 				filterKey: FilterKey.AssignedCompanies,
 				filterType: FiltersEnum.DropDown,
 			},
-			// {
-			// 	filterTitle: 'Cohort',
-			// 	filterKey: FilterKey.Cohort,
-			// 	filterType: FiltersEnum.DropDown,
-			// },
+			{
+				filterTitle: 'Status',
+				filterKey: FilterKey.UserStatus,
+				filterType: FiltersEnum.DropDown,
+			},
 		],
 	},
 	{

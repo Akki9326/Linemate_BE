@@ -7,7 +7,7 @@ import { ChangePasswordDto, SelectUserData, UserActionDto, UserData, UserDto } f
 import { FileDestination } from '@/models/enums/file-destination.enum';
 import { FilterKey } from '@/models/enums/filter.enum';
 import { SortOrder } from '@/models/enums/sort-order.enum';
-import { UserType, getPermissionGroup } from '@/models/enums/user-types.enum';
+import { UserStatus, UserType, getPermissionGroup } from '@/models/enums/user-types.enum';
 import { VariableCategories, VariableType } from '@/models/enums/variable.enum';
 import { FilterResponse } from '@/models/interfaces/filter.interface';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
@@ -607,6 +607,7 @@ class UserService {
 	}
 	private async mappingDynamicFilter(condition: object, dynamicFilter: FilterResponse[]) {
 		const cohortUserIds = [];
+
 		const variableList = dynamicFilter
 			.filter(filter => 'variableId' in filter && 'selectedValue' in filter)
 			.map(filter => ({
@@ -626,9 +627,32 @@ class UserService {
 					throw new BadRequestException(AppMessages.InvalidFilterDate);
 				}
 			}
+
 			if (filter.filterKey === FilterKey.Cohort) {
 				const userIds = await this.cohortService.getUserByCohortId(Number(filter?.selectedValue));
 				cohortUserIds.push(...userIds);
+			}
+
+			if (filter.filterKey === FilterKey.UserType) {
+				condition['userType'] = filter.selectedValue;
+			}
+
+			if (filter.filterKey === FilterKey.AssignedCompanies) {
+				const tenents = [];
+				const tenant = await this.tenant.findOne({ where: { name: filter.selectedValue } });
+				tenents.push(tenant.id);
+				const assignedCompanies = await this.users.findAll({
+					where: {
+						tenantIds: {
+							[Op.in]: [tenents],
+						},
+					},
+				});
+				condition['tenantIds'] = assignedCompanies[0].tenantIds;
+			}
+
+			if (filter.filterKey === FilterKey.UserStatus) {
+				filter.selectedValue === UserStatus.Active ? (condition['isActive'] = true) : (condition['isActive'] = false);
 			}
 		}
 		const variableMatrixUserIds = await this.getUserIdsFromVariableMatrix(variableList);
