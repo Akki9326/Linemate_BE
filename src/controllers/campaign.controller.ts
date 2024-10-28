@@ -94,5 +94,26 @@ class CampaignController {
 			next(ex);
 		}
 	};
+
+	public getCampaignDetails = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const campaignId = parseInt(req.params.campaignId);
+			const userId = req.user.id as number;
+			const campaignResponse = await this.campaignService.getCamapignAnalytics(campaignId, userId);
+			AppResponseHelper.sendSuccess(res, 'Success', campaignResponse);
+		} catch (ex) {
+			next(ex);
+		}
+	};
+
+	public fireCampaign = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const campaignId = parseInt(req.params.id);
+			const campaignResponse = await this.campaignService.fireCampaign(campaignId);
+			AppResponseHelper.sendSuccess(res, 'Success', campaignResponse);
+		} catch (ex) {
+			next(ex);
+		}
+	};
 }
 export default CampaignController;

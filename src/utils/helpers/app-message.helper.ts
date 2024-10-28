@@ -86,6 +86,10 @@ export const CampaignMessage = {
 	campaignNotFound: 'campaign not found',
 	campaignInProgress: 'campaign not found or in progress',
 	cannotCreateCampaign: 'error create campaign',
+	camapignTriggered: 'campaign already triggered',
+	fynoApiError: 'error fetching data try later',
+	campaignExpired: 'campaign is expired',
+	campaignNameTaken: 'campaign name already taken',
 };
 export const CommunicationMessage = {
 	communicationNotFound: 'communication not found',

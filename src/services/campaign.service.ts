@@ -2,15 +2,25 @@ import DB from '@/databases';
 import { Op, WhereOptions, BelongsTo, Sequelize } from 'sequelize';
 import { AssignCampaign, CampaignMasterDto } from '@/models/dtos/campaign.dto';
 import { BadRequestException } from '@/exceptions/BadRequestException';
-import { AppMessages, CampaignMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
+import { AppMessages, CampaignMessage, TemplateMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
 import { applyingCampaign } from '@/utils/helpers/cohort.helper';
 import { CampaignListRequestDto } from '@/models/dtos/campaign-list.dto';
 import { CampaignMatrixDto } from '@/models/dtos/campaignMatrix.dto';
-import { ReoccurenceType, CampaignStatusType } from '@/models/enums/campaign.enums';
+import { ReoccurenceType, CampaignStatusType, TriggerType } from '@/models/enums/campaign.enums';
 import { CampaignMasterModel } from '@/models/db/campaignMastel';
 import { SortOrder } from '@/models/enums/sort-order.enum';
 import { AssignCampaignUserId } from '@/models/interfaces/assignCampaign';
-import { createCampaignOnFyno, generateCsvFile, removeCampaign, renameFyonCampaign } from '@/utils/helpers/campaign.helper';
+import {
+	createCampaignOnFyno,
+	fynoCampaignOverview,
+	generateCsvFile,
+	getCampaignPreview,
+	getNotificationForCampaign,
+	removeCampaign,
+	renameFyonCampaign,
+	updateTemplateOnCampaign,
+	fireCampaign,
+} from '@/utils/helpers/campaign.helper';
 import { FilterResponse } from '@/models/interfaces/filter.interface';
 import { FilterKey } from '@/models/enums/filter.enum';
 import { parseISO } from 'date-fns';
@@ -21,6 +31,7 @@ export class CampaignService {
 	private campaignUserMatrix = DB.CampaignUserMatrix;
 	private user = DB.Users;
 	private tenant = DB.Tenant;
+	private template = DB.Template;
 	private sequelize: Sequelize;
 
 	constructor() {
@@ -35,19 +46,44 @@ export class CampaignService {
 					id: campaignDetails.tenantId,
 					isDeleted: false,
 				},
+				transaction,
 			});
 			if (!tenant) {
 				throw new BadRequestException(TenantMessage.tenantNotFound);
+			}
+
+			const nameTaken = await this.campaignMaster.findOne({
+				where: {
+					isDeleted: false,
+					name: campaignDetails.name,
+					tenantId: campaignDetails.tenantId,
+				},
+				transaction,
+			});
+
+			if (nameTaken) {
+				throw new BadRequestException(CampaignMessage.campaignNameTaken);
 			}
 
 			if (campaignDetails?.rules?.length) {
 				campaignDetails['userIds'] = (await applyingCampaign(campaignDetails?.rules)) || [];
 			}
 
+			const template = await this.template.findOne({
+				where: {
+					id: campaignDetails.whatsappTemplateId,
+				},
+				transaction,
+			});
+
+			if (!template) {
+				throw new BadRequestException(TemplateMessage.templateNotFound);
+			}
+
 			// Get all the campaign with same rules
 			const existingCampaigns = await this.campaignUserMatrix.findAll({
 				where: {
-					isDeleted: false, // Optional if you want to exclude deleted records
+					isDeleted: false,
 				},
 				attributes: ['userId', 'campaignId', [Sequelize.fn('COUNT', Sequelize.col('campaignId')), 'campaignCount']],
 				group: ['campaignId', 'userId'],
@@ -64,6 +100,10 @@ export class CampaignService {
 			if (!fynoCampaign) {
 				throw new BadRequestException(CampaignMessage.cannotCreateCampaign);
 			}
+
+			const notifications = await getNotificationForCampaign(template.name);
+
+			await updateTemplateOnCampaign(fynoCampaign.upload_id, notifications);
 
 			let campaign = new this.campaignMaster();
 			campaign.name = campaignDetails.name;
@@ -91,13 +131,12 @@ export class CampaignService {
 				campaign.reoccurenceDetails = campaignDetails.reoccurenceDetails;
 			}
 
-			await transaction.commit();
-			campaign = await campaign.save();
+			campaign = await campaign.save({ transaction });
 
 			if (campaignDetails?.userIds?.length) {
 				await this.assignCampaign(campaign.id, campaignDetails, userId);
 			}
-
+			await transaction.commit();
 			return { id: campaign.id };
 		} catch (error) {
 			await transaction.rollback();
@@ -115,6 +154,23 @@ export class CampaignService {
 
 			if (!campaign) {
 				throw new BadRequestException(CampaignMessage.campaignInProgress);
+			}
+
+			const nameTaken = await this.campaignMaster.findOne({
+				where: {
+					isDeleted: false,
+					name: campaignDetails.name,
+					tenantId: campaignDetails.tenantId,
+				},
+				transaction,
+			});
+
+			if (!nameTaken) {
+				throw new BadRequestException(CampaignMessage.campaignNotFound);
+			}
+
+			if (nameTaken) {
+				throw new BadRequestException(CampaignMessage.campaignNameTaken);
 			}
 
 			if (campaignDetails?.rules?.length) {
@@ -147,8 +203,8 @@ export class CampaignService {
 				campaign.reoccurenceDetails = campaignDetails?.reoccurenceDetails;
 			}
 
+			const updatedCampaign = await campaign.save({ transaction });
 			await transaction.commit();
-			const updatedCampaign = await campaign.save();
 
 			return { id: updatedCampaign.id };
 		} catch (error) {
@@ -253,8 +309,8 @@ export class CampaignService {
 				},
 			);
 
+			await campaignMaster.save({ transaction });
 			await transaction.commit();
-			await campaignMaster.save();
 			return campaignMaster.id;
 		} catch (error) {
 			await transaction.rollback();
@@ -290,68 +346,63 @@ export class CampaignService {
 	}
 
 	public async all(pageModel: CampaignListRequestDto, tenantId: number) {
-		const transaction = await this.sequelize.transaction();
-		try {
-			const { page = 1, limit = 10 } = pageModel;
-			const validSortFields = Object.keys(CampaignMasterModel.rawAttributes);
-			const sortField = validSortFields.includes(pageModel.sortField) ? pageModel.sortField : 'id';
-			const sortOrder = Object.values(SortOrder).includes(pageModel.sortOrder as SortOrder) ? pageModel.sortOrder : SortOrder.ASC;
-			const offset = (page - 1) * limit;
-			let condition: WhereOptions = { isDeleted: false };
+		const { page = 1, limit = 10 } = pageModel;
+		const validSortFields = Object.keys(CampaignMasterModel.rawAttributes);
+		const sortField = validSortFields.includes(pageModel.sortField) ? pageModel.sortField : 'id';
+		const sortOrder = Object.values(SortOrder).includes(pageModel.sortOrder as SortOrder) ? pageModel.sortOrder : SortOrder.ASC;
+		const offset = (page - 1) * limit;
+		let condition: WhereOptions = { isDeleted: false };
 
-			if (!tenantId) {
-				throw new BadRequestException(AppMessages.headerTenantId);
-			}
-
-			if (tenantId) {
-				condition.tenantId = tenantId;
-			}
-
-			if (pageModel?.search) {
-				condition = {
-					...condition,
-					name: { [Op.iLike]: `%${pageModel.search}%` },
-					transaction,
-					//  search by template name pending
-				};
-			}
-
-			if (pageModel?.filter) {
-				if (pageModel?.filter?.dynamicFilter && pageModel?.filter?.dynamicFilter?.length) {
-					await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter);
-				}
-			}
-			const campaignResule = await this.campaignMaster.findAll({
-				where: condition,
-				offset,
-				limit,
-				order: [[sortField, sortOrder]],
-				transaction,
-				include: [
-					{
-						association: new BelongsTo(this.user, this.campaignMaster, { as: 'Creator', foreignKey: 'createdBy' }),
-						attributes: ['id', 'firstName', 'lastName'],
-					},
-					{
-						association: new BelongsTo(this.user, this.campaignMaster, { as: 'Updater', foreignKey: 'updatedBy' }),
-						attributes: ['id', 'firstName', 'lastName'],
-					},
-					{
-						association: new BelongsTo(this.tenant, this.campaignMaster, { as: 'Tenant', foreignKey: 'id' }),
-						attributes: ['id', 'name', 'companyType', 'phoneNumber'],
-					},
-				],
-			});
-
-			await transaction.commit();
-			return {
-				count: campaignResule?.length,
-				rows: campaignResule,
-			};
-		} catch (error) {
-			await transaction.rollback();
-			throw error;
+		if (!tenantId) {
+			throw new BadRequestException(AppMessages.headerTenantId);
 		}
+
+		if (tenantId) {
+			condition.tenantId = tenantId;
+		}
+
+		if (pageModel?.search) {
+			condition = {
+				...condition,
+				name: { [Op.iLike]: `%${pageModel.search}%` },
+			};
+		}
+
+		if (pageModel?.filter) {
+			if (pageModel?.filter?.dynamicFilter && pageModel?.filter?.dynamicFilter?.length) {
+				await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter);
+			}
+		}
+
+		const campaignResule = await this.campaignMaster.findAll({
+			where: condition,
+			offset,
+			limit,
+			order: [[sortField, sortOrder]],
+			include: [
+				{
+					association: new BelongsTo(this.user, this.campaignMaster, { as: 'Creator', foreignKey: 'createdBy' }),
+					attributes: ['id', 'firstName', 'lastName'],
+				},
+				{
+					association: new BelongsTo(this.user, this.campaignMaster, { as: 'Updater', foreignKey: 'updatedBy' }),
+					attributes: ['id', 'firstName', 'lastName'],
+				},
+				{
+					association: new BelongsTo(this.tenant, this.campaignMaster, { as: 'Tenant', foreignKey: 'id' }),
+					attributes: ['id', 'name', 'companyType', 'phoneNumber'],
+				},
+			],
+		});
+
+		const count = await this.campaignMaster.count({
+			where: condition,
+		});
+
+		return {
+			count,
+			rows: campaignResule,
+		};
 	}
 
 	public async addTrigger(triggerDetails: CampaignMatrixDto, userId: number) {
@@ -491,72 +542,183 @@ export class CampaignService {
 	}
 
 	public async assignCampaign(campaignId: number, campaignDetails: AssignCampaignUserId, creatorId: number) {
-		campaignDetails.userIds = Array.from(new Set(campaignDetails.userIds));
-		const existingUsers = await this.user.findAll({
-			where: {
-				id: {
-					[Op.in]: campaignDetails.userIds,
-				},
-			},
-			attributes: ['id'],
-		});
-
-		const existingUserIds = existingUsers.map(user => user.id);
-		const validUserIds = campaignDetails.userIds.filter(userId => existingUserIds.includes(userId));
-
-		if (validUserIds.length) {
-			const existingCampaignMatrixRecords = await this.campaignUserMatrix.findAll({
+		const transaction = await this.sequelize.transaction();
+		try {
+			campaignDetails.userIds = Array.from(new Set(campaignDetails.userIds));
+			const existingUsers = await this.user.findAll({
 				where: {
-					campaignId: campaignId,
+					id: {
+						[Op.in]: campaignDetails.userIds,
+					},
 				},
-				attributes: ['userId', 'isDeleted'],
+				attributes: ['id'],
+				transaction,
 			});
 
-			const existingCampaignMatrixUserIds = existingCampaignMatrixRecords.map(record => record.userId.toString());
+			const existingUserIds = existingUsers.map(user => user.id);
+			const validUserIds = campaignDetails.userIds.filter(userId => existingUserIds.includes(userId));
 
-			const recordsToReactivate = existingCampaignMatrixRecords
-				.filter(record => validUserIds.includes(parseInt(record.userId)) && record.isDeleted === true)
-				.map(record => record.userId);
+			if (validUserIds.length) {
+				const existingCampaignMatrixRecords = await this.campaignUserMatrix.findAll({
+					where: {
+						campaignId: campaignId,
+					},
+					attributes: ['userId', 'isDeleted'],
+					transaction,
+				});
 
-			const recordsToDelete = existingCampaignMatrixRecords
-				.filter(record => !validUserIds.includes(parseInt(record.userId)) && record.isDeleted === false)
-				.map(record => record.userId);
+				const existingCampaignMatrixUserIds = existingCampaignMatrixRecords.map(record => record.userId.toString());
 
-			const newUserIds = validUserIds.filter(userId => !existingCampaignMatrixUserIds.includes(userId.toString()));
+				const recordsToReactivate = existingCampaignMatrixRecords
+					.filter(record => validUserIds.includes(parseInt(record.userId)) && record.isDeleted === true)
+					.map(record => record.userId);
 
-			if (recordsToReactivate.length) {
-				await this.campaignUserMatrix.update(
-					{ isDeleted: false, updatedBy: creatorId },
-					{
-						where: {
-							campaignId: campaignId,
-							userId: {
-								[Op.in]: recordsToReactivate,
+				const recordsToDelete = existingCampaignMatrixRecords
+					.filter(record => !validUserIds.includes(parseInt(record.userId)) && record.isDeleted === false)
+					.map(record => record.userId);
+
+				const newUserIds = validUserIds.filter(userId => !existingCampaignMatrixUserIds.includes(userId.toString()));
+
+				if (recordsToReactivate.length) {
+					await this.campaignUserMatrix.update(
+						{ isDeleted: false, updatedBy: creatorId },
+						{
+							where: {
+								campaignId: campaignId,
+								userId: {
+									[Op.in]: recordsToReactivate,
+								},
+								transaction,
 							},
 						},
-					},
-				);
-			}
-			if (recordsToDelete.length) {
-				await this.campaignUserMatrix.update(
-					{ isDeleted: true, updatedBy: creatorId },
-					{
-						where: {
-							campaignId: campaignId,
-							userId: {
-								[Op.in]: recordsToDelete,
+					);
+				}
+				if (recordsToDelete.length) {
+					await this.campaignUserMatrix.update(
+						{ isDeleted: true, updatedBy: creatorId },
+						{
+							where: {
+								campaignId: campaignId,
+								userId: {
+									[Op.in]: recordsToDelete,
+								},
+								transaction,
 							},
 						},
-					},
-				);
+					);
+				}
+
+				const CampaignMatrixRecords = newUserIds.map(userId => ({
+					campaignId: campaignId,
+					userId: userId,
+					createdBy: creatorId, // Add the creatorId here
+				}));
+				await this.campaignUserMatrix.bulkCreate(CampaignMatrixRecords);
+				transaction.commit();
+			}
+		} catch (error) {
+			await transaction.rollback();
+			throw error;
+		}
+	}
+
+	public async getCamapignAnalytics(campaignId: number, userId: number) {
+		const transaction = await this.sequelize.transaction();
+		try {
+			const campaign = await this.campaignMaster.findOne({
+				where: {
+					id: campaignId,
+					isDeleted: false,
+				},
+				attributes: ['id', 'fynoCampaignId', 'name', 'reoccurenceType'],
+				raw: true,
+				transaction,
+			});
+
+			if (!campaign) {
+				throw new BadRequestException(CampaignMessage.campaignNotFound);
 			}
 
-			const CampaignMatrixRecords = newUserIds.map(userId => ({
-				campaignId: campaignId,
-				userId: userId,
-				createdBy: creatorId, // Add the creatorId here
-			}));
-			await this.campaignUserMatrix.bulkCreate(CampaignMatrixRecords);
+			const campaignPreview = await getCampaignPreview(campaign.fynoCampaignId);
+
+			let campaignOverview = await fynoCampaignOverview(campaignPreview);
+			if (campaignOverview.length <= 0) {
+				throw new BadRequestException(CampaignMessage.fynoApiError);
+			}
+
+			campaignOverview = campaignOverview.reduce((result, item) => {
+				if (!result[item.status]) {
+					result[item.status] = 0;
+				}
+				result[item.status] += item.total_requests;
+				return result;
+			}, {});
+
+			const campaignMatrix = new this.campaignMatrix();
+			campaignMatrix.campaignId = campaignId;
+			campaignMatrix.triggerType = campaign.reoccurenceType === ReoccurenceType.once ? TriggerType.manual : TriggerType.automatic;
+			campaignMatrix.triggered = campaignOverview.Delivered + campaignOverview.Undelivered;
+			campaignMatrix.delivered = campaignOverview.Delivered;
+			campaignMatrix.read = campaignOverview?.Read;
+			campaignMatrix.clicked = campaignOverview?.clicked || 0;
+			campaignMatrix.failed = campaignOverview?.Undelivered;
+			campaignMatrix.createdBy = userId;
+
+			const campaignTriggered = await this.campaignMatrix.findOne({
+				where: {
+					campaignId,
+				},
+				transaction,
+			});
+
+			if (!campaignTriggered) {
+				await campaignMatrix.save({ transaction });
+				await transaction.commit();
+				return campaignMatrix;
+			}
+
+			await transaction.commit();
+			return campaignTriggered;
+		} catch (error) {
+			await transaction.rollback();
+			throw error;
+		}
+	}
+
+	public async fireCampaign(campiagnId: number) {
+		const transaction = await this.sequelize.transaction();
+		try {
+			const campign = await this.campaignMaster.findOne({
+				where: {
+					id: campiagnId,
+					isDeleted: false,
+				},
+				transaction,
+			});
+
+			if (!campign) {
+				throw new BadRequestException(CampaignMessage.campaignNotFound);
+			}
+
+			const createdAt = campign.createdAt;
+			const now = new Date();
+
+			const differenceInTime = now.getTime() - createdAt.getTime();
+			const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+
+			if (differenceInDays > 30) {
+				throw new BadRequestException(CampaignMessage.campaignExpired);
+			}
+
+			await fireCampaign(campign.fynoCampaignId);
+
+			await transaction.commit();
+			return {
+				id: campiagnId,
+			};
+		} catch (error) {
+			await transaction.rollback();
+			throw error;
 		}
 	}
 }
