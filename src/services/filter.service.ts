@@ -9,7 +9,7 @@ import { LanguageService } from './language.service';
 import VariableServices from './variable.service';
 import { ContentStatus, ConteTypes } from '@/models/enums/contentType.enum';
 import { CampaignStatusType } from '@/models/enums/campaign.enums';
-import { UserType } from '@/models/enums/user-types.enum';
+import { UserStatus, UserType } from '@/models/enums/user-types.enum';
 
 export class FilterService {
 	private variableServices = new VariableServices();
@@ -156,6 +156,15 @@ export class FilterService {
 						filterType: field.filterType,
 						selectedValue: '',
 						options: await FilterHelper.assignedCompaniesOption(),
+					});
+				}
+				if (field.filterKey === FilterKey.UserStatus) {
+					filterResponse.push({
+						filterTitle: field.filterTitle,
+						filterKey: field.filterKey,
+						filterType: field.filterType,
+						selectedValue: '',
+						options: Object.values(UserStatus)?.length ? FilterHelper.formatOptions(Object.values(UserStatus)) : [],
 					});
 				}
 			} else if (field.filterType === FiltersEnum.NumberRange) {
