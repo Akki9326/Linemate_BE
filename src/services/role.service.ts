@@ -5,7 +5,7 @@ import { RoleDto, RoleListRequestDto } from '@/models/dtos/role.dto';
 import { UserType } from '@/models/enums/user-types.enum';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { RoleMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
-import { BelongsTo, Op, WhereOptions } from 'sequelize';
+import { BelongsTo, literal, Op, WhereOptions } from 'sequelize';
 
 export class RoleService {
 	private role = DB.Roles;
@@ -57,37 +57,57 @@ export class RoleService {
 
 	async fetchPermissionDetails(permissionId: number) {
 		const permission = await this.permissionModel.findByPk(permissionId, {});
-		return permission.name;
+		return {
+			id: permission.id,
+			name: permission.name,
+		};
 	}
-
 	public async one(roleId: number) {
 		const rolesResult = await this.role.findOne({
 			where: { id: roleId, isDeleted: false },
 		});
-
 		if (!rolesResult) {
 			throw new BadRequestException(RoleMessage.roleNotFound);
 		}
 
 		const rolesWithPermission = await Promise.all(
-			rolesResult.dataValues.permissionsIds.map(async (permissionId: number) => {
-				const permissionData = await this.fetchPermissionDetails(permissionId);
-				return permissionData;
+			rolesResult.permissionsIds.map(async (permissionId: number) => {
+				try {
+					const permissionData = await this.fetchPermissionDetails(permissionId);
+					return permissionData;
+				} catch (error) {
+					return null; // Optionally handle errors or skip failed permission fetches
+				}
 			}),
 		);
+		const filteredPermissions = rolesWithPermission.filter(Boolean);
+
+		const usersWithDetails = await Promise.all(
+			rolesResult.userIds.map(async (userId: number) => {
+				try {
+					const userData = await this.users.findOne({
+						where: { id: userId, isDeleted: false },
+						attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
+					});
+					return userData;
+				} catch (error) {
+					return null; // Optionally handle errors or skip failed user fetches
+				}
+			}),
+		);
+		const filteredUsers = usersWithDetails.filter(Boolean);
 
 		return {
-			name: rolesResult.dataValues.name,
+			name: rolesResult.name,
 			description: rolesResult.description,
-			permission: rolesWithPermission,
-			userIds: rolesResult.userIds,
+			permissions: filteredPermissions,
+			users: filteredUsers,
 			type: rolesResult.type,
 		};
 	}
-
 	async fetchUserDetails(userId: number) {
 		const user = await UserModel.findByPk(userId, {
-			attributes: ['id', 'firstName', 'lastName'],
+			attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
 		});
 		return user;
 	}
@@ -112,15 +132,15 @@ export class RoleService {
 			offset,
 			limit: limit,
 			order: [[sortField, sortOrder]],
-			attributes: ['id', 'name', 'createdAt', 'tenantId'],
+			attributes: ['id', 'name', 'createdAt', 'tenantId', [literal(`COALESCE(array_length("userIds", 1), 0)`), 'usersCount']],
 			include: [
 				{
 					association: new BelongsTo(this.users, this.role, { as: 'Creator', foreignKey: 'createdBy' }),
-					attributes: ['id', 'firstName', 'lastName'],
+					attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
 				},
 				{
 					association: new BelongsTo(this.users, this.role, { as: 'Updater', foreignKey: 'updatedBy' }),
-					attributes: ['id', 'firstName', 'lastName'],
+					attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
 				},
 			],
 		});

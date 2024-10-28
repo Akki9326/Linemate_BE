@@ -1,0 +1,2 @@
+ALTER TABLE role
+ALTER COLUMN "description" DROP NOT NULL;

@@ -29,6 +29,10 @@ export const AppMessages = {
 export const RoleMessage = {
 	roleNotFound: 'Role not found',
 };
+export const PermissionMessage = {
+	permissionAlready: 'Permission already exists',
+	permissionNotFound: 'Permission not found',
+};
 export const TenantMessage = {
 	requiredTenant: 'tenantIds is required',
 	requiredTenantId: 'tenantId is required',

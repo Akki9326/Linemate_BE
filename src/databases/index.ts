@@ -37,12 +37,12 @@ export const sequelizeConnect = new Sequelize.Sequelize(DB_DATABASE, DB_USER, DB
 	username: DB_USER,
 	password: DB_PASSWORD,
 	timezone: '+05:30',
-	dialectOptions: {
-		ssl: {
-			require: true,
-			rejectUnauthorized: false,
-		},
-	},
+	// dialectOptions: {
+	// 	ssl: {
+	// 		require: true,
+	// 		rejectUnauthorized: false,
+	// 	},
+	// },
 	pool: {
 		max: 10,
 		min: 1,

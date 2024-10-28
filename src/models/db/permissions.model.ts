@@ -23,7 +23,6 @@ export default function (sequelize: Sequelize): typeof PermissionModel {
 			name: {
 				allowNull: false,
 				type: DataTypes.STRING,
-				unique: true,
 			},
 			type: {
 				allowNull: false,
@@ -44,6 +43,17 @@ export default function (sequelize: Sequelize): typeof PermissionModel {
 			sequelize,
 		},
 	);
+	// Set up self-referencing associations
+	PermissionModel.hasMany(PermissionModel, {
+		as: 'children',
+		foreignKey: 'parentId',
+		onDelete: 'CASCADE',
+	});
+
+	PermissionModel.belongsTo(PermissionModel, {
+		as: 'parent',
+		foreignKey: 'parentId',
+	});
 
 	return PermissionModel;
 }
