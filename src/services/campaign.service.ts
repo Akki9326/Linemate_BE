@@ -132,11 +132,10 @@ export class CampaignService {
 			}
 
 			campaign = await campaign.save({ transaction });
-
+			await transaction.commit();
 			if (campaignDetails?.userIds?.length) {
 				await this.assignCampaign(campaign.id, campaignDetails, userId);
 			}
-			await transaction.commit();
 			return { id: campaign.id };
 		} catch (error) {
 			await transaction.rollback();
@@ -544,6 +543,14 @@ export class CampaignService {
 	public async assignCampaign(campaignId: number, campaignDetails: AssignCampaignUserId, creatorId: number) {
 		const transaction = await this.sequelize.transaction();
 		try {
+			const campaignExists = await this.campaignMaster.findOne({
+				where: { id: campaignId },
+				transaction,
+			});
+
+			if (!campaignExists) {
+				throw new BadRequestException(`Campaign with ID ${campaignId} does not exist`);
+			}
 			campaignDetails.userIds = Array.from(new Set(campaignDetails.userIds));
 			const existingUsers = await this.user.findAll({
 				where: {
@@ -613,8 +620,8 @@ export class CampaignService {
 					userId: userId,
 					createdBy: creatorId, // Add the creatorId here
 				}));
-				await this.campaignUserMatrix.bulkCreate(CampaignMatrixRecords);
-				transaction.commit();
+				await this.campaignUserMatrix.bulkCreate(CampaignMatrixRecords, { transaction });
+				await transaction.commit();
 			}
 		} catch (error) {
 			await transaction.rollback();
@@ -630,7 +637,7 @@ export class CampaignService {
 					id: campaignId,
 					isDeleted: false,
 				},
-				attributes: ['id', 'fynoCampaignId', 'name', 'reoccurenceType'],
+				attributes: ['id', 'fynoCampaignId', 'name', 'reoccurenceType', 'channel'],
 				raw: true,
 				transaction,
 			});
