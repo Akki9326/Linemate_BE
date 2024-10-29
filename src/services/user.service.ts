@@ -405,7 +405,7 @@ class UserService {
 		user.countryCode = userData?.countyCode;
 		user.employeeId = userData?.employeeId;
 		user.profilePhoto = userData?.profilePhoto;
-		user.role = userData?.profilePhoto;
+		user.role = userData?.role;
 		user.joiningDate = userData?.joiningDate;
 		user.reportToId = userData?.reportToId;
 		user = await user.save();
