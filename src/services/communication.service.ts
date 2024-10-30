@@ -37,7 +37,7 @@ export class CommunicationService {
 		} else {
 			const customName = `${tenantDetails?.name.trim().toLowerCase().replace(/\s+/g, '_')}` + `${await CommonHelper.generateRandomId(4)}`;
 			const payloadResponse = await this.buildCommunicationPayload(communicationDetails, workSpaceDetails.workSpaceId, customName);
-			const integrationResponse = await CommunicationHelper.createOrUpdateIntegration(payloadResponse);
+			const integrationResponse = await CommunicationHelper.createOrUpdateIntegration(payloadResponse, communicationDetails.channel);
 			const communicationModel = new this.communication();
 			const communication = await this.createUpdateCommunicationRecord(
 				{ customName: payloadResponse.custom_name, ...communicationDetails },
@@ -65,7 +65,7 @@ export class CommunicationService {
 			fynoWorkSpaceDetails.fynoWorkSpaceId,
 			existingCommunication?.customName,
 		);
-		await CommunicationHelper.createOrUpdateIntegration({ ...payloadResponse, integration_id: existingCommunication?.integrationId });
+		await CommunicationHelper.createOrUpdateIntegration({ ...payloadResponse }, communicationDetails.channel);
 		const communication = await this.createUpdateCommunicationRecord(
 			communicationDetails,
 			existingCommunication.workSpaceId,
