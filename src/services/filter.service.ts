@@ -9,6 +9,7 @@ import { LanguageService } from './language.service';
 import VariableServices from './variable.service';
 import { ContentStatus, ConteTypes } from '@/models/enums/contentType.enum';
 import { CampaignStatusType, Channel } from '@/models/enums/campaign.enums';
+import { UserStatus, UserType } from '@/models/enums/user-types.enum';
 
 export class FilterService {
 	private variableServices = new VariableServices();
@@ -44,7 +45,7 @@ export class FilterService {
 		}
 	}
 
-	private async generateFilterResponse(tenantId: number, filterFor: string): Promise<FilterResponse[]> {
+	private async generateFilterResponse(tenantId: number | null, filterFor: string): Promise<FilterResponse[]> {
 		const filterResponse: FilterResponse[] = [];
 		const filterConfig = commonFilterConfig.find(config => config.filterFor === filterFor);
 		if (!filterConfig) {
@@ -139,6 +140,33 @@ export class FilterService {
 						options: Object.values(ContentStatus)?.length ? FilterHelper.formatOptions(Object.values(ContentStatus)) : [],
 					});
 				}
+				if (field.filterKey === FilterKey.UserType) {
+					filterResponse.push({
+						filterTitle: field.filterTitle,
+						filterKey: field.filterKey,
+						filterType: field.filterType,
+						selectedValue: '',
+						options: Object.values(UserType)?.length ? FilterHelper.formatOptions(Object.values(UserType)) : [],
+					});
+				}
+				if (field.filterKey === FilterKey.AssignedCompanies) {
+					filterResponse.push({
+						filterTitle: field.filterTitle,
+						filterKey: field.filterKey,
+						filterType: field.filterType,
+						selectedValue: '',
+						options: await FilterHelper.assignedCompaniesOption(),
+					});
+				}
+				if (field.filterKey === FilterKey.UserStatus) {
+					filterResponse.push({
+						filterTitle: field.filterTitle,
+						filterKey: field.filterKey,
+						filterType: field.filterType,
+						selectedValue: '',
+						options: Object.values(UserStatus)?.length ? FilterHelper.formatOptions(Object.values(UserStatus)) : [],
+					});
+				}
 			} else if (field.filterType === FiltersEnum.NumberRange) {
 				filterResponse.push({
 					filterTitle: field.filterTitle,
@@ -156,6 +184,9 @@ export class FilterService {
 	public async list(tenantId: number, filterFor: FilterFor) {
 		if (!filterFor) {
 			throw new BadRequestException(FilterMessage.filterForNotFound);
+		}
+		if (filterFor === FilterFor.User) {
+			return await this.generateFilterResponse(null, filterFor);
 		}
 		if (!tenantId) {
 			throw new BadRequestException(AppMessages.headerTenantId);

@@ -23,4 +23,17 @@ export const FilterHelper = {
 			name: `${user.firstName} ${user.lastName}`,
 		}));
 	},
+
+	assignedCompaniesOption: async () => {
+		const tenantList = await DB.Tenant.findAll({
+			where: {
+				isDeleted: false,
+			},
+			attributes: ['id', 'name'],
+		});
+		return tenantList.map(tenant => ({
+			id: tenant.id,
+			name: `${tenant.name}`,
+		}));
+	},
 };

@@ -48,7 +48,7 @@ export default function (sequelize: Sequelize): typeof CampaignMatrixModel {
 			read: {
 				type: DataTypes.INTEGER,
 			},
-			clidked: {
+			clicked: {
 				type: DataTypes.INTEGER,
 			},
 			failed: {

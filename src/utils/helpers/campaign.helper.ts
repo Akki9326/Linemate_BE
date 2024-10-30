@@ -1,7 +1,6 @@
 import { FYNO_AUTH_TOKEN, FYNO_BASE_URL, FYNO_WHATSAPP_WORKSPACE_ID } from '@/config';
 import axios from 'axios';
 import FormData from 'form-data';
-// import fs from 'fs';
 import xlsx from 'xlsx';
 import { UserModel } from '@models/db/users.model';
 import { logger } from '../services/logger';
@@ -10,7 +9,7 @@ import { logger } from '../services/logger';
 
 export const generateCsvFile = async campaigns => {
 	const csvContent = [];
-	csvContent.push(['DISTINCT_ID', 'WHATSAPP']);
+	csvContent.push(['distinct_id', 'whatsapp']);
 
 	// Get all the users from the campaign
 	for (let i = 0; i < campaigns?.length; i++) {
@@ -37,7 +36,7 @@ export const generateCsvFile = async campaigns => {
 		filename: 'campaign_data.csv',
 		contentType: 'text/csv',
 	});
-
+	form.append('validate_channels', 'true');
 	return await uploadCsvOfFynoCampaign(form);
 };
 
@@ -119,6 +118,125 @@ export const renameFyonCampaign = async (fynoCampaignId: string, campaignName: s
 			{
 				headers: {
 					'Content-Type': 'application/json',
+					Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
+				},
+			},
+		);
+		return response.data;
+	} catch (error) {
+		if (axios.isAxiosError(error)) {
+			logger.error('Error response data:', error.response?.data);
+			logger.error('Error status code:', error.response?.status);
+		} else {
+			logger.error('Error:', error.message);
+		}
+		throw error;
+	}
+};
+
+export const fireCampaign = async (fynoCampaignId: string) => {
+	try {
+		const response = await axios.post(`${FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/uploads/fireevent/${fynoCampaignId}`, null, {
+			headers: {
+				Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
+			},
+		});
+
+		return response.data;
+	} catch (error) {
+		if (axios.isAxiosError(error)) {
+			logger.error('Error response data:', error.response?.data);
+			logger.error('Error status code:', error.response?.status);
+		} else {
+			logger.error('Error:', error.message);
+		}
+		throw error;
+	}
+};
+
+export const getNotificationForCampaign = async (templateName: string) => {
+	try {
+		const getNotifictionDetails = await axios.get(`${FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/notification/${templateName}`, {
+			headers: {
+				Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
+			},
+		});
+
+		const payload = {
+			mappings: {
+				event: {
+					event_name: getNotifictionDetails.data[0].event_name,
+					event_id: getNotifictionDetails.data[0].event_id,
+					to: {
+						whatsapp: '{{whatsapp}}',
+					},
+				},
+			},
+		};
+
+		return payload;
+	} catch (error) {
+		if (axios.isAxiosError(error)) {
+			logger.error('Error response data:', error.response?.data);
+			logger.error('Error status code:', error.response?.status);
+		} else {
+			logger.error('Error:', error.message);
+		}
+		throw error;
+	}
+};
+
+export const updateTemplateOnCampaign = async (fynoCampaignId: string, payload: object) => {
+	try {
+		const mapNotificationDetails = await axios.put(`${FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/uploads/${fynoCampaignId}`, payload, {
+			headers: {
+				Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
+				'Content-Type': 'application/json',
+			},
+		});
+		return mapNotificationDetails.data;
+	} catch (error) {
+		if (axios.isAxiosError(error)) {
+			logger.error('Error response data:', error.response?.data);
+			logger.error('Error status code:', error.response?.status);
+		} else {
+			logger.error('Error:', error.message);
+		}
+		throw error;
+	}
+};
+
+export const getCampaignPreview = async (fynoCamapignId: string) => {
+	try {
+		// View Campaign Preview
+		const response = await axios.get(`${FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/uploads/preview/${fynoCamapignId}`, {
+			headers: {
+				Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
+			},
+		});
+		const version = 'live';
+		return {
+			upload_name: response.data.upload_name,
+			event_id: response.data.mappings.event.event_id,
+			version: version,
+		};
+	} catch (error) {
+		if (axios.isAxiosError(error)) {
+			logger.error('Error response data:', error.response?.data);
+			logger.error('Error status code:', error.response?.status);
+		} else {
+			logger.error('Error:', error.message);
+		}
+		throw error;
+	}
+};
+
+export const fynoCampaignOverview = async (previewData: { upload_name: string; event_id: string; version: string }) => {
+	try {
+		const response = await axios.get(
+			`${FYNO_BASE_URL}/v3/${FYNO_WHATSAPP_WORKSPACE_ID}/event-analytics/channel_engagement?campaign_name=${previewData.upload_name}&event_id=${previewData.event_id}&version=${previewData.version}`,
+			{
+				headers: {
 					Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
 				},
 			},

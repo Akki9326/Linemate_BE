@@ -5,6 +5,11 @@ export enum UserType {
 	User = 'User',
 }
 
+export enum UserStatus {
+	Active = 'active',
+	InActive = 'in-active',
+}
+
 export const getPermissionGroup = (userType: UserType): string => {
 	switch (userType) {
 		case UserType.CompanyAdmin:
