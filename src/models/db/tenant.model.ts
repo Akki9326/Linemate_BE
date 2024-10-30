@@ -22,7 +22,7 @@ export class TenantModel extends AppDBModel {
 	public companyState: string;
 	public companyCity: string;
 	public companyPinCode: number;
-	public whitelistedIps: string;
+	public whitelistedIps: Array<string>;
 	public whatsapp: boolean;
 	public sms: boolean;
 	public viber: boolean;
@@ -67,7 +67,7 @@ export default function (sequelize: Sequelize): typeof TenantModel {
 			},
 			isdCode: {
 				type: DataTypes.STRING,
-				allowNull: false,
+				allowNull: true,
 			},
 			clientType: {
 				type: DataTypes.ENUM,
@@ -110,8 +110,9 @@ export default function (sequelize: Sequelize): typeof TenantModel {
 				allowNull: true,
 			},
 			whitelistedIps: {
-				type: DataTypes.STRING,
+				type: DataTypes.ARRAY(DataTypes.STRING),
 				allowNull: true,
+				defaultValue: [],
 			},
 			whatsapp: {
 				type: DataTypes.BOOLEAN,
