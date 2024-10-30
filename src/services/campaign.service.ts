@@ -69,6 +69,17 @@ export class CampaignService {
 				campaignDetails['userIds'] = (await applyingCampaign(campaignDetails?.rules)) || [];
 			}
 
+			const userIdArr = campaignDetails['userIds'];
+			const campaignUser = await this.user.findAll({
+				where: {
+					id: {
+						[Op.in]: userIdArr,
+					},
+					tenantIds: {
+						[Op.contains]: [campaignDetails.tenantId],
+					},
+				},
+			});
 			const template = await this.template.findOne({
 				where: {
 					id: campaignDetails.whatsappTemplateId,
@@ -80,23 +91,12 @@ export class CampaignService {
 				throw new BadRequestException(TemplateMessage.templateNotFound);
 			}
 
-			// Get all the campaign with same rules
-			const existingCampaigns = await this.campaignUserMatrix.findAll({
-				where: {
-					isDeleted: false,
-				},
-				attributes: ['userId', 'campaignId', [Sequelize.fn('COUNT', Sequelize.col('campaignId')), 'campaignCount']],
-				group: ['campaignId', 'userId'],
-				raw: true,
-				transaction,
-			});
-
-			const fynoCampaignUploadId = await generateCsvFile(existingCampaigns);
-			if (!fynoCampaignUploadId) {
-				throw new BadRequestException(CampaignMessage.cannotCreateCampaign);
+			if (!campaignUser.length) {
+				throw new BadRequestException("No user found in the campaign's rule criteria");
 			}
+			const fynoCampaignUploadId = await generateCsvFile(campaignUser);
 
-			const fynoCampaign = await createCampaignOnFyno(fynoCampaignUploadId.upload_id, campaignDetails.name);
+			const fynoCampaign = await createCampaignOnFyno(fynoCampaignUploadId?.upload_id, campaignDetails.name);
 			if (!fynoCampaign) {
 				throw new BadRequestException(CampaignMessage.cannotCreateCampaign);
 			}
@@ -164,11 +164,7 @@ export class CampaignService {
 				transaction,
 			});
 
-			if (!nameTaken) {
-				throw new BadRequestException(CampaignMessage.campaignNotFound);
-			}
-
-			if (nameTaken) {
+			if (nameTaken === null) {
 				throw new BadRequestException(CampaignMessage.campaignNameTaken);
 			}
 
