@@ -1,30 +1,36 @@
-import { IsString, IsNotEmpty, IsBoolean, IsOptional } from 'class-validator';
+import { IsArray, IsBoolean, IsEmail, IsEnum, IsMobilePhone, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { ClientTypes } from '../enums/client-type.enum';
 
 export class TenantDto {
 	@IsString()
 	@IsNotEmpty()
 	public name: string;
 
+	@IsEmail()
+	@IsOptional()
+	public email: string;
+
 	@IsString()
 	@IsOptional()
 	public companyType: string;
 
 	@IsString()
-	@IsNotEmpty()
 	@IsOptional()
 	public trademark: string;
 
 	@IsBoolean()
+	@IsOptional()
 	whatsapp: boolean;
 
 	@IsBoolean()
+	@IsOptional()
 	sms: boolean;
 
 	@IsBoolean()
+	@IsOptional()
 	viber: boolean;
 
-	@IsString()
-	@IsNotEmpty()
+	@IsMobilePhone()
 	@IsOptional()
 	public phoneNumber: number;
 
@@ -33,47 +39,55 @@ export class TenantDto {
 	public gstNumber: string;
 
 	@IsString()
-	@IsNotEmpty()
 	@IsOptional()
 	public currencyCode: string;
 
 	@IsString()
-	@IsNotEmpty()
+	@IsOptional()
 	public isdCode: string;
 
-	@IsString()
+	@IsEnum(ClientTypes)
 	@IsNotEmpty()
-	public clientType: string;
+	public clientType: ClientTypes;
 
 	@IsString()
 	public authorisedFirstName: string;
 
 	@IsString()
+	@IsOptional()
 	public authorisedLastName: string;
 
 	@IsString()
+	@IsOptional()
 	public authorisedEmail: string;
 
-	@IsString()
+	@IsMobilePhone()
+	@IsOptional()
 	public authorisedMobileNo: string;
 
 	@IsString()
+	@IsOptional()
 	public companyAddress: string;
 
 	@IsString()
+	@IsOptional()
 	public companyCountry: string;
 
 	@IsString()
+	@IsOptional()
 	public companyState: string;
 
 	@IsString()
+	@IsOptional()
 	public companyCity: string;
 
 	@IsString()
+	@IsOptional()
 	public companyPinCode: string;
 
-	@IsString()
-	public whitelistedIps: string;
+	@IsArray()
+	@IsOptional()
+	public whitelistedIps: string[];
 
 	@IsString()
 	@IsOptional()
