@@ -1,6 +1,6 @@
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { commonFilterConfig, FilterFor, FilterKey, FiltersEnum } from '@/models/enums/filter.enum';
-import { Channel, TemplateStatus } from '@/models/enums/template.enum';
+import { TemplateStatus } from '@/models/enums/template.enum';
 import { FilterResponse } from '@/models/interfaces/filter.interface';
 import { AppMessages, FilterMessage } from '@/utils/helpers/app-message.helper';
 import { FilterHelper } from '@/utils/helpers/filter.helper';
@@ -8,7 +8,7 @@ import { CohortService } from './cohort.service';
 import { LanguageService } from './language.service';
 import VariableServices from './variable.service';
 import { ContentStatus, ConteTypes } from '@/models/enums/contentType.enum';
-import { CampaignStatusType } from '@/models/enums/campaign.enums';
+import { CampaignStatusType, Channel } from '@/models/enums/campaign.enums';
 import { UserStatus, UserType } from '@/models/enums/user-types.enum';
 
 export class FilterService {

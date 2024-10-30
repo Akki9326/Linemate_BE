@@ -1,11 +1,4 @@
-import {
-	FYNO_AUTH_TOKEN,
-	FYNO_BASE_URL,
-	FYNO_WHATSAPP_CUSTOM_NAME,
-	FYNO_WHATSAPP_INTEGRATION_ID,
-	FYNO_WHATSAPP_PROVIDER_ID,
-	FYNO_WHATSAPP_PROVIDER_NAME,
-} from '@/config';
+import { FYNO_AUTH_TOKEN, FYNO_BASE_URL, FYNO_WHATSAPP_PROVIDER_ID, FYNO_WHATSAPP_PROVIDER_NAME } from '@/config';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { TemplateModel } from '@/models/db/template.model';
 import { FileDto } from '@/models/dtos/file.dto';
@@ -22,6 +15,7 @@ import {
 	MessageType,
 	TemplateCategory,
 	TemplateType,
+	ViberContentType,
 } from '@/models/enums/template.enum';
 import { CommunicationResponse } from '@/models/interfaces/communication.interface';
 import {
@@ -186,7 +180,11 @@ export const TemplateGenerator = {
 			return cardPayload;
 		});
 	},
-	externalTemplatePayload: (templateDetails: TemplateDto, providerTemplateId: string): ExternalTemplatePayload => {
+	externalTemplatePayload: (
+		templateDetails: TemplateDto,
+		providerTemplateId: string,
+		communication: CommunicationResponse,
+	): ExternalTemplatePayload => {
 		if (!templateDetails) {
 			throw new BadRequestException('Template details are required to generate the payload.');
 		}
@@ -272,7 +270,7 @@ export const TemplateGenerator = {
 		}
 
 		const payload: ExternalTemplatePayload = {
-			integration_id: FYNO_WHATSAPP_INTEGRATION_ID,
+			integration_id: communication?.integrationId,
 			provider_id: FYNO_WHATSAPP_PROVIDER_ID,
 			name: name,
 			category: TemplateCategory.Marketing,
@@ -432,7 +430,7 @@ export const TemplateGenerator = {
 
 		return content;
 	},
-	fynoTemplatePayload: (templateDetails: TemplateDto, providerTemplateId: string) => {
+	fynoTemplatePayload: (templateDetails: TemplateDto, providerTemplateId: string, communication: CommunicationResponse) => {
 		const { name, messageType, contentSubType, templateType } = templateDetails;
 		if (templateType === TemplateType.Interactive) {
 			if (!contentSubType) {
@@ -469,7 +467,7 @@ export const TemplateGenerator = {
 			event: {
 				event_flow: {
 					provider: {
-						whatsapp: FYNO_WHATSAPP_INTEGRATION_ID,
+						whatsapp: communication?.integrationId,
 					},
 				},
 			},
@@ -576,7 +574,12 @@ export const TemplateGenerator = {
 			throw new BadRequestException(error?.response?.data);
 		}
 	},
-	externalNotificationPayload: async (templateDetails: TemplateModel, externalPayload: ExternalTemplatePayload, notificationTemplateId: string) => {
+	externalNotificationPayload: async (
+		templateDetails: TemplateModel,
+		externalPayload: ExternalTemplatePayload,
+		notificationTemplateId: string,
+		communication: CommunicationResponse,
+	) => {
 		let transformedSample = {};
 		if (typeof externalPayload.languages[0].content.body !== 'string' && externalPayload.languages[0].content.body.sample?.length) {
 			transformedSample = externalPayload.languages[0].content.body.sample.reduce((acc, item, index) => {
@@ -596,7 +599,7 @@ export const TemplateGenerator = {
 			event: {
 				event_flow: {
 					provider: {
-						whatsapp: FYNO_WHATSAPP_INTEGRATION_ID,
+						whatsapp: communication?.integrationId,
 					},
 				},
 			},
@@ -614,7 +617,7 @@ export const TemplateGenerator = {
 								external_template_data: {
 									name: name,
 									language: language,
-									custom_name: FYNO_WHATSAPP_CUSTOM_NAME,
+									custom_name: communication?.customName,
 									provide_name: FYNO_WHATSAPP_PROVIDER_NAME,
 								},
 							},
@@ -630,7 +633,7 @@ export const TemplateGenerator = {
 		try {
 			const payload = {
 				template_id: templateId,
-				integration_id: FYNO_WHATSAPP_INTEGRATION_ID,
+				integration_id: communication?.integrationId,
 				language,
 			};
 			const response = await axios.post(`${FYNO_BASE_URL}/${communication?.fynoWorkSpaceId}/external-template/${name}/delete`, payload, {
@@ -651,6 +654,93 @@ export const TemplateGenerator = {
 				},
 			});
 			return response;
+		} catch (error) {
+			throw new BadRequestException(error?.response?.data?._message);
+		}
+	},
+	viberPayload: async (templateDetails: TemplateDto, providerTemplateId: string, communication: CommunicationResponse) => {
+		const content: {
+			viber: {
+				content: {
+					type: string;
+					message_route: string;
+					button?: {
+						title: string;
+						action: string;
+					};
+					text?: string;
+					caption?: string;
+					mediaUrl?: string;
+					thumbnailUrl?: string;
+					mediaDuration?: string;
+				};
+			};
+		} = {
+			viber: {
+				content: {
+					type: templateDetails.contentType,
+					message_route: 'transcational',
+					button: {
+						title: templateDetails[0]?.title,
+						action: templateDetails[0]?.navigateScreen,
+					},
+				},
+			},
+		};
+
+		switch (templateDetails.contentType) {
+			case ViberContentType.Text:
+				content.viber.content.text = templateDetails?.messageText;
+				break;
+			case ViberContentType.Image:
+				content.viber.content.caption = templateDetails?.messageText;
+				content.viber.content.mediaUrl = templateDetails.headerMediaUrl;
+				break;
+			case ViberContentType.Video:
+				content.viber.content.caption = templateDetails?.messageText;
+				content.viber.content.mediaUrl = templateDetails.headerMediaUrl;
+				content.viber.content.thumbnailUrl = templateDetails.thumbnailUrl;
+				content.viber.content.mediaDuration = templateDetails.mediaDuration;
+				break;
+			case ViberContentType.File:
+				content.viber.content.caption = templateDetails?.messageText;
+				content.viber.content.mediaUrl = templateDetails.headerMediaUrl;
+				delete content.viber.content.button;
+				break;
+			default:
+				throw new BadRequestException(`Unsupported content type: ${templateDetails.contentType}`);
+		}
+		const payload: FynoTemplatePayload = {
+			name: templateDetails?.name,
+			event: {
+				event_flow: {
+					provider: {
+						viber: communication?.integrationId,
+					},
+				},
+			},
+			template: {
+				template_id: providerTemplateId,
+				channels: {
+					viber: {
+						content: content.viber.content,
+					},
+				},
+				placeholders: {},
+			},
+		};
+		return payload;
+	},
+	generateViber: async (payload: unknown, communication: CommunicationResponse) => {
+		try {
+			const request = await payload;
+			const response = await axios.put(`${FYNO_BASE_URL}/${communication?.fynoWorkSpaceId}/notification/`, request, {
+				headers: {
+					Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
+					'Content-Type': 'application/json',
+				},
+			});
+			return response.data;
 		} catch (error) {
 			throw new BadRequestException(error?.response?.data?._message);
 		}

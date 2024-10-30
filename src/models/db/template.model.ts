@@ -1,7 +1,8 @@
 import { DataTypes, Sequelize } from 'sequelize';
-import { Channel, TemplateStatus, TemplateType } from '../enums/template.enum';
+import { TemplateStatus, TemplateType } from '../enums/template.enum';
 import { AppDBModel, AppDB_Common_Fields } from './app-db.model';
 import { UserModel } from './users.model';
+import { Channel } from '../enums/campaign.enums';
 
 export class TemplateModel extends AppDBModel {
 	public id: number;
@@ -11,6 +12,8 @@ export class TemplateModel extends AppDBModel {
 	public templateType: string;
 	public language: string;
 	public tenantId: number;
+	public thumbnailUrl: string;
+	public mediaDuration: string;
 	public providerTemplateId: string;
 	public notificationTemplateId: string;
 	public status: string;

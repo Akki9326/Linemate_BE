@@ -1,6 +1,6 @@
 import { DataTypes, Sequelize } from 'sequelize';
 import { AppDB_Common_Fields, AppDBModel } from './app-db.model';
-import { Channel } from '../enums/template.enum';
+import { Channel } from '../enums/campaign.enums';
 
 export class CommunicationModel extends AppDBModel {
 	public id: number;

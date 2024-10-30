@@ -16,12 +16,6 @@ export enum TemplateStatus {
 	REJECTED = 'rejected',
 }
 
-export enum Channel {
-	Whatsapp = 'whatsapp',
-	SMS = 'SMS',
-	Viber = 'viber',
-}
-
 export enum HeaderType {
 	Text = 'text',
 	Media = 'media',
@@ -90,4 +84,15 @@ export enum FynoWords {
 	external = 'template',
 	request = 'request_location',
 	address = 'address_message',
+}
+
+export enum ViberContentType {
+	Text = 'text',
+	Video = 'video',
+	File = 'file',
+	Image = 'image',
+}
+export enum DefaultLanguage {
+	EN = 'en',
+	AR = 'ar',
 }

@@ -207,7 +207,7 @@ export class CommunicationService {
 			},
 		};
 		await CommunicationHelper.testIntegrationConfig(payload, communication.integrationId, workSpace.fynoWorkSpaceId);
-		return { integrationId: communication.integrationId, fynoWorkSpaceId: workSpace.fynoWorkSpaceId };
+		return { integrationId: communication.integrationId, fynoWorkSpaceId: workSpace.fynoWorkSpaceId, customName: communication.customName };
 	}
 
 	public async one(tenantId: number, channel: Channel) {
