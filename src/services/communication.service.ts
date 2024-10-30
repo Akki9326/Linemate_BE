@@ -9,7 +9,7 @@ import { CommonHelper } from '@/utils/helpers/common.helper';
 import { CommunicationHelper } from '@/utils/helpers/communication.helper';
 import { TenantService } from './tenant.service';
 import { WorkSpaceModel } from '@/models/db/workSpace.model';
-import { FYNO_WHATSAPP_VIBER_NAME } from '@/config';
+import { FYNO_VIBER_NAME } from '@/config';
 
 export class CommunicationService {
 	private communication = DB.CommunicationModel;
@@ -139,7 +139,7 @@ export class CommunicationService {
 		});
 		const payload: CommunicationPayload = {
 			config: {
-				provider: FYNO_WHATSAPP_VIBER_NAME,
+				provider: FYNO_VIBER_NAME,
 				domain: communicationDetails.domain,
 				sender: communicationDetails.sender,
 				apikey: communicationDetails.accessToken,
