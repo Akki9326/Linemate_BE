@@ -1,6 +1,6 @@
 import { IsArray, IsDate, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
 import { CampaignStatusType } from '../enums/campaign.enums';
-import { Channel } from '@/models/enums/template.enum';
+import { Channel } from '@/models/enums/campaign.enums';
 import { FilterResponse } from '../interfaces/filter.interface';
 import { SortOrder } from '../enums/sort-order.enum';
 
