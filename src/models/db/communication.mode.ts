@@ -10,7 +10,6 @@ export class CommunicationModel extends AppDBModel {
 	public workSpaceId: number;
 	public customName: string;
 	public channel: string;
-	public viberProvider: string;
 	public domain: string;
 	public sender: string;
 	public accessToken: string;
@@ -53,10 +52,6 @@ export default function (sequelize: Sequelize): typeof CommunicationModel {
 				onDelete: 'CASCADE',
 			},
 			customName: {
-				allowNull: true,
-				type: DataTypes.STRING,
-			},
-			viberProvider: {
 				allowNull: true,
 				type: DataTypes.STRING,
 			},

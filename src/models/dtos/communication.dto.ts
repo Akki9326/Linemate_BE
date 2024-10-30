@@ -24,10 +24,6 @@ export class CommunicationDto {
 
 	@IsString()
 	@IsOptional()
-	public viberProvider: string; // for viber only
-
-	@IsString()
-	@IsOptional()
 	public domain: string;
 
 	@IsString()
