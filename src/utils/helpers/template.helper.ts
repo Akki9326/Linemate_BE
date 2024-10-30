@@ -1,4 +1,4 @@
-import { FYNO_AUTH_TOKEN, FYNO_BASE_URL, FYNO_WHATSAPP_CUSTOM_NAME, FYNO_WHATSAPP_PROVIDER_ID, FYNO_WHATSAPP_PROVIDER_NAME } from '@/config';
+import { FYNO_AUTH_TOKEN, FYNO_BASE_URL, FYNO_WHATSAPP_PROVIDER_ID, FYNO_WHATSAPP_PROVIDER_NAME } from '@/config';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { TemplateModel } from '@/models/db/template.model';
 import { FileDto } from '@/models/dtos/file.dto';
@@ -617,7 +617,7 @@ export const TemplateGenerator = {
 								external_template_data: {
 									name: name,
 									language: language,
-									custom_name: FYNO_WHATSAPP_CUSTOM_NAME,
+									custom_name: communication?.customName,
 									provide_name: FYNO_WHATSAPP_PROVIDER_NAME,
 								},
 							},

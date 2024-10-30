@@ -1,5 +1,3 @@
-import { TemplateActionDto } from '@/models/dtos/template-dto';
-import { CommunicationResponse } from './../models/interfaces/communication.interface';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import DB from '@/databases';
 import { BadRequestException } from '@/exceptions/BadRequestException';
@@ -7,7 +5,7 @@ import { TemplateModel } from '@/models/db/template.model';
 import { TemplateContentModel } from '@/models/db/templateContent.model';
 import { TemplateContentCardsModel } from '@/models/db/templateContentCard.model';
 import { FileDto, FileMediaType } from '@/models/dtos/file.dto';
-import { TemplateButtonDto, TemplateDto } from '@/models/dtos/template-dto';
+import { TemplateActionDto, TemplateButtonDto, TemplateDto } from '@/models/dtos/template-dto';
 import { TemplateListRequestDto } from '@/models/dtos/template-list.dto';
 import { Channel } from '@/models/enums/campaign.enums';
 import { FilterKey } from '@/models/enums/filter.enum';
@@ -20,6 +18,7 @@ import { TemplateGenerator } from '@/utils/helpers/template.helper';
 import S3Services from '@/utils/services/s3.services';
 import { parseISO } from 'date-fns';
 import { BelongsTo, Op, Sequelize, Transaction, WhereOptions } from 'sequelize';
+import { CommunicationResponse } from './../models/interfaces/communication.interface';
 import { CommunicationService } from './communication.service';
 
 export class TemplateService {
@@ -46,7 +45,7 @@ export class TemplateService {
 				await this.addOrUpdateContentCards(templateDetails, templateContent.id, userId, transaction);
 				await this.generateTemplate(templateDetails, template, transaction);
 			} else if (templateDetails?.channel === Channel.viber) {
-				await this.generateViber(templateDetails, templateContent.id, userId, transaction);
+				await this.generateViber(templateDetails, template, userId, transaction);
 			}
 			await transaction.commit();
 			return { id: template.id };
@@ -134,14 +133,15 @@ export class TemplateService {
 		return template;
 	}
 
-	private async generateViber(templateDetails: TemplateDto, template: TemplateModel, transaction: Transaction) {
+	private async generateViber(templateDetails: TemplateDto, template: TemplateModel, userId: number, transaction: Transaction) {
 		let payload = {};
 		const communication = await this.communicationService.findIntegrationDetails(templateDetails.tenantId, Channel.viber);
 		if (communication) {
 			let response = {};
 			payload = TemplateGenerator.viberPayload(templateDetails, template?.providerTemplateId, communication);
 			response = await TemplateGenerator.createFynoTemplate(payload, communication);
-			console.log('result', response);
+			console.log('transaction', transaction);
+			console.log('response', response);
 		}
 	}
 
@@ -181,6 +181,8 @@ export class TemplateService {
 				throw new BadRequestException('headerMediaHandle is required.');
 			}
 		}
+		console.log('templateDetails?.channel === Channel.whatsapp', templateDetails?.channel === Channel.whatsapp);
+		console.log('templateDetails.contentType', templateDetails.contentType);
 		if (templateDetails?.channel === Channel.whatsapp) {
 			if (!templateDetails.templateType || !Object.values(TemplateType).includes(templateDetails.templateType as TemplateType)) {
 				throw new BadRequestException(`TemplateType must be one of the following values: ${Object.values(TemplateType).join(', ')}`);

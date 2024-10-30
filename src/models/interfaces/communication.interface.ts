@@ -20,4 +20,5 @@ export interface CommunicationPayload {
 export interface CommunicationResponse {
 	fynoWorkSpaceId?: string;
 	integrationId?: string;
+	customName?: string;
 }
