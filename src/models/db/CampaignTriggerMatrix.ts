@@ -66,7 +66,7 @@ export default function (sequelize: Sequelize): typeof campaignTriggerMatrix {
 			},
 		},
 		{
-			tableName: 'CampaignTriggerMatrix',
+			tableName: 'campaignTriggerMatrix',
 			sequelize,
 		},
 	);

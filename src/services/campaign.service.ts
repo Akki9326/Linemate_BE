@@ -70,17 +70,17 @@ export class CampaignService {
 				campaignDetails['userIds'] = (await applyingCampaign(campaignDetails?.rules)) || [];
 			}
 
-			const userIdArr = campaignDetails['userIds'];
-			const campaignUser = await this.user.findAll({
-				where: {
-					id: {
-						[Op.in]: userIdArr,
-					},
-					tenantIds: {
-						[Op.contains]: [campaignDetails.tenantId],
-					},
-				},
-			});
+			// const userIdArr = campaignDetails['userIds'];
+			// const campaignUser = await this.user.findAll({
+			// 	where: {
+			// 		id: {
+			// 			[Op.in]: userIdArr,
+			// 		},
+			// 		tenantIds: {
+			// 			[Op.contains]: [campaignDetails.tenantId],
+			// 		},
+			// 	},
+			// });
 			const template = await this.template.findOne({
 				where: {
 					id: campaignDetails.whatsappTemplateId,
@@ -92,19 +92,19 @@ export class CampaignService {
 				throw new BadRequestException(TemplateMessage.templateNotFound);
 			}
 
-			if (!campaignUser.length) {
-				throw new BadRequestException("No user found in the campaign's rule criteria");
-			}
-			const fynoCampaignUploadId = await generateCsvFile(campaignUser);
+			// if (!campaignUser.length) {
+			// 	throw new BadRequestException("No user found in the campaign's rule criteria");
+			// }
+			// const fynoCampaignUploadId = await generateCsvFile(campaignUser);
 
-			const fynoCampaign = await createCampaignOnFyno(fynoCampaignUploadId?.upload_id, campaignDetails.name);
-			if (!fynoCampaign) {
-				throw new BadRequestException(CampaignMessage.cannotCreateCampaign);
-			}
+			// const fynoCampaign = await createCampaignOnFyno(fynoCampaignUploadId?.upload_id, campaignDetails.name);
+			// if (!fynoCampaign) {
+			// 	throw new BadRequestException(CampaignMessage.cannotCreateCampaign);
+			// }
 
-			const notifications = await getNotificationForCampaign(template.name);
+			// const notifications = await getNotificationForCampaign(template.name);
 
-			await updateTemplateOnCampaign(fynoCampaign.upload_id, notifications);
+			// await updateTemplateOnCampaign(fynoCampaign.upload_id, notifications);
 
 			let campaign = new this.campaignMaster();
 			campaign.name = campaignDetails.name;
@@ -119,7 +119,7 @@ export class CampaignService {
 			campaign.rules = campaignDetails.rules;
 			campaign.tenantId = campaignDetails.tenantId;
 			campaign.deliveryStatus = campaignDetails.deliveryStatus;
-			campaign.fynoCampaignId = fynoCampaign.upload_id;
+			// campaign.fynoCampaignId = fynoCampaign.upload_id;
 			campaign.createdBy = userId;
 
 			if (campaignDetails?.reoccurenceType === ReoccurenceType.custom) {
@@ -787,7 +787,7 @@ export class CampaignService {
 				throw new BadRequestException(CampaignMessage.campaignNotFound);
 			}
 
-			const newCampaignName = `${campign.name}-${new Date().getDate()}`;
+			const newCampaignName = `${campign.name}-${new Date().getTime()}`;
 
 			let userIds;
 			if (campign?.rules.length) {
@@ -843,13 +843,7 @@ export class CampaignService {
 				isFired: true,
 			};
 
-			const createCampaignTriggerMatrix = await this.campaignTriggerMatrix.create(triggerDetails);
-
-			await this.campaignMaster.create({
-				campaignTriggerMatrixId: createCampaignTriggerMatrix.id,
-				campaignId: campiagnId,
-				triggerType: TriggerType.automatic,
-			});
+			await this.campaignTriggerMatrix.create(triggerDetails);
 
 			await transaction.commit();
 			return {

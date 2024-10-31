@@ -1,5 +1,5 @@
 import { logger } from '@/utils/services/logger';
-import { CREDENTIALS, NODE_ENV, ORIGIN, PORT } from '@config';
+import { CAMPAIGN_CRON_TIME, CREDENTIALS, NODE_ENV, ORIGIN, PORT } from '@config';
 import errorMiddleware from '@middlewares/error.middleware';
 import compression from 'compression';
 import cors from 'cors';
@@ -18,6 +18,7 @@ import cron from 'node-cron';
 import DB from '@/databases';
 import { IntervalUnitType, TriggerType } from './models/enums/campaign.enums';
 import { CampaignService } from '@/services/campaign.service';
+import { format } from 'date-fns';
 
 class App {
 	public app: express.Application;
@@ -137,7 +138,7 @@ class App {
 		});
 
 		// Schedule a task to run every 24 hours
-		cron.schedule('0 0 * * *', async next => {
+		cron.schedule(CAMPAIGN_CRON_TIME, async () => {
 			interface ReoccurenceDetails {
 				repeatEvery: number;
 				intervalTimeUnit: string;
@@ -195,7 +196,7 @@ class App {
 
 			const campaignList = await this.campaignMaster.findAll({
 				where: {
-					isDeleted: true,
+					isDeleted: false,
 				},
 			});
 
@@ -203,15 +204,18 @@ class App {
 				// Check if reoccurenceDetails exist and cast it to the correct type
 				const reoccurenceDetails = campaign.reoccurenceDetails as ReoccurenceDetails;
 
-				if (reoccurenceDetails && reoccurenceDetails.startDate >= new Date()) {
-					next();
+				if (reoccurenceDetails && new Date(reoccurenceDetails.startDate) >= new Date()) {
+					continue;
 				}
 
-				if (reoccurenceDetails && reoccurenceDetails.endDate <= new Date()) {
-					next();
+				if (reoccurenceDetails && new Date(reoccurenceDetails.endDate) <= new Date()) {
+					continue;
 				}
 
-				if (reoccurenceDetails.startDate == new Date()) {
+				const firstFormatedDate = format(new Date(reoccurenceDetails.startDate), 'yyyy-MM-dd');
+				const SecondFormatedDate = format(new Date(), 'yyyy-MM-dd');
+
+				if (firstFormatedDate == SecondFormatedDate) {
 					await this.campaignService.automaticFiredCampaign(campaign.id);
 				}
 
@@ -225,7 +229,7 @@ class App {
 						order: [['id', 'DESC']],
 					});
 					if (lastTrigerInfo.length == reoccurenceDetails.afterOccurences) {
-						next();
+						continue;
 					}
 					const lastTriger = lastTrigerInfo[0];
 					const lastTrigerDate = String(lastTriger.firedOn);
@@ -245,7 +249,7 @@ class App {
 						order: [['id', 'DESC']],
 					});
 					if (lastTrigerInfo.length == reoccurenceDetails.afterOccurences) {
-						next();
+						continue;
 					}
 					const lastTriger = lastTrigerInfo[0];
 					const lastTrigerDate = String(lastTriger.firedOn);
@@ -264,7 +268,7 @@ class App {
 						order: [['id', 'DESC']],
 					});
 					if (lastTrigerInfo.length == reoccurenceDetails.afterOccurences) {
-						next();
+						continue;
 					}
 					const lastTriger = lastTrigerInfo[0];
 					const lastTrigerDate = String(lastTriger.firedOn);
