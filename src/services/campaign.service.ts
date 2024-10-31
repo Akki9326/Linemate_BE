@@ -32,6 +32,7 @@ export class CampaignService {
 	private user = DB.Users;
 	private tenant = DB.Tenant;
 	private template = DB.Template;
+	private campaignTriggerMatrix = DB.CampaignTriggerMatrix;
 	private sequelize: Sequelize;
 
 	constructor() {
@@ -703,17 +704,152 @@ export class CampaignService {
 				throw new BadRequestException(CampaignMessage.campaignNotFound);
 			}
 
-			const createdAt = campign.createdAt;
-			const now = new Date();
+			const newCampaignName = `${campign.name}-${new Date().getDate()}`;
 
-			const differenceInTime = now.getTime() - createdAt.getTime();
-			const differenceInDays = differenceInTime / (1000 * 3600 * 24);
-
-			if (differenceInDays > 30) {
-				throw new BadRequestException(CampaignMessage.campaignExpired);
+			let userIds;
+			if (campign?.rules.length) {
+				userIds = (await applyingCampaign(campign?.rules)) || [];
 			}
 
-			await fireCampaign(campign.fynoCampaignId);
+			const campaignUser = await this.user.findAll({
+				where: {
+					id: {
+						[Op.in]: userIds,
+					},
+					tenantIds: {
+						[Op.contains]: [campign.tenantId],
+					},
+				},
+			});
+
+			const template = await this.template.findOne({
+				where: {
+					id: campign.whatsappTemplateId,
+				},
+				transaction,
+			});
+
+			if (!template) {
+				throw new BadRequestException(TemplateMessage.templateNotFound);
+			}
+
+			if (!campaignUser.length) {
+				throw new BadRequestException("No user found in the campaign's rule criteria");
+			}
+
+			const fynoCampaignUploadId = await generateCsvFile(campaignUser);
+
+			const fynoCampaign = await createCampaignOnFyno(fynoCampaignUploadId?.upload_id, newCampaignName);
+			if (!fynoCampaign) {
+				throw new BadRequestException(CampaignMessage.cannotCreateCampaign);
+			}
+
+			const notifications = await getNotificationForCampaign(template.name);
+
+			await updateTemplateOnCampaign(fynoCampaign.upload_id, notifications);
+
+			const now = new Date();
+
+			await fireCampaign(fynoCampaign.upload_id);
+
+			const triggerDetails = {
+				fireType: TriggerType.manual,
+				campaignId: campiagnId,
+				fynoCampaignId: fynoCampaign.upload_id,
+				firedOn: now,
+				isFired: true,
+			};
+
+			await this.campaignTriggerMatrix.create(triggerDetails);
+
+			await transaction.commit();
+			return {
+				id: campiagnId,
+			};
+		} catch (error) {
+			await transaction.rollback();
+			throw error;
+		}
+	}
+
+	public async automaticFiredCampaign(campiagnId: number) {
+		const transaction = await this.sequelize.transaction();
+		try {
+			const campign = await this.campaignMaster.findOne({
+				where: {
+					id: campiagnId,
+					isDeleted: false,
+				},
+				transaction,
+			});
+
+			if (!campign) {
+				throw new BadRequestException(CampaignMessage.campaignNotFound);
+			}
+
+			const newCampaignName = `${campign.name}-${new Date().getDate()}`;
+
+			let userIds;
+			if (campign?.rules.length) {
+				userIds = (await applyingCampaign(campign?.rules)) || [];
+			}
+
+			const campaignUser = await this.user.findAll({
+				where: {
+					id: {
+						[Op.in]: userIds,
+					},
+					tenantIds: {
+						[Op.contains]: [campign.tenantId],
+					},
+				},
+			});
+
+			const template = await this.template.findOne({
+				where: {
+					id: campign.whatsappTemplateId,
+				},
+				transaction,
+			});
+
+			if (!template) {
+				throw new BadRequestException(TemplateMessage.templateNotFound);
+			}
+
+			if (!campaignUser.length) {
+				throw new BadRequestException("No user found in the campaign's rule criteria");
+			}
+
+			const fynoCampaignUploadId = await generateCsvFile(campaignUser);
+
+			const fynoCampaign = await createCampaignOnFyno(fynoCampaignUploadId?.upload_id, newCampaignName);
+			if (!fynoCampaign) {
+				throw new BadRequestException(CampaignMessage.cannotCreateCampaign);
+			}
+
+			const notifications = await getNotificationForCampaign(template.name);
+
+			await updateTemplateOnCampaign(fynoCampaign.upload_id, notifications);
+
+			const now = new Date();
+
+			await fireCampaign(fynoCampaign.upload_id);
+
+			const triggerDetails = {
+				fireType: TriggerType.automatic,
+				campaignId: campiagnId,
+				fynoCampaignId: fynoCampaign.upload_id,
+				firedOn: now,
+				isFired: true,
+			};
+
+			const createCampaignTriggerMatrix = await this.campaignTriggerMatrix.create(triggerDetails);
+
+			await this.campaignMaster.create({
+				campaignTriggerMatrixId: createCampaignTriggerMatrix.id,
+				campaignId: campiagnId,
+				triggerType: TriggerType.automatic,
+			});
 
 			await transaction.commit();
 			return {
