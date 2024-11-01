@@ -135,13 +135,16 @@ export class TemplateService {
 
 	private async generateViber(templateDetails: TemplateDto, template: TemplateModel, userId: number, transaction: Transaction) {
 		let payload = {};
+		if (templateDetails?.buttons?.length > 1) {
+			throw new BadRequestException('Only one button is allowed for Viber templates.');
+		}
 		const communication = await this.communicationService.findIntegrationDetails(templateDetails.tenantId, Channel.viber);
 		if (communication) {
-			let response = {};
 			payload = TemplateGenerator.viberPayload(templateDetails, template?.providerTemplateId, communication);
-			response = await TemplateGenerator.createFynoTemplate(payload, communication);
-			console.log('transaction', transaction);
-			console.log('response', response);
+			const response = await TemplateGenerator.createFynoTemplate(payload, communication);
+			template.providerTemplateId = response?.template?.template_id;
+			template.status = TemplateStatus.APPROVED;
+			await template.save({ transaction });
 		}
 	}
 
@@ -181,8 +184,6 @@ export class TemplateService {
 				throw new BadRequestException('headerMediaHandle is required.');
 			}
 		}
-		console.log('templateDetails?.channel === Channel.whatsapp', templateDetails?.channel === Channel.whatsapp);
-		console.log('templateDetails.contentType', templateDetails.contentType);
 		if (templateDetails?.channel === Channel.whatsapp) {
 			if (!templateDetails.templateType || !Object.values(TemplateType).includes(templateDetails.templateType as TemplateType)) {
 				throw new BadRequestException(`TemplateType must be one of the following values: ${Object.values(TemplateType).join(', ')}`);
@@ -446,11 +447,11 @@ export class TemplateService {
 				);
 			} else {
 				payload = TemplateGenerator.fynoTemplatePayload(templateDetails, template?.providerTemplateId, communication);
-				const response = {};
+				let response = {};
 				if (templateDetails.id) {
-					await TemplateGenerator.updateFynoTemplate(payload, template.name, communication);
+					response = await TemplateGenerator.updateFynoTemplate(payload, template.name, communication);
 				} else {
-					await TemplateGenerator.createFynoTemplate(payload, communication);
+					response = await TemplateGenerator.createFynoTemplate(payload, communication);
 				}
 				await this.handleFynoTemplateResponse(response, template, transaction);
 			}
@@ -501,6 +502,7 @@ export class TemplateService {
 			throw new BadRequestException(response?._message || 'Error saving template.');
 		} else {
 			template.status = TemplateStatus.APPROVED;
+			template.providerTemplateId = response?.template?.template_id;
 			await template.save({ transaction });
 		}
 	}
@@ -548,6 +550,8 @@ export class TemplateService {
 						'headerMediaUrl',
 						'messageText',
 						'locationName',
+						'thumbnailUrl',
+						'mediaDuration',
 					],
 					required: false,
 				},
@@ -853,12 +857,12 @@ export class TemplateService {
 				{
 					association: new BelongsTo(this.users, this.template, { as: 'Creator', foreignKey: 'createdBy' }),
 					attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
-					required: false, // Keep it as a left join, so it doesn't exclude templates without a Creator
+					required: false,
 				},
 				{
 					association: new BelongsTo(this.users, this.template, { as: 'Updater', foreignKey: 'updatedBy' }),
 					attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
-					required: false, // Optional association, does not enforce the presence of Updater
+					required: false,
 				},
 			],
 			...(isPaginationEnabled && { limit: pageModel.limit, offset: (pageModel.page - 1) * pageModel.limit }), // Apply pagination if enabled

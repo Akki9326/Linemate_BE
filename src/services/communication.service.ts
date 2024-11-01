@@ -205,7 +205,9 @@ export class CommunicationService {
 				waba_id: communication.wabaId,
 			},
 		};
-		await CommunicationHelper.testIntegrationConfig(payload, communication.integrationId, workSpace.fynoWorkSpaceId);
+		if (channel === Channel.whatsapp) {
+			await CommunicationHelper.testIntegrationConfig(payload, communication.integrationId, workSpace.fynoWorkSpaceId);
+		}
 		return { integrationId: communication.integrationId, fynoWorkSpaceId: workSpace.fynoWorkSpaceId, customName: communication.customName };
 	}
 
