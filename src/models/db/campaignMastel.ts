@@ -87,10 +87,6 @@ export default function (sequelize: Sequelize): typeof CampaignMasterModel {
 				type: DataTypes.INTEGER,
 				defaultValue: 0,
 			},
-			fynoCampaignId: {
-				type: DataTypes.STRING,
-				allowNull: false,
-			},
 		},
 		{
 			tableName: 'campaignMaster',

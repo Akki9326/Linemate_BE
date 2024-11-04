@@ -2,7 +2,7 @@ import { FYNO_AUTH_TOKEN, FYNO_BASE_URL, FYNO_WHATSAPP_WORKSPACE_ID } from '@/co
 import axios from 'axios';
 import FormData from 'form-data';
 import xlsx from 'xlsx';
-import { UserModel } from '@models/db/users.model';
+// import { UserModel } from '@models/db/users.model';
 import { logger } from '../services/logger';
 
 // Helper to generate Csv having users data
@@ -12,18 +12,25 @@ export const generateCsvFile = async campaigns => {
 	csvContent.push(['distinct_id', 'whatsapp']);
 
 	// Get all the users from the campaign
+	// for (let i = 0; i < campaigns?.length; i++) {
+	// 	const campaign = campaigns[i].userId;
+	// 	// Fetch details of user
+	// 	const user = await UserModel.findOne({
+	// 		where: {
+	// 			id: campaign,
+	// 		},
+	// 		attributes: ['mobileNumber'],
+	// 		raw: true,
+	// 	});
+	// 	if (user) {
+	// 		csvContent.push(['', user.mobileNumber]);
+	// 	}
+	// }
+
 	for (let i = 0; i < campaigns?.length; i++) {
-		const campaign = campaigns[i].userId;
-		// Fetch details of user
-		const user = await UserModel.findOne({
-			where: {
-				id: campaign,
-			},
-			attributes: ['mobileNumber'],
-			raw: true,
-		});
-		if (user) {
-			csvContent.push(['', user.mobileNumber]);
+		const campaign = campaigns[i].mobileNumber;
+		if (campaign) {
+			csvContent.push(['', campaign]);
 		}
 	}
 
