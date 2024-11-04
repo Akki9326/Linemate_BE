@@ -105,4 +105,7 @@ export const TemplateMessage = {
 	templateAlreadyExists: 'template already exists',
 	notFoundArchiveTemplate: 'not found archive template.',
 	notFoundUnArchiveTemplate: 'not found un archive template.',
+	headerMediaUrlRequired: 'headerMediaUrl is required',
+	captionRequired: 'caption is required',
+	messageTextRequired: 'messageText is required',
 };

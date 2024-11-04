@@ -9,6 +9,7 @@ import { CommonHelper } from '@/utils/helpers/common.helper';
 import { CommunicationHelper } from '@/utils/helpers/communication.helper';
 import { TenantService } from './tenant.service';
 import { WorkSpaceModel } from '@/models/db/workSpace.model';
+import { FYNO_VIBER_NAME } from '@/config';
 
 export class CommunicationService {
 	private communication = DB.CommunicationModel;
@@ -132,14 +133,13 @@ export class CommunicationService {
 
 	private async populateViberPayload(communicationDetails: CommunicationDto, workSpaceId: string, customName: string) {
 		await this.validateRequiredFields({
-			viberProvider: communicationDetails.viberProvider,
 			domain: communicationDetails.domain,
 			sender: communicationDetails.sender,
 			accessToken: communicationDetails.accessToken,
 		});
 		const payload: CommunicationPayload = {
 			config: {
-				provider: communicationDetails.viberProvider,
+				provider: FYNO_VIBER_NAME,
 				domain: communicationDetails.domain,
 				sender: communicationDetails.sender,
 				apikey: communicationDetails.accessToken,
@@ -161,7 +161,6 @@ export class CommunicationService {
 	) {
 		communicationModel.fromNumberId = communicationDetails.fromNumberId;
 		communicationModel.wabaId = communicationDetails.wabaId;
-		communicationModel.viberProvider = communicationDetails.viberProvider;
 		communicationModel.domain = communicationDetails.domain;
 		communicationModel.sender = communicationDetails.sender;
 		communicationModel.accessToken = communicationDetails.accessToken;
@@ -197,7 +196,7 @@ export class CommunicationService {
 		return communication;
 	}
 	public async findIntegrationDetails(tenantId: number, channel: Channel) {
-		const attributes = ['fromNumberId', 'wabaId', 'channel', 'viberProvider', 'domain', 'sender', 'accessToken', 'integrationId', 'customName'];
+		const attributes = ['fromNumberId', 'wabaId', 'channel', 'domain', 'sender', 'accessToken', 'integrationId', 'customName'];
 		const workSpace = await this.getWorkSpaceDetails(tenantId);
 		const communication = await this.getCommunicationDetails(tenantId, attributes, workSpace, channel);
 		const payload: CommunicationPayload = {
@@ -206,12 +205,14 @@ export class CommunicationService {
 				waba_id: communication.wabaId,
 			},
 		};
-		await CommunicationHelper.testIntegrationConfig(payload, communication.integrationId, workSpace.fynoWorkSpaceId);
+		if (channel === Channel.whatsapp) {
+			await CommunicationHelper.testIntegrationConfig(payload, communication.integrationId, workSpace.fynoWorkSpaceId);
+		}
 		return { integrationId: communication.integrationId, fynoWorkSpaceId: workSpace.fynoWorkSpaceId, customName: communication.customName };
 	}
 
 	public async one(tenantId: number, channel: Channel) {
-		const attributes = ['id', 'fromNumberId', 'wabaId', 'channel', 'viberProvider', 'domain', 'sender', 'accessToken'];
+		const attributes = ['id', 'fromNumberId', 'wabaId', 'channel', 'domain', 'sender', 'accessToken'];
 		const workSpace = await this.getWorkSpaceDetails(tenantId);
 		const communication = await this.getCommunicationDetails(tenantId, attributes, workSpace, channel);
 		return communication;
