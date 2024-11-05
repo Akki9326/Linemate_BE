@@ -16,7 +16,7 @@ export class CommunicationService {
 	private workSpaceModel = DB.WorkSpaceModel;
 	private tenantService = new TenantService();
 
-	constructor() {}
+	constructor() { }
 
 	public async add(communicationDetails: CommunicationDto, userId: number) {
 		const tenantDetails = await this.validateTenant(communicationDetails?.tenantId);
@@ -190,9 +190,7 @@ export class CommunicationService {
 			},
 			attributes,
 		});
-		if (!communication) {
-			throw new BadRequestException(`${channel} communication not exists for this tenant`);
-		}
+
 		return communication;
 	}
 	public async findIntegrationDetails(tenantId: number, channel: Channel) {
