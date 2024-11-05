@@ -31,7 +31,6 @@ import { BelongsTo, Op, Sequelize } from 'sequelize';
 import { CohortService } from './cohort.service';
 import { RoleService } from './role.service';
 import { TenantService } from './tenant.service';
-import VariableServices from './variable.service';
 import moment from 'moment';
 
 class UserService {
@@ -42,12 +41,11 @@ class UserService {
 	private variableMatrix = DB.VariableMatrix;
 	private tenantService = new TenantService();
 	private roleService = new RoleService();
-	private variableServices = new VariableServices();
 	public s3Service = new S3Services();
 	private cohortService = new CohortService();
 	private excelService = new ExcelService();
 
-	constructor() {}
+	constructor() { }
 	public async sendAccountActivationEmail(userData, temporaryPassword: string, createdUser: JwtTokenData) {
 		await Promise.all(
 			userData.tenantIds.map(async tenantId => {
@@ -263,9 +261,12 @@ class UserService {
 			function isNumeric(value): boolean {
 				return typeof value === 'number' && !isNaN(value);
 			}
-			if (variable.type === VariableType.Numeric && !isNumeric(variableElement.value)) {
-				message = VariableMessage.numericVariableMustNumber;
-				continue;
+			if (variable.type === VariableType.Numeric) {
+				variableElement.value = +variableElement.value;
+				if (!isNumeric(+variableElement.value)) {
+					message = VariableMessage.numericVariableMustNumber;
+					continue;
+				}
 			}
 			if (variable.type === VariableType.SingleSelect) {
 				if (!variable.options.includes(variableElement.value)) {
@@ -274,6 +275,9 @@ class UserService {
 				}
 			}
 			if (variable.type === VariableType.MultiSelect) {
+				if (variableElement.value) {
+					variableElement.value = variableElement.value.split(',');
+				}
 				for (const value of variableElement.value) {
 					if (!variable.options.includes(value)) {
 						message = VariableMessage.multiSelectMustMustBeAnOptions;
@@ -281,7 +285,8 @@ class UserService {
 					}
 				}
 			}
-			return message;
+
+			if (message) return message;
 		}
 	}
 	private async addTenantVariables(tenantVariables: TenantVariables[], userId: number, creatorId: number) {
@@ -936,7 +941,7 @@ class UserService {
 				const validationErrors = await validate(userInstance, {
 					skipMissingProperties: false, // This ensures that missing properties will be flagged as errors
 					whitelist: true,
-					forbidNonWhitelisted: true,
+					forbidNonWhitelisted: false,
 				});
 
 				if (validationErrors.length > 0) {
@@ -958,9 +963,22 @@ class UserService {
 						errorReason: message.trim(), // Remove extra spaces
 					});
 				}
+				if (userInstance.reportTo) {
+					const managerDetails = await this.users.findOne({
+						where: {
+							email: userInstance.reportTo,
+							tenantIds: {
+								[Op.contains]: [tenantId],
+							},
+						},
+						attributes: ['id', 'email', 'tenantIds'],
+					});
+
+					userInstance.reportToId = managerDetails?.id;
+				}
 			}
 
-			const userArray = await this.removeMatchingRecords(errorArray, userData);
+			const userArray = await this.removeMatchingRecords(errorArray, userDataInstances);
 			let successCount = 0;
 			if (userArray.length) {
 				for (let i = 0; i < userArray.length; i++) {
@@ -979,6 +997,9 @@ class UserService {
 							lastName: user.lastName,
 							email: user.email,
 							errorReason: AppMessages.existedEmail,
+							role: user.role,
+							joiningDate: user.joiningDate,
+							reportToId: user.reportToId,
 						};
 						errorArray.push(errorObj);
 						continue;
@@ -1068,7 +1089,7 @@ class UserService {
 			}
 
 			const errorCount = {
-				failureCount: uniqueEmployees.length,
+				failureCount: uniqueEmployees?.length || 0,
 				successCount: successCount,
 			};
 			return errorCount;
