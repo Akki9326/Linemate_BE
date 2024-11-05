@@ -477,10 +477,14 @@ class UserService {
 		return user;
 	}
 	public async update(userData: UserDto, userId: number, updatedBy: JwtTokenData) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const emailMobileConditions: any[] = [{ mobileNumber: userData.mobileNumber }];
+
+		if (userData.email) emailMobileConditions.push({ email: userData.email });
 		const existingUser = await this.users.findOne({
 			where: {
 				id: { [Op.not]: userId },
-				[Op.or]: [{ email: userData.email }, { mobileNumber: userData.mobileNumber }],
+				[Op.or]: emailMobileConditions,
 				isDeleted: false,
 			},
 		});
@@ -858,7 +862,7 @@ class UserService {
 				isDeleted: false,
 			},
 			raw: true,
-		});
+	});
 		if (data.length) {
 			const userData = await Promise.all(
 				data.map(async user => {
