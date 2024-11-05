@@ -14,7 +14,7 @@ import { Routes } from './models/interfaces/routes.interface';
 import { CacheService } from './services/cache.service';
 import fileUpload from 'express-fileupload';
 import 'reflect-metadata';
-import cron from 'node-cron';
+// import cron from 'node-cron';
 import DB from '@/databases';
 import { IntervalUnitType, TriggerType } from './models/enums/campaign.enums';
 import { CampaignService } from '@/services/campaign.service';
@@ -138,7 +138,7 @@ class App {
 		});
 
 		// Schedule a task to run every 24 hours
-		cron.schedule(CAMPAIGN_CRON_TIME, async () => {
+		/*cron.schedule(CAMPAIGN_CRON_TIME, async () => {
 			interface ReoccurenceDetails {
 				repeatEvery: number;
 				intervalTimeUnit: string;
@@ -278,7 +278,7 @@ class App {
 					}
 				}
 			}
-		});
+		});*/
 	}
 
 	private initializeErrorHandling() {
