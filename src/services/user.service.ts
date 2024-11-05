@@ -528,7 +528,7 @@ class UserService {
 		user.countryCode = userData.countyCode;
 		user.employeeId = userData.employeeId;
 		user.profilePhoto = userData.profilePhoto;
-		user.role = userData?.profilePhoto;
+		user.role = userData.role;
 		user.joiningDate = userData?.joiningDate;
 		user.reportToId = userData?.reportToId;
 
@@ -862,7 +862,7 @@ class UserService {
 				isDeleted: false,
 			},
 			raw: true,
-	});
+		});
 		if (data.length) {
 			const userData = await Promise.all(
 				data.map(async user => {
