@@ -39,7 +39,7 @@ export default class AuthService {
 	public contentService = new ContentService();
 	public userService = new UserService();
 
-	constructor() {}
+	constructor() { }
 
 	public async findUserByContactInfo(username: string, condition: object) {
 		if (!username) {
@@ -47,6 +47,7 @@ export default class AuthService {
 		}
 		const user = await this.users.findOne({
 			where: {
+				isDeleted: false,
 				[Op.and]: [
 					{ ...condition },
 					{

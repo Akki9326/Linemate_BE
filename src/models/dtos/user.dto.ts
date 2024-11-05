@@ -162,7 +162,6 @@ export class UserData {
 	@IsOptional()
 	public tenantVariables: variableValues[];
 
-	@IsEmail()
 	@IsOptional()
 	public reportTo: string;
 
