@@ -130,7 +130,7 @@ export class UserData {
 	public lastName: string;
 
 	@IsEmail()
-	@IsDefined()
+	@IsOptional()
 	public email: string;
 
 	@IsEnum(UserType)
@@ -162,7 +162,6 @@ export class UserData {
 	@IsOptional()
 	public tenantVariables: variableValues[];
 
-	@IsEmail()
 	@IsOptional()
 	public reportTo: string;
 

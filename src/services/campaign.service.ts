@@ -16,8 +16,6 @@ import {
 	generateCsvFile,
 	getCampaignPreview,
 	getNotificationForCampaign,
-	removeCampaign,
-	renameFyonCampaign,
 	updateTemplateOnCampaign,
 	fireCampaign,
 } from '@/utils/helpers/campaign.helper';
@@ -67,7 +65,7 @@ export class CampaignService {
 			}
 
 			if (campaignDetails?.rules?.length) {
-				campaignDetails['userIds'] = (await applyingCampaign(campaignDetails?.rules)) || [];
+				campaignDetails['userIds'] = (await applyingCampaign(campaignDetails?.tenantId, campaignDetails?.rules)) || [];
 			}
 
 			// const userIdArr = campaignDetails['userIds'];
@@ -170,12 +168,10 @@ export class CampaignService {
 			}
 
 			if (campaignDetails?.rules?.length) {
-				campaignDetails['userIds'] = (await applyingCampaign(campaignDetails?.rules)) || [];
+				campaignDetails['userIds'] = (await applyingCampaign(campaignDetails?.tenantId, campaignDetails?.rules)) || [];
 			}
 
-			const updatedFynoCampaignName = await renameFyonCampaign(campaign.fynoCampaignId, campaignDetails.name);
-
-			campaign.name = updatedFynoCampaignName?.upload_name;
+			campaign.name = campaignDetails?.name;
 			campaign.description = campaignDetails.description;
 			campaign.tenantId = campaignDetails.tenantId;
 			campaign.rules = campaignDetails.rules;
@@ -234,7 +230,6 @@ export class CampaignService {
 					'whatsappTemplateId',
 					'smsTemplateId',
 					'viberTemplateId',
-					'fynoCampaignId',
 				],
 				include: [
 					{
@@ -285,11 +280,6 @@ export class CampaignService {
 
 			if (!campaignMaster) {
 				throw new BadRequestException(CampaignMessage.campaignInProgress);
-			}
-
-			const deletedCampaign = await removeCampaign(campaignMaster?.fynoCampaignId);
-			if (!deletedCampaign) {
-				throw new BadRequestException(CampaignMessage.campaignNotFound);
 			}
 
 			await this.campaignMaster.update(
@@ -627,66 +617,69 @@ export class CampaignService {
 	}
 
 	public async getCamapignAnalytics(campaignId: number, userId: number) {
-		const transaction = await this.sequelize.transaction();
-		try {
-			const campaign = await this.campaignMaster.findOne({
-				where: {
-					id: campaignId,
-					isDeleted: false,
-				},
-				attributes: ['id', 'fynoCampaignId', 'name', 'reoccurenceType', 'channel'],
-				raw: true,
-				transaction,
-			});
 
-			if (!campaign) {
-				throw new BadRequestException(CampaignMessage.campaignNotFound);
-			}
+		const campaign = await this.campaignMaster.findOne({
+			where: {
+				id: campaignId,
+				isDeleted: false,
+			},
+			attributes: ['id', 'fynoCampaignId', 'name', 'reoccurenceType', 'channel'],
+		});
 
-			const campaignPreview = await getCampaignPreview(campaign.fynoCampaignId);
-
-			let campaignOverview = await fynoCampaignOverview(campaignPreview);
-			if (campaignOverview.length <= 0) {
-				throw new BadRequestException(CampaignMessage.fynoApiError);
-			}
-
-			campaignOverview = campaignOverview.reduce((result, item) => {
-				if (!result[item.status]) {
-					result[item.status] = 0;
-				}
-				result[item.status] += item.total_requests;
-				return result;
-			}, {});
-
-			const campaignMatrix = new this.campaignMatrix();
-			campaignMatrix.campaignId = campaignId;
-			campaignMatrix.triggerType = campaign.reoccurenceType === ReoccurenceType.once ? TriggerType.manual : TriggerType.automatic;
-			campaignMatrix.triggered = campaignOverview.Delivered + campaignOverview.Undelivered;
-			campaignMatrix.delivered = campaignOverview.Delivered;
-			campaignMatrix.read = campaignOverview?.Read;
-			campaignMatrix.clicked = campaignOverview?.clicked || 0;
-			campaignMatrix.failed = campaignOverview?.Undelivered;
-			campaignMatrix.createdBy = userId;
-
-			const campaignTriggered = await this.campaignMatrix.findOne({
-				where: {
-					campaignId,
-				},
-				transaction,
-			});
-
-			if (!campaignTriggered) {
-				await campaignMatrix.save({ transaction });
-				await transaction.commit();
-				return campaignMatrix;
-			}
-
-			await transaction.commit();
-			return campaignTriggered;
-		} catch (error) {
-			await transaction.rollback();
-			throw error;
+		if (!campaign) {
+			throw new BadRequestException(CampaignMessage.campaignNotFound);
 		}
+
+		const campaignTriggerMatrixList = await this.campaignTriggerMatrix.findAll({
+			where: {
+				campaignId,
+				isFired: true,
+			},
+		});
+
+		const campaignAnalytics = [];
+		for (const campaignTriggerMatrix of campaignTriggerMatrixList) {
+			const existingMaxtrix = this.campaignMatrix.findOne({
+				where: {
+					campaignTriggerMatrixId: campaignTriggerMatrix.id,
+				},
+			});
+
+			if (!existingMaxtrix) {
+				const campaignPreview = await getCampaignPreview(campaignTriggerMatrix.fynoCampaignId);
+
+				let campaignOverview = await fynoCampaignOverview(campaignPreview);
+				if (campaignOverview.length <= 0) {
+					throw new BadRequestException(CampaignMessage.fynoApiError);
+				}
+
+				campaignOverview = campaignOverview.reduce((result, item) => {
+					if (!result[item.status]) {
+						result[item.status] = 0;
+					}
+					result[item.status] += item.total_requests;
+					return result;
+				}, {});
+
+				const campaignMatrix = new this.campaignMatrix();
+				campaignMatrix.campaignId = campaignId;
+				campaignMatrix.triggerType = campaign.reoccurenceType === ReoccurenceType.once ? TriggerType.manual : TriggerType.automatic;
+				campaignMatrix.triggered = campaignOverview.Delivered + campaignOverview.Undelivered;
+				campaignMatrix.delivered = campaignOverview.Delivered;
+				campaignMatrix.read = campaignOverview?.Read;
+				campaignMatrix.clicked = campaignOverview?.clicked || 0;
+				campaignMatrix.failed = campaignOverview?.Undelivered;
+				campaignMatrix.createdBy = userId;
+				campaignMatrix.campaignTriggerMatrixId = campaignTriggerMatrix.id;
+
+				await campaignMatrix.save();
+
+				campaignAnalytics.push(campaignMatrix);
+			} else {
+				campaignAnalytics.push(existingMaxtrix);
+			}
+		}
+		return campaignAnalytics;
 	}
 
 	public async fireCampaign(campiagnId: number) {
@@ -708,7 +701,7 @@ export class CampaignService {
 
 			let userIds;
 			if (campign?.rules.length) {
-				userIds = (await applyingCampaign(campign?.rules)) || [];
+				userIds = (await applyingCampaign(campign.tenantId, campign?.rules)) || [];
 			}
 
 			const campaignUser = await this.user.findAll({
@@ -791,7 +784,7 @@ export class CampaignService {
 
 			let userIds;
 			if (campign?.rules.length) {
-				userIds = (await applyingCampaign(campign?.rules)) || [];
+				userIds = (await applyingCampaign(campign.tenantId, campign?.rules)) || [];
 			}
 
 			const campaignUser = await this.user.findAll({

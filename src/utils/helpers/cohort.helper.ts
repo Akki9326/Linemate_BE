@@ -27,14 +27,14 @@ const queryCohort = async (cohortValue: number, operator: string) => {
 	return userIds;
 };
 
-async function queryVariableMatrix(variableId: number, variableValue: string, operator: string) {
+async function queryVariableMatrix(tenantId, variableId: number, variableValue: string, operator: string) {
 	let query = {};
 	switch (operator) {
 		case 'EQUAL':
-			query = { variableId: variableId, value: variableValue, isDeleted: false };
+			query = { tenantId: tenantId, variableId: variableId, value: variableValue, isDeleted: false };
 			break;
 		case 'NOTEQUAL':
-			query = { variableId: variableId, value: { [Op.ne]: variableValue }, isDeleted: false };
+			query = { tenantId: tenantId, variableId: variableId, value: { [Op.ne]: variableValue }, isDeleted: false };
 			break;
 		default:
 			throw new BadRequestException(`Unsupported operator for role: ${operator}`);
@@ -47,7 +47,7 @@ async function queryVariableMatrix(variableId: number, variableValue: string, op
 	return userIds;
 }
 
-async function queryUserByDate(dateValue: any, operator: string) {
+async function queryUserByDate(tenantId, dateValue: any, operator: string) {
 	let query = {};
 
 	const parseDate = (dateStr: string) => {
@@ -60,27 +60,27 @@ async function queryUserByDate(dateValue: any, operator: string) {
 
 	switch (operator) {
 		case 'LESS_THAN':
-			query = { createdAt: { [Op.lt]: parseDate(dateValue) } };
+			query = { joiningDate: { [Op.lt]: parseDate(dateValue) } };
 			break;
 		case 'GREATER_THAN':
-			query = { createdAt: { [Op.gt]: parseDate(dateValue) } };
+			query = { joiningDate: { [Op.gt]: parseDate(dateValue) } };
 			break;
 		case 'EQUAL':
 			query = {
-				createdAt: {
+				joiningDate: {
 					[Op.between]: [startOfDay(parseDate(dateValue)), endOfDay(parseDate(dateValue))],
 				},
 			};
 			break;
 		case 'NOTEQUAL':
-			query = { createdAt: { [Op.notBetween]: [startOfDay(parseDate(dateValue)), endOfDay(parseDate(dateValue))] } };
+			query = { joiningDate: { [Op.notBetween]: [startOfDay(parseDate(dateValue)), endOfDay(parseDate(dateValue))] } };
 			break;
 		case 'BETWEEN':
 			if (!dateValue.startDate || !dateValue.endDate) {
 				throw new BadRequestException('Both startDate and endDate must be provided for BETWEEN operator');
 			}
 			query = {
-				createdAt: {
+				joiningDate: {
 					[Op.between]: [parseDate(dateValue.startDate), parseDate(dateValue.endDate)],
 				},
 			};
@@ -90,25 +90,30 @@ async function queryUserByDate(dateValue: any, operator: string) {
 	}
 
 	const data = await DB.Users.findAll({
-		where: query,
+		where: {
+			...query,
+			tenantIds: {
+				[Op.contains]: [tenantId],
+			},
+		},
 		attributes: ['id'],
 	});
 	const userIds = data.map(item => item.id);
 	return userIds;
 }
 
-async function processAndCondition(condition: any) {
+async function processAndCondition(tenantId, condition: any) {
 	let results: number[] = [];
 	if (condition.and) {
 		for (const subCondition of condition.and) {
 			// Check if subCondition has an 'or' clause or is a direct condition
 			let subResults;
 			if (subCondition.or) {
-				subResults = await processOrCondition(subCondition);
+				subResults = await processOrCondition(tenantId, subCondition);
 			} else if (subCondition.and) {
-				subResults = await processAndCondition(subCondition);
+				subResults = await processAndCondition(tenantId, subCondition);
 			} else {
-				subResults = await processCondition(subCondition);
+				subResults = await processCondition(tenantId, subCondition);
 			}
 
 			if (results.length === 0) {
@@ -121,23 +126,23 @@ async function processAndCondition(condition: any) {
 	return results;
 }
 
-async function processOrCondition(condition: any) {
+async function processOrCondition(tenantId, condition: any) {
 	const results = new Set<number>();
 	for (const subCondition of condition.or) {
 		let userIds;
 		if (subCondition.or) {
-			userIds = await processOrCondition(subCondition);
+			userIds = await processOrCondition(tenantId, subCondition);
 		} else if (subCondition.and) {
-			userIds = await processAndCondition(subCondition);
+			userIds = await processAndCondition(tenantId, subCondition);
 		} else {
-			userIds = await processCondition(subCondition);
+			userIds = await processCondition(tenantId, subCondition);
 		}
 		userIds.forEach(id => results.add(id));
 	}
 	return Array.from(results);
 }
 
-async function processCondition(condition: any) {
+async function processCondition(tenantId, condition: any) {
 	const { title, operators, value, variableId } = condition;
 
 	if (!title || !operators || value === undefined) {
@@ -147,23 +152,23 @@ async function processCondition(condition: any) {
 	if (title === 'cohort') {
 		return await queryCohort(value, operators);
 	} else if (variableId) {
-		return await queryVariableMatrix(variableId, value, operators);
+		return await queryVariableMatrix(tenantId, variableId, value, operators);
 	} else if (title === 'joiningDate') {
-		return await queryUserByDate(value, operators);
+		return await queryUserByDate(tenantId, value, operators);
 	} else {
 		throw new BadRequestException(`Unsupported title: ${title}`);
 	}
 }
 
-export const applyingCohort = async (cohortRule: CohortRuleQuery[]) => {
+export const applyingCohort = async (tenantId: number, cohortRule: CohortRuleQuery[]) => {
 	const userSets = [];
 
 	// Iterate over each rule in cohortRule
 	for (const rule of cohortRule) {
 		if (rule.and) {
-			userSets.push(await processAndCondition(rule));
+			userSets.push(await processAndCondition(tenantId, rule));
 		} else if (rule.or) {
-			userSets.push(await processOrCondition(rule));
+			userSets.push(await processOrCondition(tenantId, rule));
 		} else {
 			throw new BadRequestException(`Invalid rule: ${JSON.stringify(rule)}`);
 		}
@@ -171,14 +176,14 @@ export const applyingCohort = async (cohortRule: CohortRuleQuery[]) => {
 	return userSets.length > 0 ? userSets[0] : [];
 };
 
-export const applyingCampaign = async (campaignRule: CampaignRuleQuery[]) => {
+export const applyingCampaign = async (tenantId: number, campaignRule: CampaignRuleQuery[]) => {
 	const userSets = [];
 	// Iterate over each rule in cohortRule
 	for (const rule of campaignRule) {
 		if (rule.and) {
-			userSets.push(await processAndCondition(rule));
+			userSets.push(await processAndCondition(tenantId, rule));
 		} else if (rule.or) {
-			userSets.push(await processOrCondition(rule));
+			userSets.push(await processOrCondition(tenantId, rule));
 		} else {
 			throw new BadRequestException(`Invalid rule: ${JSON.stringify(rule)}`);
 		}

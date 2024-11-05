@@ -24,7 +24,7 @@ import S3Services from '@/utils/services/s3.services';
 import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.transaction';
 import DB from '@databases';
 import { plainToInstance } from 'class-transformer';
-import { ValidationError, isEmail, isNumber, isPhoneNumber, validate } from 'class-validator';
+import { IsMobilePhone, ValidationError, isEmail, isNumber, validate } from 'class-validator';
 import { parseISO } from 'date-fns';
 import 'reflect-metadata';
 import { BelongsTo, Op, Sequelize } from 'sequelize';
@@ -59,7 +59,7 @@ class UserService {
 					temporaryPassword,
 					FRONTEND_URL,
 				);
-				await Email.sendEmail(userData.email, emailSubject, emailBody);
+				if (userData.email) await Email.sendEmail(userData.email, emailSubject, emailBody);
 			}),
 		);
 	}
@@ -180,7 +180,7 @@ class UserService {
 				}
 				break;
 			case VariableType.PhoneNumber:
-				if (!isPhoneNumber(value)) {
+				if (!IsMobilePhone(value)) {
 					throw new BadRequestException(`Tenant "${tenantName}" Invalid value for field: ${variableName}`);
 				}
 				break;
@@ -238,56 +238,37 @@ class UserService {
 			}
 			for (const variable of variableMaster) {
 				const value = userVariablesMap.get(variable.id);
-				if (value !== undefined && value !== null) {
+				if (value !== undefined && value !== null && value !== '') {
 					await this.validateValue(value, variable.type, variable.options, variable.name, tenantDetails.name);
 				}
 			}
 		}
 	}
 	private async validateImportUserVariables(tenantVariables: variableValues[]) {
-		let message;
+		const message = [];
 		for (let i = 0; i < tenantVariables.length; i++) {
 			const variableElement = tenantVariables[i];
 			const variable = await this.variableMaster.findOne({ where: { id: variableElement.variableId } });
+
+			if (!variableElement.value) {
+				if (variable.isMandatory) {
+					message.push(VariableMessage.variableIsRequired(variable.name));
+				}
+				continue;
+			}
+
 			if (!variable) {
-				message = VariableMessage.variableNotFound;
+				message.push(VariableMessage.variableNotFound);
 				continue;
 			}
 
-			if (variable.type === VariableType.Text && variableElement.value == '' && !(typeof variableElement.value == 'string')) {
-				message = VariableMessage.textVariableMustString;
-				continue;
+			try {
+				await this.validateValue(variableElement.value, variable.type, variable.options, variable.name, '');
+			} catch (ex: unknown) {
+				message.push(VariableMessage.variableValueIsInvalid(variable.name));
 			}
-			function isNumeric(value): boolean {
-				return typeof value === 'number' && !isNaN(value);
-			}
-			if (variable.type === VariableType.Numeric) {
-				variableElement.value = +variableElement.value;
-				if (!isNumeric(+variableElement.value)) {
-					message = VariableMessage.numericVariableMustNumber;
-					continue;
-				}
-			}
-			if (variable.type === VariableType.SingleSelect) {
-				if (!variable.options.includes(variableElement.value)) {
-					message = VariableMessage.singleSelectMustMustBeAnOptions;
-					continue;
-				}
-			}
-			if (variable.type === VariableType.MultiSelect) {
-				if (variableElement.value) {
-					variableElement.value = variableElement.value.split(',');
-				}
-				for (const value of variableElement.value) {
-					if (!variable.options.includes(value)) {
-						message = VariableMessage.multiSelectMustMustBeAnOptions;
-						continue;
-					}
-				}
-			}
-
-			if (message) return message;
 		}
+		if (message.length) return message.join(', ');
 	}
 	private async addTenantVariables(tenantVariables: TenantVariables[], userId: number, creatorId: number) {
 		tenantVariables.length &&
@@ -496,10 +477,14 @@ class UserService {
 		return user;
 	}
 	public async update(userData: UserDto, userId: number, updatedBy: JwtTokenData) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const emailMobileConditions: any[] = [{ mobileNumber: userData.mobileNumber }];
+
+		if (userData.email) emailMobileConditions.push({ email: userData.email });
 		const existingUser = await this.users.findOne({
 			where: {
 				id: { [Op.not]: userId },
-				[Op.or]: [{ email: userData.email }, { mobileNumber: userData.mobileNumber }],
+				[Op.or]: emailMobileConditions,
 				isDeleted: false,
 			},
 		});
@@ -877,7 +862,7 @@ class UserService {
 				isDeleted: false,
 			},
 			raw: true,
-		});
+	});
 		if (data.length) {
 			const userData = await Promise.all(
 				data.map(async user => {
@@ -983,26 +968,27 @@ class UserService {
 			if (userArray.length) {
 				for (let i = 0; i < userArray.length; i++) {
 					const user = userArray[i];
+					if (user.email) {
+						const emailExists = await this.users.findOne({
+							where: {
+								email: user.email,
+							},
+						});
 
-					const emailExists = await this.users.findOne({
-						where: {
-							email: user.email,
-						},
-					});
-
-					if (emailExists) {
-						const errorObj = {
-							employeeId: user.employeeId,
-							firstName: user.firstName,
-							lastName: user.lastName,
-							email: user.email,
-							errorReason: AppMessages.existedEmail,
-							role: user.role,
-							joiningDate: user.joiningDate,
-							reportToId: user.reportToId,
-						};
-						errorArray.push(errorObj);
-						continue;
+						if (emailExists) {
+							const errorObj = {
+								employeeId: user.employeeId,
+								firstName: user.firstName,
+								lastName: user.lastName,
+								email: user.email,
+								errorReason: AppMessages.existedEmail,
+								role: user.role,
+								joiningDate: user.joiningDate,
+								reportToId: user.reportToId,
+							};
+							errorArray.push(errorObj);
+							continue;
+						}
 					}
 
 					const mobileNumberExists = await this.users.findOne({
@@ -1051,13 +1037,13 @@ class UserService {
 						createUser = await this.users.create(user);
 						successCount++;
 
-						this.addTenantVariables(tenantVariables, createUser.id, createdBy.id);
+						await this.addTenantVariables(tenantVariables, createUser.id, createdBy.id);
 					} else {
 						createUser = await this.users.create(user);
 						successCount++;
 					}
 
-					if (createUser) {
+					if (createUser && user.email) {
 						const emailSubject = await EmailSubjects.accountActivationSubject(tenantExists.name);
 						const emailBody = EmailTemplates.accountActivationEmail(
 							tenantExists.name,

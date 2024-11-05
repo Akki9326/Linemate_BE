@@ -18,7 +18,6 @@ export class CampaignMasterModel extends AppDBModel {
 	public reoccurenceType: string;
 	public reoccurenceDetails: object;
 	public deliveryStatus: number;
-	public fynoCampaignId: string;
 }
 
 export default function (sequelize: Sequelize): typeof CampaignMasterModel {

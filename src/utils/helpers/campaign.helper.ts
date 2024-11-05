@@ -4,6 +4,7 @@ import FormData from 'form-data';
 import xlsx from 'xlsx';
 // import { UserModel } from '@models/db/users.model';
 import { logger } from '../services/logger';
+import { BadRequestException } from '@/exceptions/BadRequestException';
 
 // Helper to generate Csv having users data
 
@@ -169,19 +170,23 @@ export const getNotificationForCampaign = async (templateName: string) => {
 			},
 		});
 
-		const payload = {
-			mappings: {
-				event: {
-					event_name: getNotifictionDetails.data[0].event_name,
-					event_id: getNotifictionDetails.data[0].event_id,
-					to: {
-						whatsapp: '{{whatsapp}}',
+		if (getNotifictionDetails.data.length) {
+			const payload = {
+				mappings: {
+					event: {
+						event_name: getNotifictionDetails.data[0].event_name,
+						event_id: getNotifictionDetails.data[0].event_id,
+						to: {
+							whatsapp: '{{whatsapp}}',
+						},
 					},
 				},
-			},
-		};
+			};
+			return payload;
+		} else {
+			throw new BadRequestException(`Notification Details not found for ${templateName}`);
+		}
 
-		return payload;
 	} catch (error) {
 		if (axios.isAxiosError(error)) {
 			logger.error('Error response data:', error.response?.data);

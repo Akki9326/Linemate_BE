@@ -56,6 +56,8 @@ export const VariableMessage = {
 	numericVariableMustNumber: 'Numeric variable value must be a Number',
 	singleSelectMustMustBeAnOptions: 'Single select variable value must be an options',
 	multiSelectMustMustBeAnOptions: 'Multi select variable value must be an options',
+	variableIsRequired: (variabledName: string) => `${variabledName} is required`,
+	variableValueIsInvalid: (variabledName: string) => `${variabledName} is invalid`,
 };
 export const CommonMessage = {
 	filterIsRequired: 'filter is required',
