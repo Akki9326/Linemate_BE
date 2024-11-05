@@ -24,7 +24,7 @@ import S3Services from '@/utils/services/s3.services';
 import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.transaction';
 import DB from '@databases';
 import { plainToInstance } from 'class-transformer';
-import { ValidationError, isEmail, isNumber, isPhoneNumber, validate } from 'class-validator';
+import { IsMobilePhone, ValidationError, isEmail, isNumber, validate } from 'class-validator';
 import { parseISO } from 'date-fns';
 import 'reflect-metadata';
 import { BelongsTo, Op, Sequelize } from 'sequelize';
@@ -59,7 +59,7 @@ class UserService {
 					temporaryPassword,
 					FRONTEND_URL,
 				);
-				await Email.sendEmail(userData.email, emailSubject, emailBody);
+				if (userData.email) await Email.sendEmail(userData.email, emailSubject, emailBody);
 			}),
 		);
 	}
@@ -180,7 +180,7 @@ class UserService {
 				}
 				break;
 			case VariableType.PhoneNumber:
-				if (!isPhoneNumber(value)) {
+				if (!IsMobilePhone(value)) {
 					throw new BadRequestException(`Tenant "${tenantName}" Invalid value for field: ${variableName}`);
 				}
 				break;
@@ -238,7 +238,7 @@ class UserService {
 			}
 			for (const variable of variableMaster) {
 				const value = userVariablesMap.get(variable.id);
-				if (value !== undefined && value !== null) {
+				if (value !== undefined && value !== null && value !== '') {
 					await this.validateValue(value, variable.type, variable.options, variable.name, tenantDetails.name);
 				}
 			}
@@ -964,26 +964,27 @@ class UserService {
 			if (userArray.length) {
 				for (let i = 0; i < userArray.length; i++) {
 					const user = userArray[i];
+					if (user.email) {
+						const emailExists = await this.users.findOne({
+							where: {
+								email: user.email,
+							},
+						});
 
-					const emailExists = await this.users.findOne({
-						where: {
-							email: user.email,
-						},
-					});
-
-					if (emailExists) {
-						const errorObj = {
-							employeeId: user.employeeId,
-							firstName: user.firstName,
-							lastName: user.lastName,
-							email: user.email,
-							errorReason: AppMessages.existedEmail,
-							role: user.role,
-							joiningDate: user.joiningDate,
-							reportToId: user.reportToId,
-						};
-						errorArray.push(errorObj);
-						continue;
+						if (emailExists) {
+							const errorObj = {
+								employeeId: user.employeeId,
+								firstName: user.firstName,
+								lastName: user.lastName,
+								email: user.email,
+								errorReason: AppMessages.existedEmail,
+								role: user.role,
+								joiningDate: user.joiningDate,
+								reportToId: user.reportToId,
+							};
+							errorArray.push(errorObj);
+							continue;
+						}
 					}
 
 					const mobileNumberExists = await this.users.findOne({
@@ -1032,13 +1033,13 @@ class UserService {
 						createUser = await this.users.create(user);
 						successCount++;
 
-						this.addTenantVariables(tenantVariables, createUser.id, createdBy.id);
+						await this.addTenantVariables(tenantVariables, createUser.id, createdBy.id);
 					} else {
 						createUser = await this.users.create(user);
 						successCount++;
 					}
 
-					if (createUser) {
+					if (createUser && user.email) {
 						const emailSubject = await EmailSubjects.accountActivationSubject(tenantExists.name);
 						const emailBody = EmailTemplates.accountActivationEmail(
 							tenantExists.name,
