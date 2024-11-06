@@ -685,7 +685,7 @@ export class CampaignService {
 		return campaignAnalytics;
 	}
 
-	public async fireCampaign(campiagnId: number) {
+	public async fireCampaign(campiagnId: number, triggerType = TriggerType.manual) {
 		const campign = await this.campaignMaster.findOne({
 			where: {
 				id: campiagnId,
@@ -746,7 +746,7 @@ export class CampaignService {
 		await fireCampaign(workspaceId, fynoCampaign.upload_id);
 
 		const triggerDetails = {
-			fireType: TriggerType.manual,
+			fireType: triggerType,
 			campaignId: campiagnId,
 			fynoCampaignId: fynoCampaign.upload_id,
 			firedOn: now,
@@ -762,6 +762,6 @@ export class CampaignService {
 	}
 
 	public async automaticFiredCampaign(campiagnId: number) {
-		//return this.fireCampaign(campiagnId);
+		return this.fireCampaign(campiagnId, TriggerType.automatic);
 	}
 }
