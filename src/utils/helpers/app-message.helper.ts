@@ -45,6 +45,7 @@ export const TenantMessage = {
 	companyNameIsAlreadyExists: 'Company name is already exists in our system',
 	tenantNameLength: 'Company name length should be greater than 25',
 	workSpaceNotFound: 'Work space not found in this tenant',
+	requiredChannel: 'channel is required',
 };
 export const VariableMessage = {
 	variableNotFound: 'variable not found',
@@ -56,6 +57,8 @@ export const VariableMessage = {
 	numericVariableMustNumber: 'Numeric variable value must be a Number',
 	singleSelectMustMustBeAnOptions: 'Single select variable value must be an options',
 	multiSelectMustMustBeAnOptions: 'Multi select variable value must be an options',
+	variableIsRequired: (variabledName: string) => `${variabledName} is required`,
+	variableValueIsInvalid: (variabledName: string) => `${variabledName} is invalid`,
 };
 export const CommonMessage = {
 	filterIsRequired: 'filter is required',
@@ -109,4 +112,7 @@ export const TemplateMessage = {
 	templateAlreadyExists: 'template already exists',
 	notFoundArchiveTemplate: 'not found archive template.',
 	notFoundUnArchiveTemplate: 'not found un archive template.',
+	headerMediaUrlRequired: 'headerMediaUrl is required',
+	captionRequired: 'caption is required',
+	messageTextRequired: 'messageText is required',
 };

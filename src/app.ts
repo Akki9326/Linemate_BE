@@ -1,5 +1,5 @@
 import { logger } from '@/utils/services/logger';
-import { CREDENTIALS, NODE_ENV, ORIGIN, PORT } from '@config';
+import { CAMPAIGN_CRON_TIME, CREDENTIALS, NODE_ENV, ORIGIN, PORT } from '@config';
 import errorMiddleware from '@middlewares/error.middleware';
 import compression from 'compression';
 import cors from 'cors';
@@ -14,12 +14,22 @@ import { Routes } from './models/interfaces/routes.interface';
 import { CacheService } from './services/cache.service';
 import fileUpload from 'express-fileupload';
 import 'reflect-metadata';
+import cron from 'node-cron';
+import DB from '@/databases';
+import { CampaignService } from '@/services/campaign.service';
+import { CampaignCronService } from './services/campaign-cron.service';
 
 class App {
 	public app: express.Application;
 	public env: string;
 	public port: string | number;
 	private routes: Routes[];
+
+	private campaignMaster = DB.CampaignMaster;
+	private campaignMatrix = DB.CampaignMatrix;
+	private campaignUserMatrix = DB.CampaignUserMatrix;
+	private campaignTriggerMatrix = DB.CampaignTriggerMatrix;
+	public campaignService = new CampaignService();
 
 	constructor(routes: Routes[]) {
 		this.app = express();
@@ -124,6 +134,11 @@ class App {
 		// Serve the OpenAPI specification file
 		this.app.get('/api-docs/swagger.yaml', (req, res) => {
 			res.sendFile(path.join(__dirname, 'config/swagger/swagger.yaml'));
+		});
+
+		// Schedule a task to run every 24 hours
+		cron.schedule(CAMPAIGN_CRON_TIME, async () => {
+			//new CampaignCronService().triggerCampaign();
 		});
 	}
 

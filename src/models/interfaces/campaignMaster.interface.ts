@@ -11,7 +11,7 @@ export interface CampaignMaster {
 	tags?: string[];
 	status: CampaignStatusType;
 	isArchived?: boolean;
-	tenantId:number
+	tenantId: number;
 }
 
 export interface CampaignCondition {

@@ -146,7 +146,7 @@ export class CohortService {
 			throw new BadRequestException(TenantMessage.tenantNotFound);
 		}
 		if (cohortDetails?.rules?.length && cohortDetails.isExistingRuleProcess) {
-			cohortDetails['userIds'] = (await applyingCohort(cohortDetails?.rules)) || [];
+			cohortDetails['userIds'] = (await applyingCohort(cohortDetails?.tenantId, cohortDetails?.rules)) || [];
 		}
 
 		let cohort = new this.cohortMaster();
@@ -171,7 +171,7 @@ export class CohortService {
 			throw new BadRequestException(CohortMessage.cohortNotFound);
 		}
 		if (cohortDetails?.rules?.length && cohortDetails.isExistingRuleProcess) {
-			cohortDetails['userIds'] = (await applyingCohort(cohortDetails?.rules)) || [];
+			cohortDetails['userIds'] = (await applyingCohort(cohortDetails?.tenantId, cohortDetails?.rules)) || [];
 		}
 		cohort.name = cohortDetails.name;
 		cohort.description = cohortDetails.description;

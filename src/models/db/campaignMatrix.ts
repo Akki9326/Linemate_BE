@@ -16,6 +16,7 @@ export class CampaignMatrixModel extends AppDBModel {
 	public read: number;
 	public clicked: number;
 	public failed: number;
+	public campaignTriggerMatrixId: number;
 }
 
 export default function (sequelize: Sequelize): typeof CampaignMatrixModel {
@@ -39,6 +40,9 @@ export default function (sequelize: Sequelize): typeof CampaignMatrixModel {
 					key: 'id',
 				},
 			},
+			campaignTriggerMatrixId: {
+				type: DataTypes.INTEGER,
+			},
 			triggered: {
 				type: DataTypes.INTEGER,
 			},
@@ -56,7 +60,7 @@ export default function (sequelize: Sequelize): typeof CampaignMatrixModel {
 			},
 		},
 		{
-			tableName: 'campaignMatrix',
+			tableName: 'campaignAnalyticMatrix',
 			sequelize,
 		},
 	);

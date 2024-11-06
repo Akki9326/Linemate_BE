@@ -31,6 +31,7 @@ import axios from 'axios';
 import FormData from 'form-data';
 import { Readable } from 'stream';
 import { v4 as uuidv4 } from 'uuid';
+import { TemplateMessage } from './app-message.helper';
 
 export const TemplateGenerator = {
 	isValidUrl: (url: string) => {
@@ -504,6 +505,7 @@ export const TemplateGenerator = {
 			});
 			return response.data;
 		} catch (error) {
+			console.log('error', error);
 			throw new BadRequestException(error?.response?.data?._message);
 		}
 	},
@@ -680,32 +682,55 @@ export const TemplateGenerator = {
 				content: {
 					type: templateDetails.contentType,
 					message_route: 'transcational',
-					button: {
-						title: templateDetails[0]?.title,
-						action: templateDetails[0]?.navigateScreen,
-					},
 				},
 			},
 		};
+		if (templateDetails?.buttons?.length) {
+			content.viber.content.button = {
+				title: templateDetails.buttons[0].title,
+				action: templateDetails.buttons[0].navigateScreen,
+			};
+		}
 
 		switch (templateDetails.contentType) {
 			case ViberContentType.Text:
-				content.viber.content.text = templateDetails?.messageText;
+				if (!templateDetails?.messageText) {
+					throw new BadRequestException(TemplateMessage.messageTextRequired);
+				} else {
+					content.viber.content.text = templateDetails?.messageText;
+				}
 				break;
 			case ViberContentType.Image:
-				content.viber.content.caption = templateDetails?.messageText;
-				content.viber.content.mediaUrl = templateDetails.headerMediaUrl;
+				if (!templateDetails?.headerMediaUrl) {
+					throw new BadRequestException(TemplateMessage.headerMediaUrlRequired);
+				} else if (!templateDetails?.caption) {
+					throw new BadRequestException(TemplateMessage.captionRequired);
+				} else {
+					content.viber.content.caption = templateDetails?.caption;
+					content.viber.content.mediaUrl = templateDetails.headerMediaUrl;
+				}
 				break;
 			case ViberContentType.Video:
-				content.viber.content.caption = templateDetails?.messageText;
-				content.viber.content.mediaUrl = templateDetails.headerMediaUrl;
-				content.viber.content.thumbnailUrl = templateDetails.thumbnailUrl;
-				content.viber.content.mediaDuration = templateDetails.mediaDuration;
+				if (!templateDetails?.headerMediaUrl) {
+					throw new BadRequestException(TemplateMessage.headerMediaUrlRequired);
+				} else if (!templateDetails?.caption) {
+					throw new BadRequestException(TemplateMessage.captionRequired);
+				} else {
+					content.viber.content.caption = templateDetails?.caption;
+					content.viber.content.mediaUrl = templateDetails.headerMediaUrl;
+					content.viber.content.thumbnailUrl = templateDetails.thumbnailUrl;
+					content.viber.content.mediaDuration = templateDetails.mediaDuration;
+				}
 				break;
 			case ViberContentType.File:
-				content.viber.content.caption = templateDetails?.messageText;
-				content.viber.content.mediaUrl = templateDetails.headerMediaUrl;
-				delete content.viber.content.button;
+				if (!templateDetails?.headerMediaUrl) {
+					throw new BadRequestException(TemplateMessage.headerMediaUrlRequired);
+				} else if (!templateDetails?.caption) {
+					throw new BadRequestException(templateDetails?.caption);
+				} else {
+					content.viber.content.caption = templateDetails?.messageText;
+					content.viber.content.mediaUrl = templateDetails.headerMediaUrl;
+				}
 				break;
 			default:
 				throw new BadRequestException(`Unsupported content type: ${templateDetails.contentType}`);
@@ -730,19 +755,5 @@ export const TemplateGenerator = {
 			},
 		};
 		return payload;
-	},
-	generateViber: async (payload: unknown, communication: CommunicationResponse) => {
-		try {
-			const request = await payload;
-			const response = await axios.put(`${FYNO_BASE_URL}/${communication?.fynoWorkSpaceId}/notification/`, request, {
-				headers: {
-					Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
-					'Content-Type': 'application/json',
-				},
-			});
-			return response.data;
-		} catch (error) {
-			throw new BadRequestException(error?.response?.data?._message);
-		}
 	},
 };

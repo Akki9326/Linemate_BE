@@ -27,9 +27,10 @@ import UserModel from '@/models/db/users.model';
 import UserTokenModel from '@/models/db/userToken.model';
 import UserVariableMasterModel from '@/models/db/userVariableMaster';
 import UserVariableMatrixModel from '@/models/db/userVariableMatrix';
-import WorkSpaceModel from '@/models/db/workSpace.model';
 import { DB_DATABASE, DB_HOST, DB_PASSWORD, DB_PORT, DB_USER } from '@config';
 import Sequelize from 'sequelize';
+import WorkSpaceModel from '@/models/db/workSpace.model';
+import CampaignTriggerMatrix from '@/models/db/CampaignTriggerMatrix';
 
 export const sequelizeConnect = new Sequelize.Sequelize(DB_DATABASE, DB_USER, DB_PASSWORD, {
 	dialect: 'postgres',
@@ -87,6 +88,7 @@ const DB = {
 	CampaignUserMatrix: CampaignUserMatrixModel(sequelizeConnect),
 	CommunicationModel: CommunicationModel(sequelizeConnect),
 	WorkSpaceModel: WorkSpaceModel(sequelizeConnect),
+	CampaignTriggerMatrix: CampaignTriggerMatrix(sequelizeConnect),
 	sequelizeConnect, // connection instance (RAW queries)
 	Sequelize, // library
 };

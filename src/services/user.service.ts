@@ -24,14 +24,13 @@ import S3Services from '@/utils/services/s3.services';
 import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.transaction';
 import DB from '@databases';
 import { plainToInstance } from 'class-transformer';
-import { ValidationError, isEmail, isNumber, isPhoneNumber, validate } from 'class-validator';
+import { IsMobilePhone, ValidationError, isEmail, isNumber, validate } from 'class-validator';
 import { parseISO } from 'date-fns';
 import 'reflect-metadata';
 import { BelongsTo, Op, Sequelize } from 'sequelize';
 import { CohortService } from './cohort.service';
 import { RoleService } from './role.service';
 import { TenantService } from './tenant.service';
-import VariableServices from './variable.service';
 import moment from 'moment';
 
 class UserService {
@@ -42,12 +41,11 @@ class UserService {
 	private variableMatrix = DB.VariableMatrix;
 	private tenantService = new TenantService();
 	private roleService = new RoleService();
-	private variableServices = new VariableServices();
 	public s3Service = new S3Services();
 	private cohortService = new CohortService();
 	private excelService = new ExcelService();
 
-	constructor() {}
+	constructor() { }
 	public async sendAccountActivationEmail(userData, temporaryPassword: string, createdUser: JwtTokenData) {
 		await Promise.all(
 			userData.tenantIds.map(async tenantId => {
@@ -61,7 +59,7 @@ class UserService {
 					temporaryPassword,
 					FRONTEND_URL,
 				);
-				await Email.sendEmail(userData.email, emailSubject, emailBody);
+				if (userData.email) await Email.sendEmail(userData.email, emailSubject, emailBody);
 			}),
 		);
 	}
@@ -182,7 +180,7 @@ class UserService {
 				}
 				break;
 			case VariableType.PhoneNumber:
-				if (!isPhoneNumber(value)) {
+				if (!IsMobilePhone(value)) {
 					throw new BadRequestException(`Tenant "${tenantName}" Invalid value for field: ${variableName}`);
 				}
 				break;
@@ -240,49 +238,37 @@ class UserService {
 			}
 			for (const variable of variableMaster) {
 				const value = userVariablesMap.get(variable.id);
-				if (value !== undefined && value !== null) {
+				if (value !== undefined && value !== null && value !== '') {
 					await this.validateValue(value, variable.type, variable.options, variable.name, tenantDetails.name);
 				}
 			}
 		}
 	}
 	private async validateImportUserVariables(tenantVariables: variableValues[]) {
-		let message;
+		const message = [];
 		for (let i = 0; i < tenantVariables.length; i++) {
 			const variableElement = tenantVariables[i];
 			const variable = await this.variableMaster.findOne({ where: { id: variableElement.variableId } });
-			if (!variable) {
-				message = VariableMessage.variableNotFound;
+
+			if (!variableElement.value) {
+				if (variable.isMandatory) {
+					message.push(VariableMessage.variableIsRequired(variable.name));
+				}
 				continue;
 			}
 
-			if (variable.type === VariableType.Text && variableElement.value == '' && !(typeof variableElement.value == 'string')) {
-				message = VariableMessage.textVariableMustString;
+			if (!variable) {
+				message.push(VariableMessage.variableNotFound);
 				continue;
 			}
-			function isNumeric(value): boolean {
-				return typeof value === 'number' && !isNaN(value);
+
+			try {
+				await this.validateValue(variableElement.value, variable.type, variable.options, variable.name, '');
+			} catch (ex: unknown) {
+				message.push(VariableMessage.variableValueIsInvalid(variable.name));
 			}
-			if (variable.type === VariableType.Numeric && !isNumeric(variableElement.value)) {
-				message = VariableMessage.numericVariableMustNumber;
-				continue;
-			}
-			if (variable.type === VariableType.SingleSelect) {
-				if (!variable.options.includes(variableElement.value)) {
-					message = VariableMessage.singleSelectMustMustBeAnOptions;
-					continue;
-				}
-			}
-			if (variable.type === VariableType.MultiSelect) {
-				for (const value of variableElement.value) {
-					if (!variable.options.includes(value)) {
-						message = VariableMessage.multiSelectMustMustBeAnOptions;
-						continue;
-					}
-				}
-			}
-			return message;
 		}
+		if (message.length) return message.join(', ');
 	}
 	private async addTenantVariables(tenantVariables: TenantVariables[], userId: number, creatorId: number) {
 		tenantVariables.length &&
@@ -491,10 +477,14 @@ class UserService {
 		return user;
 	}
 	public async update(userData: UserDto, userId: number, updatedBy: JwtTokenData) {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const emailMobileConditions: any[] = [{ mobileNumber: userData.mobileNumber }];
+
+		if (userData.email) emailMobileConditions.push({ email: userData.email });
 		const existingUser = await this.users.findOne({
 			where: {
 				id: { [Op.not]: userId },
-				[Op.or]: [{ email: userData.email }, { mobileNumber: userData.mobileNumber }],
+				[Op.or]: emailMobileConditions,
 				isDeleted: false,
 			},
 		});
@@ -538,7 +528,7 @@ class UserService {
 		user.countryCode = userData.countyCode;
 		user.employeeId = userData.employeeId;
 		user.profilePhoto = userData.profilePhoto;
-		user.role = userData?.profilePhoto;
+		user.role = userData.role;
 		user.joiningDate = userData?.joiningDate;
 		user.reportToId = userData?.reportToId;
 
@@ -579,15 +569,15 @@ class UserService {
 	}
 	private async getUserIdsFromVariableMatrix(filterCriteria: { variableId: number; value: string }[]) {
 		const whereConditions = filterCriteria.map(criteria => {
-			const jsonStringValue = JSON.stringify([criteria.value]);
+
 			return {
 				variableId: criteria.variableId,
-				[Op.or]: [{ value: { [Op.like]: `%${criteria.value}%` } }, { value: { [Op.like]: `%${jsonStringValue}%` } }],
+				[Op.or]: [{ value: { [Op.like]: `%"${criteria.value}"%` } }, { value: criteria.value }],
 			};
 		});
 
 		const havingClause = filterCriteria.map(criteria =>
-			Sequelize.literal(`COUNT(DISTINCT CASE WHEN "variableId" = ${criteria.variableId} AND "value" = '${criteria.value}' THEN 1 END) > 0`),
+			Sequelize.literal(`COUNT(DISTINCT CASE WHEN "variableId" = ${criteria.variableId} THEN 1 END) > 0`),
 		);
 
 		const matchingRecords = await this.variableMatrix.findAll({
@@ -684,7 +674,8 @@ class UserService {
 		const validSortFields = Object.keys(UserModel.rawAttributes);
 		const orderByField = validSortFields.includes(pageModel.sortField) ? pageModel.sortField : 'id';
 		const sortDirection = Object.values(SortOrder).includes(pageModel.sortOrder as SortOrder) ? pageModel.sortOrder : SortOrder.ASC;
-		let condition = {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		let condition: any = {
 			isDeleted: false,
 			isActive: true,
 		};
@@ -697,6 +688,19 @@ class UserService {
 					...(await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter)),
 				};
 			}
+		}
+
+		if (pageModel.search) {
+			condition = {
+				...condition,
+				[Op.or]: [
+					{ firstName: { [Op.iLike]: `%${pageModel.search}%` } },
+					{ lastName: { [Op.iLike]: `%${pageModel.search}%` } },
+					{ email: { [Op.iLike]: `%${pageModel.search}%` } },
+					{ mobileNumber: { [Op.iLike]: `%${pageModel.search}%` } },
+					{ employeeId: { [Op.iLike]: `%${pageModel.search}%` } },
+				],
+			};
 		}
 		if (tenantId) {
 			condition['tenantIds'] = {
@@ -751,30 +755,6 @@ class UserService {
 			searchArray = userRows;
 		}
 
-		if (pageModel?.search && pageModel.search.trim() !== '') {
-			const regex = new RegExp(pageModel?.search, 'i');
-			const filteredRows = searchArray.filter(row => {
-				const firstNameMatches = regex.test(row.firstName);
-				const lastNameMatches = regex.test(row.lastName);
-				const emailMatches = regex.test(row.email);
-				const mobileNoMatches = regex.test(row.mobileNumber);
-				const employeeIdMatches = row.employeeId ? regex.test(row.employeeId) : false;
-				const tenantNameMatches =
-					row.tenantDetails && row.tenantDetails.length > 0
-						? row.tenantDetails.some(tenant => tenant && tenant.name && regex.test(tenant.name))
-						: false;
-
-				// Return true if any of the fields match
-				return firstNameMatches || lastNameMatches || emailMatches || mobileNoMatches || employeeIdMatches || tenantNameMatches;
-			});
-
-			if (filteredRows && filteredRows.length) {
-				return {
-					count: totalUsersCount,
-					rows: filteredRows,
-				};
-			}
-		}
 		return {
 			count: totalUsersCount,
 			rows: searchArray,
@@ -936,7 +916,7 @@ class UserService {
 				const validationErrors = await validate(userInstance, {
 					skipMissingProperties: false, // This ensures that missing properties will be flagged as errors
 					whitelist: true,
-					forbidNonWhitelisted: true,
+					forbidNonWhitelisted: false,
 				});
 
 				if (validationErrors.length > 0) {
@@ -958,30 +938,47 @@ class UserService {
 						errorReason: message.trim(), // Remove extra spaces
 					});
 				}
+				if (userInstance.reportTo) {
+					const managerDetails = await this.users.findOne({
+						where: {
+							email: userInstance.reportTo,
+							tenantIds: {
+								[Op.contains]: [tenantId],
+							},
+						},
+						attributes: ['id', 'email', 'tenantIds'],
+					});
+
+					userInstance.reportToId = managerDetails?.id;
+				}
 			}
 
-			const userArray = await this.removeMatchingRecords(errorArray, userData);
+			const userArray = await this.removeMatchingRecords(errorArray, userDataInstances);
 			let successCount = 0;
 			if (userArray.length) {
 				for (let i = 0; i < userArray.length; i++) {
 					const user = userArray[i];
+					if (user.email) {
+						const emailExists = await this.users.findOne({
+							where: {
+								email: user.email,
+							},
+						});
 
-					const emailExists = await this.users.findOne({
-						where: {
-							email: user.email,
-						},
-					});
-
-					if (emailExists) {
-						const errorObj = {
-							employeeId: user.employeeId,
-							firstName: user.firstName,
-							lastName: user.lastName,
-							email: user.email,
-							errorReason: AppMessages.existedEmail,
-						};
-						errorArray.push(errorObj);
-						continue;
+						if (emailExists) {
+							const errorObj = {
+								employeeId: user.employeeId,
+								firstName: user.firstName,
+								lastName: user.lastName,
+								email: user.email,
+								errorReason: AppMessages.existedEmail,
+								role: user.role,
+								joiningDate: user.joiningDate,
+								reportToId: user.reportToId,
+							};
+							errorArray.push(errorObj);
+							continue;
+						}
 					}
 
 					const mobileNumberExists = await this.users.findOne({
@@ -1030,13 +1027,13 @@ class UserService {
 						createUser = await this.users.create(user);
 						successCount++;
 
-						this.addTenantVariables(tenantVariables, createUser.id, createdBy.id);
+						await this.addTenantVariables(tenantVariables, createUser.id, createdBy.id);
 					} else {
 						createUser = await this.users.create(user);
 						successCount++;
 					}
 
-					if (createUser) {
+					if (createUser && user.email) {
 						const emailSubject = await EmailSubjects.accountActivationSubject(tenantExists.name);
 						const emailBody = EmailTemplates.accountActivationEmail(
 							tenantExists.name,
@@ -1068,7 +1065,7 @@ class UserService {
 			}
 
 			const errorCount = {
-				failureCount: uniqueEmployees.length,
+				failureCount: uniqueEmployees?.length || 0,
 				successCount: successCount,
 			};
 			return errorCount;

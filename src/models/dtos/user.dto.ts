@@ -1,6 +1,7 @@
 import { Transform, Type } from 'class-transformer';
 import {
 	IsArray,
+	IsDateString,
 	IsDefined,
 	IsEmail,
 	IsEnum,
@@ -129,7 +130,7 @@ export class UserData {
 	public lastName: string;
 
 	@IsEmail()
-	@IsDefined()
+	@IsOptional()
 	public email: string;
 
 	@IsEnum(UserType)
@@ -161,7 +162,30 @@ export class UserData {
 	@IsOptional()
 	public tenantVariables: variableValues[];
 
-	public static fields = ['firstName', 'lastName', 'email', 'userType', 'mobileNumber', 'countyCode', 'permissionGroup', 'employeeId'];
+	@IsOptional()
+	public reportTo: string;
+
+	@IsString()
+	@IsOptional()
+	public role: string;
+
+	@IsOptional()
+	@IsDateString()
+	public joiningDate: Date;
+
+	public static fields = [
+		'firstName',
+		'lastName',
+		'email',
+		'userType',
+		'mobileNumber',
+		'countyCode',
+		'permissionGroup',
+		'employeeId',
+		'reportToId',
+		'role',
+		'joiningDate',
+	];
 }
 
 export class ImportUserDto {
