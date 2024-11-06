@@ -7,6 +7,7 @@ export class AssessmentResult extends AppDBModel {
 	public id: number;
 	public userId: number;
 	public assessmentId: number;
+	public contentId: number;
 	public totalScore: number;
 	public resultType: ResultType;
 	public startTime: Date;
@@ -38,6 +39,14 @@ export default function (sequelize: Sequelize): typeof AssessmentResult {
 				allowNull: true,
 				references: {
 					model: 'assessmentMaster',
+					key: 'id',
+				},
+			},
+			contentId: {
+				type: DataTypes.INTEGER,
+				allowNull: true,
+				references: {
+					model: 'contents',
 					key: 'id',
 				},
 			},

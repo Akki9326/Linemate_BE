@@ -8,7 +8,8 @@ CREATE TABLE "assessmentResult" (
     "isDeleted" BOOLEAN NOT NULL DEFAULT false,
     "userId" INTEGER NOT NULL,  
     "assessmentId" INTEGER NOT NULL, 
-    "totalScore" INTEGER  NULL, 
+    "contentId" INTEGER NOT NULL, 
+    "totalScore" INTEGER NULL, 
     "resultType" VARCHAR(10) NULL CHECK ("resultType" IN ('Pass', 'Fail')),
     "startTime" TIMESTAMP NOT NULL,
     "endTime" TIMESTAMP NULL,
@@ -16,7 +17,8 @@ CREATE TABLE "assessmentResult" (
     "wrongAnswerCount" INTEGER NULL,
     "unAttemptQuestionCount" INTEGER NULL,
     CONSTRAINT fk_userId FOREIGN KEY ("userId") REFERENCES "users"(id) ON DELETE CASCADE,
-    CONSTRAINT fk_assessmentId FOREIGN KEY ("assessmentId") REFERENCES "assessmentMaster"(id) ON DELETE CASCADE
+    CONSTRAINT fk_assessmentId FOREIGN KEY ("assessmentId") REFERENCES "assessmentMaster"(id) ON DELETE CASCADE,
+    CONSTRAINT fk_contentId FOREIGN KEY ("contentId") REFERENCES "contents"(id) ON DELETE CASCADE
 );
 
 CREATE TABLE "assessmentAnswerMatrix" (

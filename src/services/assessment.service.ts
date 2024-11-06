@@ -175,8 +175,7 @@ class AssessmentServices {
 
 		content.isPublish = true;
 		assessment.totalQuestion = totalQuestion;
-		assessment.score = score;
-		console.log('assessment', assessment);
+		assessment.score = assessment?.scoring === ScoringType.MaxScore ? assessment.score : score;
 		assessment.save();
 		content.save();
 	}
@@ -250,6 +249,7 @@ class AssessmentServices {
 			const assessmentResult = new this.assessmentResult();
 			assessmentResult.userId = userId;
 			assessmentResult.assessmentId = contentDetails.assessmentId;
+			assessmentResult.contentId = contentDetails.id;
 			assessmentResult.startTime = new Date();
 			assessmentResult.endTime = endTime ? new Date(endTime) : null;
 			assessmentResult.totalScore = 0;
@@ -273,8 +273,7 @@ class AssessmentServices {
 		return assessmentDetails?.assessment;
 	}
 	public async setAnswer(contentId: number, answerRequest: AnswerRequest, userId: number) {
-		const contentDetails = await this.content.findOne({ where: { id: contentId, isDeleted: false } });
-		const assessmentResult = await this.assessmentResult.findOne({ where: { userId, assessmentId: contentDetails.assessmentId } });
+		const assessmentResult = await this.assessmentResult.findOne({ where: { userId, contentId: contentId } });
 		if (!assessmentResult) {
 			throw new BadRequestException(assessmentMessage.assessmentNotStarted);
 		}
@@ -294,12 +293,9 @@ class AssessmentServices {
 			const findQuestionDetails = await this.assessmentQuestionMatrix.findOne({
 				where: {
 					id: answerRequest.questionId,
-					assessmentId: contentDetails.assessmentId,
+					assessmentId: assessmentResult.assessmentId,
 				},
 			});
-			console.log('findQuestionDetails', findQuestionDetails);
-			console.log('answerRequest.userAnswerIds', answerRequest.userAnswerIds);
-			console.log('contentDetails.assessmentId', contentDetails.assessmentId);
 			if (!findQuestionDetails) {
 				throw new BadRequestException(assessmentMessage.questionNotFoundInAssessment);
 			}
@@ -329,26 +325,20 @@ class AssessmentServices {
 		}
 	}
 	public async getResult(contentId: number, userId: number) {
-		const contentDetails = await this.content.findOne({
-			where: { id: contentId, isDeleted: false },
-		});
-		if (!contentDetails) {
-			throw new BadRequestException(assessmentMessage.assessmentNotFound);
-		}
-		const assessmentDetail = await this.assessmentMaster.findOne({
-			where: { id: contentDetails.assessmentId, isDeleted: false },
-		});
-		if (!assessmentDetail) {
-			throw new BadRequestException(assessmentMessage.assessmentNotFound);
-		}
 		const assessmentResult = await this.assessmentResult.findOne({
-			where: { userId, assessmentId: contentDetails.assessmentId },
+			where: { userId, contentId: contentId },
 		});
 		if (!assessmentResult) {
 			throw new BadRequestException(assessmentMessage.assessmentNotStarted);
 		}
+		const assessmentDetail = await this.assessmentMaster.findOne({
+			where: { id: assessmentResult.assessmentId, isDeleted: false },
+		});
+		if (!assessmentDetail) {
+			throw new BadRequestException(assessmentMessage.assessmentNotFound);
+		}
 		const questions = await this.assessmentQuestionMatrix.findAll({
-			where: { assessmentId: contentDetails.assessmentId, isDeleted: false },
+			where: { assessmentId: assessmentDetail.id, isDeleted: false },
 		});
 
 		const userAnswers = await this.assessmentAnswerMatrix.findAll({
@@ -372,7 +362,11 @@ class AssessmentServices {
 			} else {
 				isCorrect = await this.isCorrectAnswer(question, userAnswer);
 				if (isCorrect) {
-					totalScore += question?.score;
+					if (assessmentDetail?.scoring === ScoringType.MaxScore) {
+						totalScore += assessmentDetail?.score / questions?.length;
+					} else {
+						totalScore += question?.score;
+					}
 					correctAnswerCount++;
 				} else {
 					wrongAnswerCount++;
@@ -387,13 +381,15 @@ class AssessmentServices {
 				isCorrect,
 			});
 		}
-		const percentageScore = (totalScore / totalQuestions) * 100;
+		const percentageScore = (totalScore / assessmentDetail?.score) * 100;
+		console.log('totalScore', totalScore);
+		console.log('totalQuestions', totalQuestions);
 
 		let isPass = false;
 		if (assessmentDetail?.scoring === ScoringType.PerQuestion) {
 			isPass = percentageScore >= assessmentDetail.pass;
 		} else if (assessmentDetail?.scoring === ScoringType.MaxScore) {
-			isPass = totalScore >= assessmentDetail.pass;
+			isPass = percentageScore >= assessmentDetail.pass;
 		} else if (assessmentDetail?.scoring === ScoringType.NoScore) {
 			isPass = null;
 		}
@@ -416,7 +412,8 @@ class AssessmentServices {
 			wrongAnswerCount,
 			unAttemptQuestionCount,
 			resultType,
-			questions: questionResults, // Include detailed question results in the response
+			percentageScore: assessmentDetail?.scoring === ScoringType.NoScore ? 0 : parseFloat(percentageScore.toFixed(2)),
+			questions: questionResults,
 		};
 	}
 
