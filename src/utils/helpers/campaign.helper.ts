@@ -1,4 +1,4 @@
-import { FYNO_AUTH_TOKEN, FYNO_BASE_URL, FYNO_WHATSAPP_WORKSPACE_ID } from '@/config';
+import { FYNO_AUTH_TOKEN, FYNO_BASE_URL } from '@/config';
 import axios from 'axios';
 import FormData from 'form-data';
 import xlsx from 'xlsx';
@@ -8,7 +8,7 @@ import { BadRequestException } from '@/exceptions/BadRequestException';
 
 // Helper to generate Csv having users data
 
-export const generateCsvFile = async campaigns => {
+export const generateCsvFile = async (workspaceId, campaigns) => {
 	const csvContent = [];
 	csvContent.push(['distinct_id', 'whatsapp']);
 
@@ -45,14 +45,14 @@ export const generateCsvFile = async campaigns => {
 		contentType: 'text/csv',
 	});
 	form.append('validate_channels', 'true');
-	return await uploadCsvOfFynoCampaign(form);
+	return await uploadCsvOfFynoCampaign(workspaceId, form);
 };
 
-const uploadCsvOfFynoCampaign = async form => {
+const uploadCsvOfFynoCampaign = async (workspaceId, form) => {
 	// eslint-disable-next-line no-useless-catch
 	try {
 		// Call the Fyno API
-		const response = await axios.post(`${FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/uploads`, form, {
+		const response = await axios.post(`${FYNO_BASE_URL}/${workspaceId}/uploads`, form, {
 			headers: {
 				...form.getHeaders(),
 				Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
@@ -63,18 +63,21 @@ const uploadCsvOfFynoCampaign = async form => {
 		if (axios.isAxiosError(error)) {
 			logger.error('Error response data:', error.response?.data);
 			logger.error('Error status code:', error.response?.status);
+
+			throw error.response.data;
 		} else {
 			logger.error('Error:', error.message);
+			throw error;
 		}
-		throw error.response.data;
+
 	}
 };
 
-export const createCampaignOnFyno = async (uploadId: string, campaignName: string) => {
+export const createCampaignOnFyno = async (workspaceId: string, uploadId: string, campaignName: string) => {
 	// eslint-disable-next-line no-useless-catch
 	try {
 		const response = await axios.post(
-			`${FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/uploads/${uploadId}`,
+			`${FYNO_BASE_URL}/${workspaceId}/uploads/${uploadId}`,
 			{
 				uploadname: campaignName,
 			},
@@ -97,9 +100,9 @@ export const createCampaignOnFyno = async (uploadId: string, campaignName: strin
 	}
 };
 
-export const removeCampaign = async (fynoCampaignId: string) => {
+export const removeCampaign = async (workspaceId: string, fynoCampaignId: string) => {
 	try {
-		const responst = await axios.delete(`${FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/uploads/${fynoCampaignId}`, {
+		const responst = await axios.delete(`${FYNO_BASE_URL}/${workspaceId}/uploads/${fynoCampaignId}`, {
 			headers: {
 				Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
 			},
@@ -116,10 +119,10 @@ export const removeCampaign = async (fynoCampaignId: string) => {
 	}
 };
 
-export const renameFyonCampaign = async (fynoCampaignId: string, campaignName: string) => {
+export const renameFyonCampaign = async (workspaceId: string, fynoCampaignId: string, campaignName: string) => {
 	try {
 		const response = await axios.put(
-			`${FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/uploads/${fynoCampaignId}`,
+			`${FYNO_BASE_URL}/${workspaceId}/uploads/${fynoCampaignId}`,
 			{
 				uploadname: campaignName,
 			},
@@ -142,9 +145,9 @@ export const renameFyonCampaign = async (fynoCampaignId: string, campaignName: s
 	}
 };
 
-export const fireCampaign = async (fynoCampaignId: string) => {
+export const fireCampaign = async (workspaceId: string, fynoCampaignId: string) => {
 	try {
-		const response = await axios.post(`${FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/uploads/fireevent/${fynoCampaignId}`, null, {
+		const response = await axios.post(`${FYNO_BASE_URL}/${workspaceId}/uploads/fireevent/${fynoCampaignId}`, null, {
 			headers: {
 				Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
 			},
@@ -162,9 +165,9 @@ export const fireCampaign = async (fynoCampaignId: string) => {
 	}
 };
 
-export const getNotificationForCampaign = async (templateName: string) => {
+export const getNotificationForCampaign = async (workspaceId: string, templateName: string) => {
 	try {
-		const getNotifictionDetails = await axios.get(`${FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/notification/${templateName}`, {
+		const getNotifictionDetails = await axios.get(`${FYNO_BASE_URL}/${workspaceId}/notification/${templateName}`, {
 			headers: {
 				Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
 			},
@@ -198,9 +201,9 @@ export const getNotificationForCampaign = async (templateName: string) => {
 	}
 };
 
-export const updateTemplateOnCampaign = async (fynoCampaignId: string, payload: object) => {
+export const updateTemplateOnCampaign = async (workspaceId: string, fynoCampaignId: string, payload: object) => {
 	try {
-		const mapNotificationDetails = await axios.put(`${FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/uploads/${fynoCampaignId}`, payload, {
+		const mapNotificationDetails = await axios.put(`${FYNO_BASE_URL}/${workspaceId}/uploads/${fynoCampaignId}`, payload, {
 			headers: {
 				Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
 				'Content-Type': 'application/json',
@@ -218,10 +221,10 @@ export const updateTemplateOnCampaign = async (fynoCampaignId: string, payload: 
 	}
 };
 
-export const getCampaignPreview = async (fynoCamapignId: string) => {
+export const getCampaignPreview = async (workspaceId: string, fynoCamapignId: string) => {
 	try {
 		// View Campaign Preview
-		const response = await axios.get(`${FYNO_BASE_URL}/${FYNO_WHATSAPP_WORKSPACE_ID}/uploads/preview/${fynoCamapignId}`, {
+		const response = await axios.get(`${FYNO_BASE_URL}/${workspaceId}/uploads/preview/${fynoCamapignId}`, {
 			headers: {
 				Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
 			},
@@ -243,10 +246,10 @@ export const getCampaignPreview = async (fynoCamapignId: string) => {
 	}
 };
 
-export const fynoCampaignOverview = async (previewData: { upload_name: string; event_id: string; version: string }) => {
+export const fynoCampaignOverview = async (workspaceId: string, previewData: { upload_name: string; event_id: string; version: string }) => {
 	try {
 		const response = await axios.get(
-			`${FYNO_BASE_URL}/v3/${FYNO_WHATSAPP_WORKSPACE_ID}/event-analytics/channel_engagement?campaign_name=${previewData.upload_name}&event_id=${previewData.event_id}&version=${previewData.version}`,
+			`${FYNO_BASE_URL}/v3/${workspaceId}/event-analytics/channel_engagement?campaign_name=${previewData.upload_name}&event_id=${previewData.event_id}&version=${previewData.version}`,
 			{
 				headers: {
 					Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,

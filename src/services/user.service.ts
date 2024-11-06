@@ -45,7 +45,7 @@ class UserService {
 	private cohortService = new CohortService();
 	private excelService = new ExcelService();
 
-	constructor() { }
+	constructor() {}
 	public async sendAccountActivationEmail(userData, temporaryPassword: string, createdUser: JwtTokenData) {
 		await Promise.all(
 			userData.tenantIds.map(async tenantId => {
@@ -674,7 +674,8 @@ class UserService {
 		const validSortFields = Object.keys(UserModel.rawAttributes);
 		const orderByField = validSortFields.includes(pageModel.sortField) ? pageModel.sortField : 'id';
 		const sortDirection = Object.values(SortOrder).includes(pageModel.sortOrder as SortOrder) ? pageModel.sortOrder : SortOrder.ASC;
-		let condition = {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		let condition: any = {
 			isDeleted: false,
 			isActive: true,
 		};
@@ -687,6 +688,19 @@ class UserService {
 					...(await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter)),
 				};
 			}
+		}
+
+		if (pageModel.search) {
+			condition = {
+				...condition,
+				[Op.or]: [
+					{ firstName: { [Op.iLike]: `%${pageModel.search}%` } },
+					{ lastName: { [Op.iLike]: `%${pageModel.search}%` } },
+					{ email: { [Op.iLike]: `%${pageModel.search}%` } },
+					{ mobileNumber: { [Op.iLike]: `%${pageModel.search}%` } },
+					{ employeeId: { [Op.iLike]: `%${pageModel.search}%` } },
+				],
+			};
 		}
 		if (tenantId) {
 			condition['tenantIds'] = {
@@ -741,30 +755,6 @@ class UserService {
 			searchArray = userRows;
 		}
 
-		if (pageModel?.search && pageModel.search.trim() !== '') {
-			const regex = new RegExp(pageModel?.search, 'i');
-			const filteredRows = searchArray.filter(row => {
-				const firstNameMatches = regex.test(row.firstName);
-				const lastNameMatches = regex.test(row.lastName);
-				const emailMatches = regex.test(row.email);
-				const mobileNoMatches = regex.test(row.mobileNumber);
-				const employeeIdMatches = row.employeeId ? regex.test(row.employeeId) : false;
-				const tenantNameMatches =
-					row.tenantDetails && row.tenantDetails.length > 0
-						? row.tenantDetails.some(tenant => tenant && tenant.name && regex.test(tenant.name))
-						: false;
-
-				// Return true if any of the fields match
-				return firstNameMatches || lastNameMatches || emailMatches || mobileNoMatches || employeeIdMatches || tenantNameMatches;
-			});
-
-			if (filteredRows && filteredRows.length) {
-				return {
-					count: totalUsersCount,
-					rows: filteredRows,
-				};
-			}
-		}
 		return {
 			count: totalUsersCount,
 			rows: searchArray,

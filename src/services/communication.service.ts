@@ -181,6 +181,15 @@ export class CommunicationService {
 		}
 		return workSpace;
 	}
+
+	public async getWorkspaceId(tenantId: number) {
+		const workSpace = await this.workSpaceModel.findOne({ where: { tenantId: tenantId, isDeleted: false } });
+		if (!workSpace) {
+			throw new BadRequestException(CommunicationMessage.workSpaceNotFound);
+		}
+		return workSpace.fynoWorkSpaceId;
+	}
+
 	public async getCommunicationDetails(tenantId: number, attributes: string[], workSpace: WorkSpaceModel, channel: Channel) {
 		const communication = await this.communication.findOne({
 			where: {
