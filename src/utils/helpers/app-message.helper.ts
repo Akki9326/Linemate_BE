@@ -45,6 +45,7 @@ export const TenantMessage = {
 	companyNameIsAlreadyExists: 'Company name is already exists in our system',
 	tenantNameLength: 'Company name length should be greater than 25',
 	workSpaceNotFound: 'Work space not found in this tenant',
+	requiredChannel: 'channel is required',
 };
 export const VariableMessage = {
 	variableNotFound: 'variable not found',

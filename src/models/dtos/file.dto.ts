@@ -1,6 +1,7 @@
 import { IsBase64, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { FileType } from '../enums/file-type.enums';
 import { UploadFileMediaType } from '../enums/template.enum';
+import { Channel } from '../enums/campaign.enums';
 
 export class FileDto {
 	@IsString()
@@ -35,4 +36,8 @@ export class FileMediaType {
 	@IsOptional()
 	@IsString()
 	public tenantId: number;
+
+	@IsOptional()
+	@IsEnum(Channel)
+	public channel: Channel;
 }
