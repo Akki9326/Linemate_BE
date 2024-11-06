@@ -293,6 +293,10 @@ export class TemplateDto {
 	@IsOptional()
 	public buttonIds: number[];
 
+	@IsNumber()
+	@IsOptional()
+	public contentId: number;
+
 	@IsArray()
 	@ValidateNested({ each: true })
 	@Type(() => TemplateButtonDto)
