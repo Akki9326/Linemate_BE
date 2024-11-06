@@ -61,11 +61,10 @@ export class EmailSubjects {
 	static async accountActivationSubject(companyName: string) {
 		return `Welcome to ${companyName}`;
 	}
-	static async mobileLoginEmailSubject(companyName: string) {
-		return `Welcome to ${companyName}`;
-	}
+
 	static async chiefAdminAccountActivationSubject() {
 		return `Welcome to Linemate`;
 	}
+	static mobileLoginEmailSubject = `Welcome to Linemate`;
 	static resetPasswordEmailSubject = `Reset Your Linemate Account Password`;
 }
