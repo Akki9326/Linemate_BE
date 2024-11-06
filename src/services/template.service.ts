@@ -903,19 +903,28 @@ export class TemplateService {
 		if (!requestBody?.tenantId) {
 			throw new BadRequestException(TenantMessage.requiredTenantId);
 		}
+		if (!requestBody?.channel) {
+			throw new BadRequestException(TenantMessage.requiredChannel);
+		}
 		const dir = `tenant/${requestBody?.tenantId}/templates/${file.name}`;
 
 		const imageUrl = await this.s3Service.uploadS3(file.data, dir, file.mimetype);
 		const s3Response: { imageUrl: string; id?: number } = {
 			imageUrl,
 		};
-		const communication = await this.communicationService.findIntegrationDetails(requestBody?.tenantId, Channel.whatsapp);
-		if (communication) {
-			const response = await TemplateGenerator.uploadFynoFile(file, communication);
+		if (requestBody?.channel === Channel.whatsapp) {
+			const communication = await this.communicationService.findIntegrationDetails(requestBody?.tenantId, Channel.whatsapp);
+			if (communication) {
+				const response = await TemplateGenerator.uploadFynoFile(file, communication);
+				return {
+					handler: response?.meta_handler,
+					file: s3Response?.imageUrl,
+					sample: response?.file.split('uploads/')[1] || '',
+				};
+			}
+		} else {
 			return {
-				handler: response?.meta_handler,
 				file: s3Response?.imageUrl,
-				sample: response?.file.split('uploads/')[1] || '',
 			};
 		}
 	}
