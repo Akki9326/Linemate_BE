@@ -76,6 +76,10 @@ export const assessmentMessage = {
 	questionNotFound: 'question not found',
 	optiopnIsMissing: 'option is missing',
 	passIsMissing: 'pass is required',
+	assessmentNotAssigning: 'assessment not assigning.',
+	assessmentTimeOver: 'assessment time over.',
+	assessmentNotStarted: 'assessment not started.',
+	questionNotFoundInAssessment: 'question not found in this assessment.',
 };
 
 export const CohortMessage = {

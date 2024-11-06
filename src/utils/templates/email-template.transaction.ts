@@ -35,6 +35,18 @@ export class EmailTemplates extends EmailTemplateBase {
 `;
 		return this.template(email);
 	}
+	static mobileLoginOTPEmail(userName: string, emailAddress: string, otp: string) {
+		const email = `
+        <p>Dear ${userName},</p>
+        <p>We have received a request to log in to your account using an OTP. Your account details are as follows:</p>
+        <p><strong>Username:</strong> ${emailAddress}</p>
+        <p>Please use the following OTP to log in:</p>
+        <strong>${otp}</strong></p>
+        <p>This OTP is valid for a limited time. If you did not request this login, please ignore this email or contact our support team if you have any questions or concerns.</p>
+        <p>Thank you,<br>Team</p>
+    `;
+		return email;
+	}
 	static errorReportEmail(firstName: string, lastName: string) {
 		const email = `
     <p>Dear ${firstName},<br><br>${lastName} has generated an error report for the recent process conducted at. 
@@ -47,6 +59,9 @@ export class EmailTemplates extends EmailTemplateBase {
 
 export class EmailSubjects {
 	static async accountActivationSubject(companyName: string) {
+		return `Welcome to ${companyName}`;
+	}
+	static async mobileLoginEmailSubject(companyName: string) {
 		return `Welcome to ${companyName}`;
 	}
 	static async chiefAdminAccountActivationSubject() {

@@ -1,8 +1,14 @@
+import AssessmentAnswerMatrix from '@/models/db/assessmentAnswerMatrix';
 import AssessmentMasterModel from '@/models/db/assessmentMaster';
 import AssessmentOptionModel from '@/models/db/assessmentOption';
 import AssessmentQuestionMatrix from '@/models/db/assessmentQuestionMatrix';
+import AssessmentResult from '@/models/db/assessmentResult';
+import CampaignMaster from '@/models/db/campaignMastel';
+import CampaignMatrix from '@/models/db/campaignMatrix';
+import CampaignUserMatrixModel from '@/models/db/campaignUserMatrix.model';
 import CohortMasterModel from '@/models/db/cohortMaster.model';
 import CohortMatrixModel from '@/models/db/cohortMatrix.model';
+import CommunicationModel from '@/models/db/communication.mode';
 import ContentModel from '@/models/db/content.model';
 import CountryModel from '@/models/db/country.model';
 import languagesModel from '@/models/db/languages.model';
@@ -17,17 +23,13 @@ import TemplateContentCardsModel from '@/models/db/templateContentCard.model';
 import TenantModel from '@/models/db/tenant.model';
 import UploadedFileModel from '@/models/db/uploadedFile.model';
 import UserPasswordModel from '@/models/db/userPassword.model';
+import UserModel from '@/models/db/users.model';
 import UserTokenModel from '@/models/db/userToken.model';
 import UserVariableMasterModel from '@/models/db/userVariableMaster';
 import UserVariableMatrixModel from '@/models/db/userVariableMatrix';
-import CampaignMaster from '@/models/db/campaignMastel';
-import CampaignMatrix from '@/models/db/campaignMatrix';
-import UserModel from '@/models/db/users.model';
-import CampaignUserMatrixModel from '@/models/db/campaignUserMatrix.model';
+import WorkSpaceModel from '@/models/db/workSpace.model';
 import { DB_DATABASE, DB_HOST, DB_PASSWORD, DB_PORT, DB_USER } from '@config';
 import Sequelize from 'sequelize';
-import CommunicationModel from '@/models/db/communication.mode';
-import WorkSpaceModel from '@/models/db/workSpace.model';
 
 export const sequelizeConnect = new Sequelize.Sequelize(DB_DATABASE, DB_USER, DB_PASSWORD, {
 	dialect: 'postgres',
@@ -70,6 +72,8 @@ const DB = {
 	AssessmentMaster: AssessmentMasterModel(sequelizeConnect),
 	AssessmentQuestionMatrix: AssessmentQuestionMatrix(sequelizeConnect),
 	AssessmentOption: AssessmentOptionModel(sequelizeConnect),
+	AssessmentResult: AssessmentResult(sequelizeConnect),
+	AssessmentAnswerMatrix: AssessmentAnswerMatrix(sequelizeConnect),
 	SkillMatrix: SkillMatrixModel(sequelizeConnect),
 	CohortMaster: CohortMasterModel(sequelizeConnect),
 	CohortMatrix: CohortMatrixModel(sequelizeConnect),

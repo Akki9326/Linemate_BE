@@ -1,5 +1,5 @@
 import { FileDto, FileTypeDto } from '@/models/dtos/file.dto';
-import { ForgotPasswordDto, LoginOTPDto, ResetPasswordDto } from '@/models/dtos/login.dto';
+import { ForgotPasswordDto, LoginOTPDto, MobileLoginUserName, ResetPasswordDto } from '@/models/dtos/login.dto';
 import { RequestWitFile } from '@/models/interfaces/auth.interface';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { User } from '@/models/interfaces/users.interface';
@@ -32,6 +32,16 @@ class AuthController {
 			next(ex);
 		}
 	};
+	public mobileLogin = async (req: Request, res: Response, next: NextFunction) => {
+		try {
+			const mobileLoginOTPDto: MobileLoginUserName = req.body;
+			const tokenInfo = await this.authService.mobileLoginUser(mobileLoginOTPDto);
+
+			AppResponseHelper.sendSuccess(res, 'Success', tokenInfo);
+		} catch (ex) {
+			next(ex);
+		}
+	};
 	public forgotPassword = async (req: Request, res: Response, next: NextFunction) => {
 		try {
 			const forgotPasswordDto: ForgotPasswordDto = req.body;
@@ -46,6 +56,15 @@ class AuthController {
 		try {
 			const { otp } = req.body;
 			const tokenInfo = await this.authService.verifyOtp(otp);
+			AppResponseHelper.sendSuccess(res, 'Success', tokenInfo);
+		} catch (ex) {
+			next(ex);
+		}
+	};
+	public verifyMobileOTP = async (req: Request, res: Response, next: NextFunction) => {
+		try {
+			const otpRequest = req.body;
+			const tokenInfo = await this.authService.verifyMobileOTP(otpRequest);
 			AppResponseHelper.sendSuccess(res, 'Success', tokenInfo);
 		} catch (ex) {
 			next(ex);

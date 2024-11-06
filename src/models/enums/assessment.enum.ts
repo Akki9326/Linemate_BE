@@ -14,3 +14,8 @@ export enum timeType {
 	Timed = 'timed',
 	Untimed = 'untimed',
 }
+
+export enum ResultType {
+	Pass = 'Pass',
+	Fail = 'Fail',
+}

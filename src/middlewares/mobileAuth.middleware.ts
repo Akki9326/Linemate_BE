@@ -2,16 +2,16 @@ import { HttpStatusCode } from '@/models/enums/http-status-code.enum';
 import { RequestWithUser } from '@/models/interfaces/auth.interface';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { UserCaching } from '@/utils/helpers/caching-user.helper';
-import { SECRET_KEY } from '@config';
+import { MOBILE_SECRET_KEY } from '@config';
 import { HttpException } from '@exceptions/HttpException';
 import { NextFunction, Response } from 'express';
 import { verify } from 'jsonwebtoken';
 
-const authMiddleware = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+const mobileAuthMiddleware = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 	try {
 		const Authorization = req.header('Authorization') ? req.header('Authorization').split('Bearer ')[1] : null;
 		if (Authorization) {
-			const secretKey: string = SECRET_KEY;
+			const secretKey: string = MOBILE_SECRET_KEY;
 			const verificationResponse = verify(Authorization, secretKey) as JwtTokenData;
 
 			const isValidSession = await UserCaching.isValidSession(
@@ -35,4 +35,4 @@ const authMiddleware = async (req: RequestWithUser, res: Response, next: NextFun
 	}
 };
 
-export default authMiddleware;
+export default mobileAuthMiddleware;
