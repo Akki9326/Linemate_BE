@@ -41,7 +41,7 @@ export default function (sequelize: Sequelize): typeof UserVariableMatrixModel {
 					if (Array.isArray(value)) {
 						this.setDataValue('value', JSON.stringify(value));
 					} else {
-						this.setDataValue('value', value);
+						this.setDataValue('value', value || '');
 					}
 				},
 			},

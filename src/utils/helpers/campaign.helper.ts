@@ -64,7 +64,7 @@ const uploadCsvOfFynoCampaign = async (workspaceId, form) => {
 			logger.error('Error response data:', error.response?.data);
 			logger.error('Error status code:', error.response?.status);
 
-			throw error.response.data;
+			throw error.response?.data;
 		} else {
 			logger.error('Error:', error.message);
 			throw error;
