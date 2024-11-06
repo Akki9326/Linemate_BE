@@ -45,7 +45,7 @@ class UserService {
 	private cohortService = new CohortService();
 	private excelService = new ExcelService();
 
-	constructor() {}
+	constructor() { }
 	public async sendAccountActivationEmail(userData, temporaryPassword: string, createdUser: JwtTokenData) {
 		await Promise.all(
 			userData.tenantIds.map(async tenantId => {
@@ -569,15 +569,15 @@ class UserService {
 	}
 	private async getUserIdsFromVariableMatrix(filterCriteria: { variableId: number; value: string }[]) {
 		const whereConditions = filterCriteria.map(criteria => {
-			const jsonStringValue = JSON.stringify([criteria.value]);
+
 			return {
 				variableId: criteria.variableId,
-				[Op.or]: [{ value: { [Op.like]: `%${criteria.value}%` } }, { value: { [Op.like]: `%${jsonStringValue}%` } }],
+				[Op.or]: [{ value: { [Op.like]: `%"${criteria.value}"%` } }, { value: criteria.value }],
 			};
 		});
 
 		const havingClause = filterCriteria.map(criteria =>
-			Sequelize.literal(`COUNT(DISTINCT CASE WHEN "variableId" = ${criteria.variableId} AND "value" = '${criteria.value}' THEN 1 END) > 0`),
+			Sequelize.literal(`COUNT(DISTINCT CASE WHEN "variableId" = ${criteria.variableId} THEN 1 END) > 0`),
 		);
 
 		const matchingRecords = await this.variableMatrix.findAll({
