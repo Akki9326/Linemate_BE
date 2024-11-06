@@ -688,7 +688,7 @@ export const TemplateGenerator = {
 		if (templateDetails?.buttons?.length) {
 			content.viber.content.button = {
 				title: templateDetails.buttons[0].title,
-				action: templateDetails.buttons[0].flowAction,
+				action: templateDetails.buttons[0].navigateScreen,
 			};
 		}
 

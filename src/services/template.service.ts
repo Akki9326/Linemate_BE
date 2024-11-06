@@ -20,6 +20,7 @@ import { parseISO } from 'date-fns';
 import { BelongsTo, Op, Sequelize, Transaction, WhereOptions } from 'sequelize';
 import { CommunicationResponse } from './../models/interfaces/communication.interface';
 import { CommunicationService } from './communication.service';
+import { ContentService } from './content.service';
 
 export class TemplateService {
 	public users = DB.Users;
@@ -28,6 +29,7 @@ export class TemplateService {
 	public templateContent = DB.TemplateContent;
 	public templateContentCards = DB.TemplateContentCards;
 	public templateContentButtons = DB.TemplateContentButtons;
+	public contentsServices = new ContentService();
 	public s3Service = new S3Services();
 	public communicationService = new CommunicationService();
 	private sequelize: Sequelize;
@@ -38,6 +40,12 @@ export class TemplateService {
 	public async add(templateDetails: TemplateDto, userId: number) {
 		const transaction = await this.sequelize.transaction();
 		try {
+			if (templateDetails?.contentId) {
+				const content = await this.contentsServices.one(templateDetails?.contentId);
+				if (content) {
+					templateDetails.headerMediaUrl = content.uploadedFiles[0];
+				}
+			}
 			const template = await this.createOrUpdateTemplate(templateDetails, userId, transaction);
 			const templateContent = await this.createOrUpdateTemplateContent(templateDetails, template.id, userId, transaction);
 			await this.addOrUpdatedButtonsToTemplateContent(templateDetails, templateContent.id, userId, transaction);
@@ -58,13 +66,22 @@ export class TemplateService {
 	public async update(templateDetails: TemplateDto, templateId: number, userId: number) {
 		const transaction = await this.sequelize.transaction();
 		try {
+			if (templateDetails?.contentId) {
+				const content = await this.contentsServices.one(templateDetails?.contentId);
+				if (content) {
+					templateDetails.headerMediaUrl = content.uploadedFiles[0];
+				}
+			}
 			templateDetails.id = templateId;
 			const template = await this.createOrUpdateTemplate(templateDetails, userId, transaction);
 			const templateContent = await this.createOrUpdateTemplateContent(templateDetails, template.id, userId, transaction);
 			await this.addOrUpdatedButtonsToTemplateContent(templateDetails, templateContent.id, userId, transaction);
-			await this.addOrUpdateContentCards(templateDetails, templateContent.id, userId, transaction);
-			await this.generateTemplate(templateDetails, template, transaction);
-
+			if (templateDetails?.channel === Channel.whatsapp) {
+				await this.addOrUpdateContentCards(templateDetails, templateContent.id, userId, transaction);
+				await this.generateTemplate(templateDetails, template, transaction);
+			} else if (templateDetails?.channel === Channel.viber) {
+				await this.generateViber(templateDetails, template, userId, transaction);
+			}
 			await transaction.commit();
 			return { id: template.id };
 		} catch (error) {
@@ -141,7 +158,12 @@ export class TemplateService {
 		const communication = await this.communicationService.findIntegrationDetails(templateDetails.tenantId, Channel.viber);
 		if (communication) {
 			payload = TemplateGenerator.viberPayload(templateDetails, template?.providerTemplateId, communication);
-			const response = await TemplateGenerator.createFynoTemplate(payload, communication);
+			let response;
+			if (templateDetails.id) {
+				response = await TemplateGenerator.updateFynoTemplate(payload, template.name, communication);
+			} else {
+				response = await TemplateGenerator.createFynoTemplate(payload, communication);
+			}
 			template.providerTemplateId = response?.template?.template_id;
 			template.status = TemplateStatus.APPROVED;
 			await template.save({ transaction });
@@ -223,6 +245,7 @@ export class TemplateService {
 			thumbnailUrl: templateDetails.thumbnailUrl,
 			mediaDuration: templateDetails.mediaDuration,
 			templateId: templateId,
+			contentId: templateDetails.contentId,
 		});
 
 		await templateContent.save({ transaction });
@@ -552,6 +575,7 @@ export class TemplateService {
 						'locationName',
 						'thumbnailUrl',
 						'mediaDuration',
+						'contentId',
 					],
 					required: false,
 				},
