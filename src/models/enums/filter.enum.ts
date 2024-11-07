@@ -47,11 +47,6 @@ export const commonFilterConfig = [
 				filterType: FiltersEnum.DropDown,
 			},
 			{
-				filterTitle: 'Experience',
-				filterKey: FilterKey.Experience,
-				filterType: FiltersEnum.NumberRange,
-			},
-			{
 				filterTitle: 'Cohort',
 				filterKey: FilterKey.Cohort,
 				filterType: FiltersEnum.DropDown,
