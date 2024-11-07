@@ -1,0 +1,1 @@
+ALTER TABLE IF EXISTS public.tenant DROP CONSTRAINT IF EXISTS tenant_trademark_key;
