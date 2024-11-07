@@ -1,4 +1,4 @@
-import { IsArray, IsBoolean } from 'class-validator';
+import { IsArray, IsBoolean, IsOptional } from 'class-validator';
 import { ListRequestDto } from './list-request.dto';
 import { FilterResponse } from '../interfaces/filter.interface';
 
@@ -8,5 +8,9 @@ export class CohortFilterDto {
 
 	@IsArray()
 	dynamicFilter: FilterResponse[];
+
+	@IsBoolean()
+	@IsOptional()
+	excludeRuleCohorts: boolean;
 }
-export class CohortListDto extends ListRequestDto<CohortFilterDto> {}
+export class CohortListDto extends ListRequestDto<CohortFilterDto> { }

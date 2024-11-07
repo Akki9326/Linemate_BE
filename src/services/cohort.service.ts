@@ -376,6 +376,15 @@ export class CohortService {
 			};
 		}
 		if (pageModel.filter) {
+			if (pageModel.filter.excludeRuleCohorts) {
+				condition = {
+					...condition,
+					rules: {
+						[Op.is]: null,
+					},
+				};
+			}
+
 			if (pageModel.filter.dynamicFilter && pageModel.filter.dynamicFilter.length) {
 				condition = {
 					...condition,
