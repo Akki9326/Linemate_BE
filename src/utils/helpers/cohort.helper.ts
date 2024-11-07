@@ -2,7 +2,7 @@ import DB from '@/databases';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { CampaignRuleQuery } from '@/models/interfaces/campaignMaster.interface';
 import { CohortRuleQuery } from '@/models/interfaces/cohort.interface';
-import { endOfDay, format, isValid, parseISO, startOfDay } from 'date-fns';
+import { format } from 'date-fns';
 import { Op } from 'sequelize';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
