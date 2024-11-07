@@ -416,6 +416,10 @@ class UserService {
 				},
 			);
 		}
+
+		for (const tenentId of user.tenantIds) {
+			await this.cohortService.applyCohortsToUser(tenentId, [user.id]);
+		}
 		return { id: user.id };
 	}
 	public async one(userId: number, tenantId: number) {
@@ -545,6 +549,10 @@ class UserService {
 		this.updateUserRole(userOldType, userData, user.id);
 		if (userData.userType !== UserType.ChiefAdmin) {
 			this.updateTenantVariables(userData.tenantVariables, user.id);
+		}
+
+		for (const tenentId of user.tenantIds) {
+			await this.cohortService.applyCohortsToUser(tenentId, [user.id]);
 		}
 		return { id: user.id };
 	}
@@ -954,7 +962,7 @@ class UserService {
 			}
 
 			const userArray = await this.removeMatchingRecords(errorArray, userDataInstances);
-			let successCount = 0;
+			const successUserIds = [];
 			if (userArray.length) {
 				for (let i = 0; i < userArray.length; i++) {
 					const user = userArray[i];
@@ -1025,12 +1033,12 @@ class UserService {
 						tenantVariables.push({ tenantId: tenantId, variables: user.tenantVariables });
 						await this.validateTenantVariable(tenantVariables, tenantId);
 						createUser = await this.users.create(user);
-						successCount++;
+						successUserIds.push(createUser.id);
 
 						await this.addTenantVariables(tenantVariables, createUser.id, createdBy.id);
 					} else {
 						createUser = await this.users.create(user);
-						successCount++;
+						successUserIds.push(createUser.id);
 					}
 
 					if (createUser && user.email) {
@@ -1064,9 +1072,10 @@ class UserService {
 				await Email.sendEmail(createdBy.email, errorReportSubject, emailBody, attachments);
 			}
 
+			await this.cohortService.applyCohortsToUser(tenantId, successUserIds);
 			const errorCount = {
 				failureCount: uniqueEmployees?.length || 0,
-				successCount: successCount,
+				successCount: successUserIds.length,
 			};
 			return errorCount;
 		} catch (error) {
