@@ -162,7 +162,7 @@ export class CohortService {
 				cohort.id,
 				{
 					deleteExistingUser: true,
-					userIds: cohortDetails.userIds,
+					userIds: cohortDetails?.userIds,
 				},
 				userId,
 			);
@@ -195,6 +195,8 @@ export class CohortService {
 				},
 				userId,
 			);
+		} else {
+			await this.removeCohortUserMatrix(cohortId, userId);
 		}
 		await cohort.save();
 		return cohort.id;
@@ -248,6 +250,13 @@ export class CohortService {
 			isDeleted: true,
 			updatedBy: userId,
 		});
+
+		await this.removeCohortUserMatrix(cohortId, userId);
+		await cohortMaster.save();
+		return cohortMaster.id;
+	}
+
+	private async removeCohortUserMatrix(cohortId: number, userId: number) {
 		await this.cohortMatrix.update(
 			{
 				isDeleted: true,
@@ -257,9 +266,6 @@ export class CohortService {
 				where: { isDeleted: false, cohortId: cohortId },
 			},
 		);
-
-		await cohortMaster.save();
-		return cohortMaster.id;
 	}
 
 	private async getCohortIdsFromVariableMatrix(filterCriteria: { variableId: number; value: string }[]) {
