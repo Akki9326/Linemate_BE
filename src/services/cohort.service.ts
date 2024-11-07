@@ -22,7 +22,7 @@ export class CohortService {
 	private variableMatrix = DB.VariableMatrix;
 	private variableServices = new VariableServices();
 
-	constructor() {}
+	constructor() { }
 
 	public async getCustomFields(tenantId: number) {
 		try {
@@ -112,7 +112,7 @@ export class CohortService {
 					},
 				);
 			}
-			if (recordsToDelete.length) {
+			if (cohortDetails.deleteExistingUser && recordsToDelete.length) {
 				await this.cohortMatrix.update(
 					{ isDeleted: true, updatedBy: creatorId },
 					{
@@ -146,7 +146,7 @@ export class CohortService {
 			throw new BadRequestException(TenantMessage.tenantNotFound);
 		}
 		if (cohortDetails?.rules?.length && cohortDetails.isExistingRuleProcess) {
-			cohortDetails['userIds'] = (await applyingCohort(cohortDetails?.tenantId, cohortDetails?.rules)) || [];
+			cohortDetails.userIds = (await applyingCohort(cohortDetails?.tenantId, cohortDetails?.rules)) || [];
 		}
 
 		let cohort = new this.cohortMaster();
@@ -158,7 +158,14 @@ export class CohortService {
 		cohort.isExistingRuleProcess = cohortDetails.isExistingRuleProcess;
 		cohort = await cohort.save();
 		if (cohortDetails?.userIds?.length) {
-			await this.assignCohort(cohort.id, cohortDetails, userId);
+			await this.assignCohort(
+				cohort.id,
+				{
+					deleteExistingUser: true,
+					userIds: cohortDetails?.userIds,
+				},
+				userId,
+			);
 		}
 		return { id: cohort.id };
 	}
@@ -180,7 +187,16 @@ export class CohortService {
 		cohort.updatedBy = userId;
 		cohort.isExistingRuleProcess = cohortDetails.isExistingRuleProcess;
 		if (cohortDetails?.userIds?.length) {
-			await this.assignCohort(cohort.id, cohortDetails, userId);
+			await this.assignCohort(
+				cohort.id,
+				{
+					deleteExistingUser: true,
+					userIds: cohortDetails.userIds,
+				},
+				userId,
+			);
+		} else {
+			await this.removeCohortUserMatrix(cohortId, userId);
 		}
 		await cohort.save();
 		return cohort.id;
@@ -234,6 +250,13 @@ export class CohortService {
 			isDeleted: true,
 			updatedBy: userId,
 		});
+
+		await this.removeCohortUserMatrix(cohortId, userId);
+		await cohortMaster.save();
+		return cohortMaster.id;
+	}
+
+	private async removeCohortUserMatrix(cohortId: number, userId: number) {
 		await this.cohortMatrix.update(
 			{
 				isDeleted: true,
@@ -243,9 +266,6 @@ export class CohortService {
 				where: { isDeleted: false, cohortId: cohortId },
 			},
 		);
-
-		await cohortMaster.save();
-		return cohortMaster.id;
 	}
 
 	private async getCohortIdsFromVariableMatrix(filterCriteria: { variableId: number; value: string }[]) {
@@ -340,7 +360,7 @@ export class CohortService {
 	}
 
 	public async all(pageModel: CohortListDto, tenantId: number) {
-		const { page = 1, limit = 10 } = pageModel;
+		const { page = 1, limit = 100 } = pageModel;
 		const validSortFields = Object.keys(CohortMasterModel.rawAttributes).concat(['EnrolledUserCount', 'createdBy']);
 		const sortField = validSortFields.includes(pageModel.sortField) ? pageModel.sortField : 'id';
 		const sortOrder = Object.values(SortOrder).includes(pageModel.sortOrder as SortOrder) ? pageModel.sortOrder : SortOrder.ASC;
@@ -362,6 +382,15 @@ export class CohortService {
 			};
 		}
 		if (pageModel.filter) {
+			if (pageModel.filter.excludeRuleCohorts) {
+				condition = {
+					...condition,
+					rules: {
+						[Op.is]: null,
+					},
+				};
+			}
+
 			if (pageModel.filter.dynamicFilter && pageModel.filter.dynamicFilter.length) {
 				condition = {
 					...condition,
@@ -417,6 +446,7 @@ export class CohortService {
 			assignCohortBody?.cohortIds.map(async cohortId => {
 				const cohortDetails = {
 					userIds: assignCohortBody?.userIds,
+					deleteExistingUser: false,
 				};
 				await this.assignCohort(cohortId, cohortDetails, userId);
 			}),
@@ -477,5 +507,26 @@ export class CohortService {
 			attributes: ['userId'],
 		});
 		return user.map(user => user.userId);
+	}
+
+	public async applyCohortsToUser(tenantId: number, userIds: number[]) {
+		const cohorts = await this.cohortMaster.findAll({
+			where: {
+				tenantId,
+				isDeleted: false,
+				rules: {
+					[Op.ne]: null,
+				},
+			},
+		});
+
+		cohorts.forEach(async (cohort: CohortMasterModel) => {
+			if (cohort?.rules?.length) {
+				const selectedUserIds = await applyingCohort(tenantId, cohort.rules, userIds);
+				if (selectedUserIds?.length) {
+					await this.assignCohort(cohort.id, { userIds: selectedUserIds, deleteExistingUser: false }, cohort.createdBy);
+				}
+			}
+		});
 	}
 }

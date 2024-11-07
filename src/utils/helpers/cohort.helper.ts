@@ -2,7 +2,7 @@ import DB from '@/databases';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { CampaignRuleQuery } from '@/models/interfaces/campaignMaster.interface';
 import { CohortRuleQuery } from '@/models/interfaces/cohort.interface';
-import { endOfDay, isValid, parseISO, startOfDay } from 'date-fns';
+import { endOfDay, format, isValid, parseISO, startOfDay } from 'date-fns';
 import { Op } from 'sequelize';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -27,7 +27,7 @@ const queryCohort = async (cohortValue: number, operator: string) => {
 	return userIds;
 };
 
-async function queryVariableMatrix(tenantId, variableId: number, variableValue: string, operator: string) {
+async function queryVariableMatrix(tenantId, variableId: number, variableValue: string, operator: string, userIds: number[]) {
 	let query = {};
 	switch (operator) {
 		case 'EQUAL':
@@ -39,24 +39,26 @@ async function queryVariableMatrix(tenantId, variableId: number, variableValue: 
 		default:
 			throw new BadRequestException(`Unsupported operator for role: ${operator}`);
 	}
+
+	if (userIds && userIds.length) {
+		query['userId'] = { [Op.in]: userIds };
+	}
+
 	const data = await DB.VariableMatrix.findAll({
 		where: query,
 		attributes: ['userId'],
 	});
-	const userIds = data.map(item => item.userId);
-	return userIds;
+	const selectedUserIds = data.map(item => item.userId);
+	return selectedUserIds;
 }
 
-async function queryUserByDate(tenantId, dateValue: any, operator: string) {
+async function queryUserByDate(tenantId, dateValue: any, operator: string, userIds: number[]) {
 	let query = {};
 
 	const parseDate = (dateStr: string) => {
-		const parsedDate = parseISO(dateStr);
-		if (!isValid(parsedDate)) {
-			throw new BadRequestException(`Invalid date format: ${dateStr}`);
-		}
-		return parsedDate;
+		return format(new Date(dateStr), 'yyyy-MM-dd');
 	};
+
 
 	switch (operator) {
 		case 'LESS_THAN':
@@ -67,13 +69,11 @@ async function queryUserByDate(tenantId, dateValue: any, operator: string) {
 			break;
 		case 'EQUAL':
 			query = {
-				joiningDate: {
-					[Op.between]: [startOfDay(parseDate(dateValue)), endOfDay(parseDate(dateValue))],
-				},
+				joiningDate: parseDate(dateValue),
 			};
 			break;
 		case 'NOTEQUAL':
-			query = { joiningDate: { [Op.notBetween]: [startOfDay(parseDate(dateValue)), endOfDay(parseDate(dateValue))] } };
+			query = { joiningDate: { [Op.not]: parseDate(dateValue) } };
 			break;
 		case 'BETWEEN':
 			if (!dateValue.startDate || !dateValue.endDate) {
@@ -89,6 +89,10 @@ async function queryUserByDate(tenantId, dateValue: any, operator: string) {
 			throw new BadRequestException(`Unsupported operator for createdAt: ${operator}`);
 	}
 
+	if (userIds && userIds.length) {
+		query['id'] = { [Op.in]: userIds };
+	}
+
 	const data = await DB.Users.findAll({
 		where: {
 			...query,
@@ -98,22 +102,22 @@ async function queryUserByDate(tenantId, dateValue: any, operator: string) {
 		},
 		attributes: ['id'],
 	});
-	const userIds = data.map(item => item.id);
-	return userIds;
+	const selectedUserIds = data.map(item => item.id);
+	return selectedUserIds;
 }
 
-async function processAndCondition(tenantId, condition: any) {
+async function processAndCondition(tenantId, condition: any, userIds: number[]) {
 	let results: number[] = [];
 	if (condition.and) {
 		for (const subCondition of condition.and) {
 			// Check if subCondition has an 'or' clause or is a direct condition
 			let subResults;
 			if (subCondition.or) {
-				subResults = await processOrCondition(tenantId, subCondition);
+				subResults = await processOrCondition(tenantId, subCondition, userIds);
 			} else if (subCondition.and) {
-				subResults = await processAndCondition(tenantId, subCondition);
+				subResults = await processAndCondition(tenantId, subCondition, userIds);
 			} else {
-				subResults = await processCondition(tenantId, subCondition);
+				subResults = await processCondition(tenantId, subCondition, userIds);
 			}
 
 			if (results.length === 0) {
@@ -126,23 +130,23 @@ async function processAndCondition(tenantId, condition: any) {
 	return results;
 }
 
-async function processOrCondition(tenantId, condition: any) {
+async function processOrCondition(tenantId, condition: any, userIds: number[]) {
 	const results = new Set<number>();
 	for (const subCondition of condition.or) {
-		let userIds;
+		let selectedUserIds;
 		if (subCondition.or) {
-			userIds = await processOrCondition(tenantId, subCondition);
+			selectedUserIds = await processOrCondition(tenantId, subCondition, userIds);
 		} else if (subCondition.and) {
-			userIds = await processAndCondition(tenantId, subCondition);
+			selectedUserIds = await processAndCondition(tenantId, subCondition, userIds);
 		} else {
-			userIds = await processCondition(tenantId, subCondition);
+			selectedUserIds = await processCondition(tenantId, subCondition, userIds);
 		}
-		userIds.forEach(id => results.add(id));
+		selectedUserIds.forEach(id => results.add(id));
 	}
 	return Array.from(results);
 }
 
-async function processCondition(tenantId, condition: any) {
+async function processCondition(tenantId, condition: any, userIds: number[]) {
 	const { title, operators, value, variableId } = condition;
 
 	if (!title || !operators || value === undefined) {
@@ -152,23 +156,23 @@ async function processCondition(tenantId, condition: any) {
 	if (title === 'cohort') {
 		return await queryCohort(value, operators);
 	} else if (variableId) {
-		return await queryVariableMatrix(tenantId, variableId, value, operators);
+		return await queryVariableMatrix(tenantId, variableId, value, operators, userIds);
 	} else if (title === 'joiningDate') {
-		return await queryUserByDate(tenantId, value, operators);
+		return await queryUserByDate(tenantId, value, operators, userIds);
 	} else {
 		throw new BadRequestException(`Unsupported title: ${title}`);
 	}
 }
 
-export const applyingCohort = async (tenantId: number, cohortRule: CohortRuleQuery[]) => {
+export const applyingCohort = async (tenantId: number, cohortRule: CohortRuleQuery[], userIds?: number[]) => {
 	const userSets = [];
 
 	// Iterate over each rule in cohortRule
 	for (const rule of cohortRule) {
 		if (rule.and) {
-			userSets.push(await processAndCondition(tenantId, rule));
+			userSets.push(await processAndCondition(tenantId, rule, userIds));
 		} else if (rule.or) {
-			userSets.push(await processOrCondition(tenantId, rule));
+			userSets.push(await processOrCondition(tenantId, rule, userIds));
 		} else {
 			throw new BadRequestException(`Invalid rule: ${JSON.stringify(rule)}`);
 		}
@@ -181,9 +185,9 @@ export const applyingCampaign = async (tenantId: number, campaignRule: CampaignR
 	// Iterate over each rule in cohortRule
 	for (const rule of campaignRule) {
 		if (rule.and) {
-			userSets.push(await processAndCondition(tenantId, rule));
+			userSets.push(await processAndCondition(tenantId, rule, null));
 		} else if (rule.or) {
-			userSets.push(await processOrCondition(tenantId, rule));
+			userSets.push(await processOrCondition(tenantId, rule, null));
 		} else {
 			throw new BadRequestException(`Invalid rule: ${JSON.stringify(rule)}`);
 		}
