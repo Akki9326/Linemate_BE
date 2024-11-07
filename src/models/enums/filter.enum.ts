@@ -52,7 +52,7 @@ export const commonFilterConfig = [
 				filterType: FiltersEnum.NumberRange,
 			},
 			{
-				filterTitle: 'Cohort',
+				filterTitle: 'cohort',
 				filterKey: FilterKey.Cohort,
 				filterType: FiltersEnum.DropDown,
 			},
@@ -121,7 +121,7 @@ export const commonFilterConfig = [
 				filterType: FiltersEnum.DropDown,
 			},
 			{
-				filterTitle: 'Cohort',
+				filterTitle: 'cohort',
 				filterKey: FilterKey.Cohort,
 				filterType: FiltersEnum.DropDown,
 			},
