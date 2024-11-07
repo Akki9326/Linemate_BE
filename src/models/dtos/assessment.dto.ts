@@ -80,3 +80,11 @@ export class questionsBank {
 	@Type(() => questionData)
 	public questions: questionData[];
 }
+
+export class AnswerRequest {
+	@IsNumber()
+	public questionId: number;
+
+	@IsArray()
+	public userAnswerIds: number[];
+}

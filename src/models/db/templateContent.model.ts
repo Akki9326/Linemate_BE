@@ -36,6 +36,7 @@ export class TemplateContentModel extends AppDBModel {
 	public actionType: string;
 	public menuButtonName: string;
 	public templateId: number;
+	public contentId: number;
 }
 
 export default function (sequelize: Sequelize): typeof TemplateContentModel {
@@ -154,6 +155,14 @@ export default function (sequelize: Sequelize): typeof TemplateContentModel {
 			thumbnailUrl: {
 				type: DataTypes.STRING,
 				allowNull: true,
+			},
+			contentId: {
+				type: DataTypes.INTEGER,
+				allowNull: true,
+				references: {
+					model: 'contents',
+					key: 'id',
+				},
 			},
 			mediaDuration: {
 				type: DataTypes.STRING,
