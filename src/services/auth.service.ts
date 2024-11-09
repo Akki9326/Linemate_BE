@@ -1,8 +1,12 @@
-import { OTP_EXPIRY, SECRET_KEY, SESSION_EXPIRY_MINS, TOKEN_EXPIRY } from '@/config';
+import { MOBILE_SECRET_KEY, OTP_EXPIRY, SECRET_KEY, SESSION_EXPIRY_MINS, TOKEN_EXPIRY } from '@/config';
 import { BadRequestException } from '@/exceptions/BadRequestException';
-import { ForgotPasswordDto, LoginOTPDto, ResetPasswordDto } from '@/models/dtos/login.dto';
+import { FileDto, FileTypeDto } from '@/models/dtos/file.dto';
+import { ForgotPasswordDto, LoginOTPDto, MobileLoginOTPDto, MobileLoginUserName, ResetPasswordDto } from '@/models/dtos/login.dto';
 import { AppPermission } from '@/models/enums/app-access.enum';
+import { FileDestination } from '@/models/enums/file-destination.enum';
+import { FileMimeType, FileType } from '@/models/enums/file-type.enums';
 import { TokenTypes } from '@/models/enums/tokenType';
+import { UserType } from '@/models/enums/user-types.enum';
 import { LoginResponseData, TokenData } from '@/models/interfaces/auth.interface';
 import { JwtTokenData } from '@/models/interfaces/jwt.user.interface';
 import { AppMessages } from '@/utils/helpers/app-message.helper';
@@ -10,6 +14,7 @@ import { UserCaching } from '@/utils/helpers/caching-user.helper';
 import { ExpiryTime } from '@/utils/helpers/expiry-time.helper';
 import { PasswordHelper } from '@/utils/helpers/password.helper';
 import { Email } from '@/utils/services/email';
+import S3Services from '@/utils/services/s3.services';
 import { EmailSubjects, EmailTemplates } from '@/utils/templates/email-template.transaction';
 import DB from '@databases';
 import { generateOtp } from '@utils/util';
@@ -17,14 +22,9 @@ import { addMinutes } from 'date-fns';
 import JWT from 'jsonwebtoken';
 import { BelongsTo, Op } from 'sequelize';
 import { v4 as uuidv4 } from 'uuid';
+import { ContentService } from './content.service';
 import { RoleService } from './role.service';
 import { TenantService } from './tenant.service';
-import { UserType } from '@/models/enums/user-types.enum';
-import { FileDto, FileTypeDto } from '@/models/dtos/file.dto';
-import { FileMimeType, FileType } from '@/models/enums/file-type.enums';
-import { FileDestination } from '@/models/enums/file-destination.enum';
-import S3Services from '@/utils/services/s3.services';
-import { ContentService } from './content.service';
 import UserService from './user.service';
 
 export default class AuthService {
@@ -99,7 +99,7 @@ export default class AuthService {
 		};
 	}
 	private createToken(tokenRawData: JwtTokenData): TokenData {
-		const secretKey: string = SECRET_KEY;
+		const secretKey: string = tokenRawData?.isMobile ? MOBILE_SECRET_KEY : SECRET_KEY;
 		const expiresIn: number = parseInt(TOKEN_EXPIRY);
 
 		return { expiresIn, token: JWT.sign(tokenRawData, secretKey, { expiresIn }) };
@@ -108,6 +108,83 @@ export default class AuthService {
 		const emailSubject = await EmailSubjects.resetPasswordEmailSubject;
 		const emailBody = EmailTemplates.resetPasswordEmail(user.firstName, user.email, otp);
 		await Email.sendEmail(user.email, emailSubject, emailBody);
+	}
+	private async triggerMobileLoginOTPs(user, otp: string) {
+		const emailSubject = await EmailSubjects.mobileLoginEmailSubject;
+		const emailBody = EmailTemplates.mobileLoginOTPEmail(user.firstName, user.email, otp);
+		await Email.sendEmail(user.email, emailSubject, emailBody);
+	}
+	public async mobileLoginUser(loginOTPDto: MobileLoginUserName) {
+		const condition = {
+			isDeleted: false,
+		};
+		const user = await this.findUserByContactInfo(loginOTPDto.username, condition);
+		if (!user) {
+			throw new BadRequestException(AppMessages.invalidUsername);
+		}
+
+		if (!user.isActive) {
+			throw new BadRequestException(AppMessages.inactiveUser);
+		}
+
+		if (user.isLocked) {
+			throw new BadRequestException(AppMessages.lockedUser);
+		}
+		const otp = generateOtp().toString();
+		await this.saveTokenInDB(user.id, TokenTypes.LOGIN_OTP, otp);
+		await this.triggerMobileLoginOTPs(user, otp);
+	}
+	public async verifyMobileOTP(mobileLoginOTP: MobileLoginOTPDto) {
+		const userOTP = await this.userToken.findOne({
+			where: {
+				isActive: true,
+				tokenType: TokenTypes.LOGIN_OTP,
+				token: mobileLoginOTP.otp,
+			},
+		});
+		if (!userOTP || userOTP.expiresAt < new Date()) {
+			throw new BadRequestException(AppMessages.expiredOtp);
+		}
+		const userDetails = await this.users.findOne({ where: { id: userOTP.userId, isActive: true, isDeleted: false } });
+		if (!userDetails) {
+			throw new BadRequestException(AppMessages.userNotFound);
+		}
+		const user = await this.users.findOne({ where: { id: userOTP.userId, isActive: true, isDeleted: false } });
+		const sessionName = user.email || user.mobileNumber;
+		const getActiveSessions = await UserCaching.getActiveSessions(sessionName);
+
+		const sessionId: string = uuidv4();
+
+		const userToken = this.createToken({
+			email: user.email,
+			firstName: user.firstName,
+			lastName: user.lastName,
+			id: user.id,
+			sessionId,
+			userType: user.userType,
+			mobileNumber: user.mobileNumber,
+			isMobile: true,
+		});
+
+		const loginResponse = {
+			userData: {
+				email: user.email,
+				mobileNumber: user.mobileNumber,
+				firstName: user.firstName,
+				lastName: user.lastName,
+				countryCode: user.countryCode,
+			},
+			token: userToken.token,
+		};
+		user.lastLoggedInAt = new Date();
+		await user.save();
+		getActiveSessions.push({
+			sessionId,
+			expiry: ExpiryTime.sessionExpiry(+SESSION_EXPIRY_MINS),
+		});
+
+		UserCaching.pushSession(sessionName, getActiveSessions);
+		return loginResponse;
 	}
 	public async loginUser(loginOTPDto: LoginOTPDto): Promise<LoginResponseData> {
 		const condition = {
@@ -151,6 +228,7 @@ export default class AuthService {
 			sessionId,
 			userType: user.userType,
 			mobileNumber: user.mobileNumber,
+			isMobile: false,
 		});
 		let allTenants = [];
 		if (user.userType !== UserType.ChiefAdmin) {
@@ -206,6 +284,7 @@ export default class AuthService {
 						id: user.id,
 						userType: user.userType,
 						sessionId: sessionId,
+						isMobile: false,
 					},
 					user.tenantIds,
 				)) as AppPermission[],

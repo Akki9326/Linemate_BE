@@ -45,6 +45,7 @@ export const TenantMessage = {
 	companyNameIsAlreadyExists: 'Company name is already exists in our system',
 	tenantNameLength: 'Company name length should be greater than 25',
 	workSpaceNotFound: 'Work space not found in this tenant',
+	requiredChannel: 'channel is required',
 };
 export const VariableMessage = {
 	variableNotFound: 'variable not found',
@@ -78,6 +79,10 @@ export const assessmentMessage = {
 	questionNotFound: 'question not found',
 	optiopnIsMissing: 'option is missing',
 	passIsMissing: 'pass is required',
+	assessmentNotAssigning: 'assessment not assigning.',
+	assessmentTimeOver: 'assessment time over.',
+	assessmentNotStarted: 'assessment not started.',
+	questionNotFoundInAssessment: 'question not found in this assessment.',
 };
 
 export const CohortMessage = {

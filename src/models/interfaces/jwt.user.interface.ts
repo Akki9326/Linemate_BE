@@ -8,4 +8,5 @@ export interface JwtTokenData {
 	userType: UserType;
 	sessionId: string;
 	mobileNumber: string;
+	isMobile: boolean;
 }

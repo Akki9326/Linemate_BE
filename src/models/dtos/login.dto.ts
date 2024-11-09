@@ -11,6 +11,19 @@ export class LoginOTPDto {
 	public password: string;
 }
 
+export class MobileLoginUserName {
+	@IsString()
+	public username: string;
+}
+
+export class MobileLoginOTPDto {
+	@IsString()
+	public username: string;
+
+	@IsNumberString()
+	public otp: string;
+}
+
 export class ForgotPasswordDto {
 	@IsString()
 	public username: string;
