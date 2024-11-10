@@ -494,6 +494,25 @@ export const TemplateGenerator = {
 			throw new BadRequestException('Failed to call Fyno API');
 		}
 	},
+	goLiveNotificationEvent: async (fynoWorkSpaceId: string, name: string) => {
+		try {
+			const payload = {
+				env: 'prod',
+				promote: 'all',
+				force: true,
+			};
+			const response = await axios.put(`${FYNO_BASE_URL}/${fynoWorkSpaceId}/notification/promote/${name}`, payload, {
+				headers: {
+					Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
+					'Content-Type': 'application/json',
+				},
+			});
+			return response.data;
+		} catch (error) {
+			console.log('error', error);
+			throw new BadRequestException(error?.response?.data?._message);
+		}
+	},
 	createFynoTemplate: async (payload: unknown, communication: CommunicationResponse) => {
 		try {
 			const request = await payload;
@@ -503,6 +522,9 @@ export const TemplateGenerator = {
 					'Content-Type': 'application/json',
 				},
 			});
+			if (response.data?.event?.status === 1) {
+				await TemplateGenerator.goLiveNotificationEvent(communication?.fynoWorkSpaceId, (payload as { name: string }).name);
+			}
 			return response.data;
 		} catch (error) {
 			console.log('error', error);
@@ -557,6 +579,18 @@ export const TemplateGenerator = {
 				},
 			});
 			return response?.data[0]?.template;
+		} catch (error) {
+			throw new BadRequestException(error?.response?.data);
+		}
+	},
+	getExternalTemplateList: async workSpaceId => {
+		try {
+			const response = await axios.get(`${FYNO_BASE_URL}/${workSpaceId}/external-template?type=template`, {
+				headers: {
+					Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
+				},
+			});
+			return response?.data;
 		} catch (error) {
 			throw new BadRequestException(error?.response?.data);
 		}
