@@ -23,6 +23,8 @@ import { FilterResponse } from '@/models/interfaces/filter.interface';
 import { FilterKey } from '@/models/enums/filter.enum';
 import { parseISO } from 'date-fns';
 import { CommunicationService } from './communication.service';
+import { CampaignMatrixModel } from '@/models/db/campaignMatrix';
+import { CampaignTriggerMatrixModel } from '@/models/db/CampaignTriggerMatrix';
 
 export class CampaignService {
 	private campaignMaster = DB.CampaignMaster;
@@ -618,14 +620,13 @@ export class CampaignService {
 		}
 	}
 
-	public async getCamapignAnalytics(campaignId: number, userId: number) {
-
+	public async getCamapignAnalytics(campaignId: number) {
 		const campaign = await this.campaignMaster.findOne({
 			where: {
 				id: campaignId,
 				isDeleted: false,
 			},
-			attributes: ['id', 'fynoCampaignId', 'name', 'reoccurenceType', 'channel'],
+			attributes: ['id', 'name', 'reoccurenceType', 'channel', 'tenantId'],
 		});
 
 		if (!campaign) {
@@ -638,11 +639,18 @@ export class CampaignService {
 				campaignId,
 				isFired: true,
 			},
+			include: [
+				{
+					association: new BelongsTo(DB.Users, this.campaignTriggerMatrix, { as: 'creator', foreignKey: 'createdBy' }),
+					attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
+					required: false,
+				},
+			]
 		});
 
 		const campaignAnalytics = [];
 		for (const campaignTriggerMatrix of campaignTriggerMatrixList) {
-			const existingMaxtrix = this.campaignMatrix.findOne({
+			const existingMaxtrix = await this.campaignMatrix.findOne({
 				where: {
 					campaignTriggerMatrixId: campaignTriggerMatrix.id,
 				},
@@ -653,7 +661,8 @@ export class CampaignService {
 
 				let campaignOverview = await fynoCampaignOverview(workspaceId, campaignPreview);
 				if (campaignOverview.length <= 0) {
-					throw new BadRequestException(CampaignMessage.fynoApiError);
+					campaignAnalytics.push(this.parseCampaignAnalytics(campaign, campaignTriggerMatrix, null));
+					continue;
 				}
 
 				campaignOverview = campaignOverview.reduce((result, item) => {
@@ -666,23 +675,37 @@ export class CampaignService {
 
 				const campaignMatrix = new this.campaignMatrix();
 				campaignMatrix.campaignId = campaignId;
-				campaignMatrix.triggerType = campaign.reoccurenceType === ReoccurenceType.once ? TriggerType.manual : TriggerType.automatic;
-				campaignMatrix.triggered = campaignOverview.Delivered + campaignOverview.Undelivered;
-				campaignMatrix.delivered = campaignOverview.Delivered;
-				campaignMatrix.read = campaignOverview?.Read;
+				campaignMatrix.triggerType = campaignTriggerMatrix.fireType;
+				campaignMatrix.triggered = (campaignOverview.Delivered || 0) + (campaignOverview.Undelivered || 0);
+				campaignMatrix.delivered = campaignOverview.Delivered || 0;
+				campaignMatrix.read = campaignOverview?.Read || 0;
 				campaignMatrix.clicked = campaignOverview?.clicked || 0;
-				campaignMatrix.failed = campaignOverview?.Undelivered;
-				campaignMatrix.createdBy = userId;
+				campaignMatrix.failed = campaignOverview?.Undelivered || 0;
+				campaignMatrix.createdBy = campaignTriggerMatrix.createdBy;
 				campaignMatrix.campaignTriggerMatrixId = campaignTriggerMatrix.id;
 
 				await campaignMatrix.save();
 
-				campaignAnalytics.push(campaignMatrix);
+				campaignAnalytics.push(this.parseCampaignAnalytics(campaign, campaignTriggerMatrix, campaignMatrix));
 			} else {
-				campaignAnalytics.push(existingMaxtrix);
+				campaignAnalytics.push(this.parseCampaignAnalytics(campaign, campaignTriggerMatrix, existingMaxtrix));
 			}
 		}
 		return campaignAnalytics;
+	}
+
+	private parseCampaignAnalytics(
+		campaign: CampaignMasterModel,
+		campaignAnalyticMatrix: CampaignTriggerMatrixModel,
+		campaignMatrix: CampaignMatrixModel,
+	) {
+		return {
+			triggeredOn: campaignAnalyticMatrix.firedOn,
+			triggedBy: campaignAnalyticMatrix.creator,
+			channel: campaign.channel,
+			triggerType: campaignAnalyticMatrix.firedOn,
+			analytics: campaignMatrix,
+		};
 	}
 
 	public async fireCampaign(campiagnId: number, triggerType = TriggerType.manual) {
@@ -756,7 +779,7 @@ export class CampaignService {
 		await this.campaignTriggerMatrix.create(triggerDetails);
 
 		return {
-			id: campiagnId,
+			id: campiagnId
 		};
 
 	}

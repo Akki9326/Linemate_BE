@@ -4,6 +4,7 @@ import { CommunicationModel } from '@/models/db/communication.model';
 import { Channel } from '@/models/enums/campaign.enums';
 import { TemplateStatus } from '@/models/enums/template.enum';
 import { TemplateGenerator } from '@/utils/helpers/template.helper';
+import { logger } from '@/utils/services/logger';
 import { BelongsTo } from 'sequelize';
 
 export class TemplateCronService {
@@ -18,20 +19,25 @@ export class TemplateCronService {
 
 			for (const item of communicationDetails) {
 				if (item['workSpace']) {
-					const workspaceTemplates = await this.fetchTemplatesForWorkspace(item['workSpace'].tenantId);
-					templateArray.push(...workspaceTemplates);
+					try {
+						const workspaceTemplates = await this.fetchTemplatesForWorkspace(item['workSpace'].tenantId);
+						templateArray.push(...workspaceTemplates);
 
-					const fynoTemplateList = await TemplateGenerator.getExternalTemplateList(item['workSpace'].fynoWorkSpaceId);
+						const fynoTemplateList = await TemplateGenerator.getExternalTemplateList(item['workSpace'].fynoWorkSpaceId);
 
-					if (fynoTemplateList?.length || workspaceTemplates?.length) {
-						await this.processTemplates(workspaceTemplates, fynoTemplateList, item);
+						if (fynoTemplateList?.length || workspaceTemplates?.length) {
+							await this.processTemplates(workspaceTemplates, fynoTemplateList, item);
+						}
+
+					} catch (ex) {
+						logger.error(`Error Processing Template for Tenent # ${item['workSpace'].tenantId}. Ex: ${ex.message}`, ex);
 					}
 				}
 			}
 
 			return templateArray;
 		} catch (error) {
-			throw new BadRequestException('Error in triggerListTemplate:', error);
+			logger.error(`Error in triggerListTemplate:`, error);
 		}
 	}
 	private async fetchActiveCommunications(): Promise<CommunicationModel[]> {

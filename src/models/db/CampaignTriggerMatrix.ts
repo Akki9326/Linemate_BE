@@ -2,7 +2,7 @@ import { Sequelize, DataTypes } from 'sequelize';
 import { AppDBModel } from './app-db.model';
 import { TriggerType } from '../enums/campaign.enums';
 
-export class campaignTriggerMatrix extends AppDBModel {
+export class CampaignTriggerMatrixModel extends AppDBModel {
 	public id: number;
 	public fireType: TriggerType;
 	public campaignId: number;
@@ -10,10 +10,12 @@ export class campaignTriggerMatrix extends AppDBModel {
 	public firedOn: Date;
 	public scheduleDate: Date;
 	public isFired: boolean;
+
+	public creator?: unknown;
 }
 
-export default function (sequelize: Sequelize): typeof campaignTriggerMatrix {
-	campaignTriggerMatrix.init(
+export default function (sequelize: Sequelize): typeof CampaignTriggerMatrixModel {
+	CampaignTriggerMatrixModel.init(
 		{
 			id: {
 				autoIncrement: true,
@@ -70,5 +72,5 @@ export default function (sequelize: Sequelize): typeof campaignTriggerMatrix {
 			sequelize,
 		},
 	);
-	return campaignTriggerMatrix;
+	return CampaignTriggerMatrixModel;
 }

@@ -139,7 +139,7 @@ class App {
 
 		// Schedule a task to run every 24 hours
 		cron.schedule(CAMPAIGN_CRON_TIME, async () => {
-			//new CampaignCronService().triggerCampaign();
+			new CampaignCronService().triggerCampaign();
 		});
 		cron.schedule(TEMPLATE_CRON_TIME, async () => {
 			new TemplateCronService().triggerListTemplate();
