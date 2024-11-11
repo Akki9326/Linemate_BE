@@ -39,6 +39,16 @@ class AssessmentController {
 			next(ex);
 		}
 	};
+
+	public getAssessmentQuestions = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const contentId = parseInt(req.params.id);
+			const assessmentResponse = await this.AssessmentServices.assessmentQuestions(contentId);
+			AppResponseHelper.sendSuccess(res, 'Success', assessmentResponse);
+		} catch (ex) {
+			next(ex);
+		}
+	};
 	public setAnswer = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
 			const contentId = parseInt(req.params.id);

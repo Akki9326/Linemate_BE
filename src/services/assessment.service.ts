@@ -9,6 +9,7 @@ import DB from '@databases';
 import { BelongsTo, HasMany, Op } from 'sequelize';
 import { ContentService } from './content.service';
 import moment from 'moment';
+import { NotFoundException } from '@/exceptions/NotFoundException';
 
 class AssessmentServices {
 	private assessmentMaster = DB.AssessmentMaster;
@@ -19,7 +20,7 @@ class AssessmentServices {
 	private user = DB.Users;
 	private content = DB.Content;
 	public contentService = new ContentService();
-	constructor() {}
+	constructor() { }
 
 	private async validateQuestion(assessmentData: assessmentDto) {
 		const questions: questionData[] = assessmentData.questions;
@@ -206,6 +207,37 @@ class AssessmentServices {
 
 		return assessmentDetails;
 	}
+	public async assessmentQuestions(contentId: number) {
+
+		const contentDetails = await this.content.findOne({ where: { id: contentId, isDeleted: false } });
+		if (contentDetails) {
+			const assessment = this.assessmentMaster.findOne({
+				where: {
+					id: contentDetails.assessmentId
+				},
+				attributes: ['id', 'totalQuestion', 'scoring', 'timed', 'pass', 'score', 'timeType'],
+				include: [
+					{
+						association: new HasMany(this.assessmentMaster, this.assessmentQuestionMatrix, { as: 'question', foreignKey: 'assessmentId' }),
+						where: { isDeleted: false },
+						required: false,
+						attributes: ['id', 'question', 'type', 'score'],
+						include: [
+							{
+								association: new HasMany(this.assessmentQuestionMatrix, this.assessmentOption, { as: 'options', foreignKey: 'questionId' }),
+								where: { isDeleted: false },
+								required: false,
+								attributes: ['id', 'option'],
+							},
+						],
+					},
+				],
+			});
+
+			return assessment;
+		} else throw new NotFoundException(`Content Details not found`, { contentId });
+	}
+
 	public async startAssessment(contentId: number, userId: number) {
 		const userDetails = await this.user.findOne({ where: { id: userId, isDeleted: false } });
 		const contentDetails = await this.content.findOne({ where: { id: contentId, isDeleted: false } });
