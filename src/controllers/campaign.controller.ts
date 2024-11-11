@@ -97,9 +97,9 @@ class CampaignController {
 
 	public getCampaignDetails = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
-			const campaignId = parseInt(req.params.campaignId);
-			const userId = req.user.id as number;
-			const campaignResponse = await this.campaignService.getCamapignAnalytics(campaignId, userId);
+			const campaignId = parseInt(req.params.id);
+			//const userId = req.user.id as number;
+			const campaignResponse = await this.campaignService.getCamapignAnalytics(campaignId);
 			AppResponseHelper.sendSuccess(res, 'Success', campaignResponse);
 		} catch (ex) {
 			next(ex);

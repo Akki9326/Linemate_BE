@@ -46,7 +46,7 @@ export default function (sequelize: Sequelize): typeof CommunicationModel {
 				type: DataTypes.INTEGER,
 				allowNull: false,
 				references: {
-					model: 'users',
+					model: 'workSpace',
 					key: 'id',
 				},
 				onDelete: 'CASCADE',

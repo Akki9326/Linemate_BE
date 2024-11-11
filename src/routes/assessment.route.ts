@@ -25,6 +25,7 @@ class AssessmentRoute implements Routes {
 		);
 		this.router.get(`${this.path}/v1/mobile/:id`, mobileAuthMiddleware, this.assessmentController.getAssessmentDetails);
 		this.router.post(`${this.path}/v1/mobile/start-assessment/:id`, mobileAuthMiddleware, this.assessmentController.startAssessment);
+		this.router.get(`${this.path}/v1/mobile/questions/:id`, mobileAuthMiddleware, this.assessmentController.getAssessmentQuestions);
 		this.router.post(
 			`${this.path}/v1/mobile/set-answer/:id`,
 			mobileAuthMiddleware,

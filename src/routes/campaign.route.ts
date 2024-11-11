@@ -24,7 +24,7 @@ class CampaignRoute implements Routes {
 		);
 		this.router.post(`${this.path}/v1/add`, validationMiddleware(CampaignMasterDto, 'body'), authMiddleware, this.campaignController.add);
 		this.router.post(`${this.path}/v1/list`, authMiddleware, headerMiddleware, this.campaignController.list);
-		this.router.post(`${this.path}/v1/:campaignId`, authMiddleware, this.campaignController.getCampaignDetails);
+		this.router.get(`${this.path}/v1/analytics/:id`, authMiddleware, this.campaignController.getCampaignDetails);
 		this.router.get(`${this.path}/v1/:id`, authMiddleware, this.campaignController.getById);
 		this.router.delete(`${this.path}/v1/:id`, authMiddleware, this.campaignController.delete);
 		this.router.put(`${this.path}/v1/:id`, validationMiddleware(CampaignMasterDto, 'body'), authMiddleware, this.campaignController.update);

@@ -26,6 +26,8 @@ function validateEnv() {
 			AWS_REGION: str(),
 			BUCKET: str(),
 			SESSION_EXPIRY_MINS: num(),
+			CAMPAIGN_CRON_TIME: str(),
+			TEMPLATE_CRON_TIME: str(),
 		},
 		{
 			reporter: ({ errors }) => {

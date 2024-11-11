@@ -420,6 +420,14 @@ export class CohortService {
 					where: { isDeleted: false },
 					as: 'userMatrix',
 					attributes: [],
+					include: [
+						{
+							model: this.users,
+							where: { isDeleted: false },
+							attributes: [],
+							required: true,
+						},
+					],
 					required: false,
 				},
 				{

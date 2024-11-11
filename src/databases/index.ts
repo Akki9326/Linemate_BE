@@ -8,7 +8,7 @@ import CampaignMatrix from '@/models/db/campaignMatrix';
 import CampaignUserMatrixModel from '@/models/db/campaignUserMatrix.model';
 import CohortMasterModel from '@/models/db/cohortMaster.model';
 import CohortMatrixModel from '@/models/db/cohortMatrix.model';
-import CommunicationModel from '@/models/db/communication.mode';
+import CommunicationModel from '@/models/db/communication.model';
 import ContentModel from '@/models/db/content.model';
 import CountryModel from '@/models/db/country.model';
 import languagesModel from '@/models/db/languages.model';

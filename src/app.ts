@@ -1,5 +1,5 @@
 import { logger } from '@/utils/services/logger';
-import { CAMPAIGN_CRON_TIME, CREDENTIALS, NODE_ENV, ORIGIN, PORT } from '@config';
+import { CAMPAIGN_CRON_TIME, CREDENTIALS, NODE_ENV, ORIGIN, PORT, TEMPLATE_CRON_TIME } from '@config';
 import errorMiddleware from '@middlewares/error.middleware';
 import compression from 'compression';
 import cors from 'cors';
@@ -18,6 +18,7 @@ import cron from 'node-cron';
 import DB from '@/databases';
 import { CampaignService } from '@/services/campaign.service';
 import { CampaignCronService } from './services/campaign-cron.service';
+import { TemplateCronService } from './services/template-cron.service';
 
 class App {
 	public app: express.Application;
@@ -138,7 +139,10 @@ class App {
 
 		// Schedule a task to run every 24 hours
 		cron.schedule(CAMPAIGN_CRON_TIME, async () => {
-			//new CampaignCronService().triggerCampaign();
+			new CampaignCronService().triggerCampaign();
+		});
+		cron.schedule(TEMPLATE_CRON_TIME, async () => {
+			new TemplateCronService().triggerListTemplate();
 		});
 	}
 

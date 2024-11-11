@@ -577,7 +577,6 @@ class UserService {
 	}
 	private async getUserIdsFromVariableMatrix(filterCriteria: { variableId: number; value: string }[]) {
 		const whereConditions = filterCriteria.map(criteria => {
-
 			return {
 				variableId: criteria.variableId,
 				[Op.or]: [{ value: { [Op.like]: `%"${criteria.value}"%` } }, { value: criteria.value }],
@@ -859,7 +858,13 @@ class UserService {
 				},
 				isDeleted: false,
 			},
-			raw: true,
+			include: [
+				{
+					model: this.users,
+					as: 'reportTo',
+					attributes: ['id', 'firstName', 'lastName', 'email'],
+				},
+			],
 		});
 		if (data.length) {
 			const userData = await Promise.all(
@@ -881,6 +886,10 @@ class UserService {
 						'Mobile Number': user.mobileNumber,
 						'User Type': user.userType,
 						'Country Code': user.countryCode,
+						'Employee Id': user.employeeId || '',
+						Role: user.role || '',
+						'Report To': user.reportTo ? `${user.reportTo?.firstName} ${user.reportTo?.lastName}` : '',
+						'Joinning Date': user.joiningDate || '',
 						'Created At': user.createdAt,
 						tenantVariableDetails: tenantVariableDetails,
 						permissionGroup: access,

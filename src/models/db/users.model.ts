@@ -22,6 +22,7 @@ export class UserModel extends AppDBModel {
 	public joiningDate: Date;
 	public role: string;
 	public reportToId: number;
+	public reportTo?: UserModel;
 
 	hashPassword() {
 		this.password = PasswordHelper.hashPassword(this.password);
@@ -117,6 +118,8 @@ export default function (sequelize: Sequelize): typeof UserModel {
 			sequelize,
 		},
 	);
+
+	UserModel.belongsTo(UserModel, { as: 'reportTo', foreignKey: 'reportToId' });
 
 	return UserModel;
 }

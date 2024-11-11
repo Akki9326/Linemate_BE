@@ -21,6 +21,14 @@ const queryCohort = async (cohortValue: number, operator: string) => {
 	const data = await DB.CohortMatrix.findAll({
 		where: query,
 		attributes: ['userId'],
+		include: [
+			{
+				model: DB.Users,
+				where: { isDeleted: false },
+				attributes: [],
+				required: true,
+			},
+		],
 	});
 
 	const userIds = data.map(item => item.userId);
