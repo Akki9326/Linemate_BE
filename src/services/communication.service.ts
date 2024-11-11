@@ -1,6 +1,6 @@
 import DB from '@/databases';
 import { BadRequestException } from '@/exceptions/BadRequestException';
-import { CommunicationModel } from '@/models/db/communication.mode';
+import { CommunicationModel } from '@/models/db/communication.model';
 import { CommunicationDto } from '@/models/dtos/communication.dto';
 import { Channel } from '@/models/enums/campaign.enums';
 import { CommunicationPayload } from '@/models/interfaces/communication.interface';
