@@ -1,5 +1,5 @@
 import DB from '@/databases';
-import { IntervalUnitType, TriggerType } from '@/models/enums/campaign.enums';
+import { IntervalUnitType, ReoccurenceType, TriggerType } from '@/models/enums/campaign.enums';
 import { CampaignService } from './campaign.service';
 import { differenceInDays, differenceInMonths, differenceInWeeks, format, startOfDay } from 'date-fns';
 import { logger } from '@/utils/services/logger';
@@ -21,6 +21,7 @@ export class CampaignCronService {
 		const campaignList = await this.campaignMaster.findAll({
 			where: {
 				isDeleted: false,
+				reoccurenceType: ReoccurenceType.custom,
 			},
 		});
 
