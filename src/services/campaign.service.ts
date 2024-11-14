@@ -703,7 +703,7 @@ export class CampaignService {
 			triggeredOn: campaignAnalyticMatrix.firedOn,
 			triggedBy: campaignAnalyticMatrix.creator,
 			channel: campaign.channel,
-			triggerType: campaignAnalyticMatrix.firedOn,
+			triggerType: campaignAnalyticMatrix.fireType,
 			analytics: campaignMatrix,
 		};
 	}

@@ -87,4 +87,7 @@ export class AnswerRequest {
 
 	@IsArray()
 	public userAnswerIds: number[];
+
+	@IsNumber()
+	assessmentResultId: number;
 }

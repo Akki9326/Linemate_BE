@@ -5,13 +5,13 @@ import { AppResponseHelper } from '@/utils/helpers/app-response.helper';
 import { NextFunction, Response } from 'express-serve-static-core';
 
 class AssessmentController {
-	public AssessmentServices = new AssessmentServices();
+	public assessmentService = new AssessmentServices();
 
 	public uploadQuestion = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
 			const contentId = parseInt(req.params.id);
 			const questionData: questionData[] = req.body.questions;
-			const assessmentResponse = await this.AssessmentServices.uploadQuestion(contentId, questionData);
+			const assessmentResponse = await this.assessmentService.uploadQuestion(contentId, questionData);
 			AppResponseHelper.sendSuccess(res, 'Success', assessmentResponse);
 		} catch (ex) {
 			next(ex);
@@ -22,7 +22,7 @@ class AssessmentController {
 		try {
 			const contentId = parseInt(req.params.id);
 			const userId = req.user.id as number;
-			const assessmentResponse = await this.AssessmentServices.one(contentId, userId);
+			const assessmentResponse = await this.assessmentService.one(contentId, userId);
 			AppResponseHelper.sendSuccess(res, 'Success', assessmentResponse);
 		} catch (ex) {
 			next(ex);
@@ -33,7 +33,7 @@ class AssessmentController {
 		try {
 			const contentId = parseInt(req.params.id);
 			const userId = req.user.id as number;
-			const assessmentResponse = await this.AssessmentServices.startAssessment(contentId, userId);
+			const assessmentResponse = await this.assessmentService.startAssessment(contentId, userId);
 			AppResponseHelper.sendSuccess(res, 'Success', assessmentResponse);
 		} catch (ex) {
 			next(ex);
@@ -43,7 +43,7 @@ class AssessmentController {
 	public getAssessmentQuestions = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
 			const contentId = parseInt(req.params.id);
-			const assessmentResponse = await this.AssessmentServices.assessmentQuestions(contentId);
+			const assessmentResponse = await this.assessmentService.assessmentQuestions(contentId);
 			AppResponseHelper.sendSuccess(res, 'Success', assessmentResponse);
 		} catch (ex) {
 			next(ex);
@@ -54,7 +54,7 @@ class AssessmentController {
 			const contentId = parseInt(req.params.id);
 			const userId = req.user.id as number;
 			const answerRequest = req.body as AnswerRequest;
-			const assessmentResponse = await this.AssessmentServices.setAnswer(contentId, answerRequest, userId);
+			const assessmentResponse = await this.assessmentService.setAnswer(contentId, answerRequest, userId);
 			AppResponseHelper.sendSuccess(res, 'Success', assessmentResponse);
 		} catch (ex) {
 			next(ex);
@@ -63,8 +63,9 @@ class AssessmentController {
 	public getResult = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
 			const contentId = parseInt(req.params.id);
+			const { assessmentResultId } = req.body;
 			const userId = req.user.id as number;
-			const assessmentResponse = await this.AssessmentServices.getResult(contentId, userId);
+			const assessmentResponse = await this.assessmentService.getResult(contentId, assessmentResultId, userId);
 			AppResponseHelper.sendSuccess(res, 'Success', assessmentResponse);
 		} catch (ex) {
 			next(ex);

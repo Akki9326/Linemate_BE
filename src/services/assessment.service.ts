@@ -213,7 +213,7 @@ class AssessmentServices {
 		if (contentDetails) {
 			const assessment = this.assessmentMaster.findOne({
 				where: {
-					id: contentDetails.assessmentId
+					id: contentDetails.assessmentId,
 				},
 				attributes: ['id', 'totalQuestion', 'scoring', 'timed', 'pass', 'score', 'timeType'],
 				include: [
@@ -239,6 +239,7 @@ class AssessmentServices {
 	}
 
 	public async startAssessment(contentId: number, userId: number) {
+		let assessmentResultId = 0;
 		const userDetails = await this.user.findOne({ where: { id: userId, isDeleted: false } });
 		const contentDetails = await this.content.findOne({ where: { id: contentId, isDeleted: false } });
 		let assessmentDetails;
@@ -290,6 +291,7 @@ class AssessmentServices {
 			assessmentResult.wrongAnswerCount = 0;
 			assessmentResult.unAttemptQuestionCount = 0;
 			await assessmentResult.save();
+			assessmentResultId = assessmentResult.id;
 			if (!assessmentDetails) {
 				throw new BadRequestException(assessmentMessage.assessmentNotFound);
 			}
@@ -302,10 +304,13 @@ class AssessmentServices {
 		}
 		await this.checkIsValidAssessment(contentDetails, userDetails.tenantIds);
 
-		return assessmentDetails?.assessment;
+		return {
+			...assessmentDetails?.assessment?.dataValues,
+			assessmentResultId,
+		};
 	}
 	public async setAnswer(contentId: number, answerRequest: AnswerRequest, userId: number) {
-		const assessmentResult = await this.assessmentResult.findOne({ where: { userId, contentId: contentId } });
+		const assessmentResult = await this.assessmentResult.findOne({ where: { id: answerRequest.assessmentResultId, userId, contentId: contentId } });
 		if (!assessmentResult) {
 			throw new BadRequestException(assessmentMessage.assessmentNotStarted);
 		}
@@ -356,9 +361,9 @@ class AssessmentServices {
 			throw new BadRequestException(assessmentMessage.assessmentTimeOver);
 		}
 	}
-	public async getResult(contentId: number, userId: number) {
+	public async getResult(contentId: number, assessmentResultId: number, userId: number) {
 		const assessmentResult = await this.assessmentResult.findOne({
-			where: { userId, contentId: contentId },
+			where: { userId, contentId: contentId, id: assessmentResultId },
 		});
 		if (!assessmentResult) {
 			throw new BadRequestException(assessmentMessage.assessmentNotStarted);

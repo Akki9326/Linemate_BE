@@ -153,6 +153,7 @@ class UserService {
 		return tenantDetails;
 	}
 	private async validateValue(value, type: string, options: string[], variableName: string, tenantName: string) {
+		let outputValue = value;
 		switch (type) {
 			case VariableType.Text:
 				if (typeof value !== 'string' || value.trim() === '') {
@@ -160,13 +161,19 @@ class UserService {
 				}
 				break;
 			case VariableType.SingleSelect:
-				if (!options.includes(value)) {
+				outputValue = options.find(o => o.toLowerCase() == value?.toLowerCase());
+				if (!outputValue) {
 					throw new BadRequestException(`Tenant "${tenantName}" select value from given options for field: ${variableName}`);
 				}
 				break;
 			case VariableType.MultiSelect:
-				if (!Array.isArray(value) || value.some(v => !options.includes(v))) {
+				if (!Array.isArray(value)) {
 					throw new BadRequestException(`Tenant "${tenantName}" Invalid value for for field: ${variableName}`);
+				} else {
+					outputValue = options.filter(v => value.find(o => o?.toLowerCase() == v?.toLowerCase()));
+					if (outputValue.length != value.length) {
+						throw new BadRequestException(`Tenant "${tenantName}" Invalid value for for field: ${variableName}`);
+					}
 				}
 				break;
 			case VariableType.Numeric:
@@ -192,6 +199,8 @@ class UserService {
 			default:
 				break;
 		}
+
+		return outputValue || value;
 	}
 	private async validateTenantVariable(tenantVariables: TenantVariables[], tenantId?: number) {
 		for (const variable of tenantVariables) {
@@ -263,7 +272,8 @@ class UserService {
 			}
 
 			try {
-				await this.validateValue(variableElement.value, variable.type, variable.options, variable.name, '');
+				const value = await this.validateValue(variableElement.value, variable.type, variable.options, variable.name, '');
+				variableElement.value = value;
 			} catch (ex: unknown) {
 				message.push(VariableMessage.variableValueIsInvalid(variable.name));
 			}
