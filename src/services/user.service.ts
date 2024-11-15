@@ -645,17 +645,19 @@ class UserService {
 			}
 
 			if (filter.filterKey === FilterKey.AssignedCompanies) {
-				const tenents = [];
-				const tenant = await this.tenant.findOne({ where: { name: filter.selectedValue } });
-				tenents.push(tenant.id);
-				const assignedCompanies = await this.users.findAll({
-					where: {
-						tenantIds: {
-							[Op.in]: [tenents],
-						},
-					},
-				});
-				condition['tenantIds'] = assignedCompanies[0].tenantIds;
+				//const tenents = [];
+				// const tenant = await this.tenant.findOne({ where: { name: filter.selectedValue } });
+				// tenents.push(tenant.id);
+				// const assignedCompanies = await this.users.findAll({
+				// 	where: {
+				// 		tenantIds: {
+				// 			[Op.in]: [tenents],
+				// 		},
+				// 	},
+				// });
+				condition['tenantIds'] = {
+					[Op.contains]: [filter.selectedValue],
+				};
 			}
 
 			if (filter.filterKey === FilterKey.UserStatus) {
