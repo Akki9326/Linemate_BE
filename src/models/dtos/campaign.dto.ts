@@ -71,3 +71,9 @@ export class AssignCampaign {
 	@IsNotEmpty()
 	public campaignId: number[];
 }
+
+
+export class CampaignActionDto {
+	@IsArray()
+	public campaignIds: number[];
+}

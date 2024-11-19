@@ -1,4 +1,4 @@
-import { AssignCampaign, CampaignMasterDto } from '@/models/dtos/campaign.dto';
+import { AssignCampaign, CampaignActionDto, CampaignMasterDto } from '@/models/dtos/campaign.dto';
 import { CampaignListRequestDto } from '@/models/dtos/campaign-list.dto';
 import { CampaignService } from '@/services/campaign.service';
 import { NextFunction, Response, Request } from 'express-serve-static-core';
@@ -111,6 +111,39 @@ class CampaignController {
 			const campaignId = parseInt(req.params.id);
 			const campaignResponse = await this.campaignService.fireCampaign(campaignId);
 			AppResponseHelper.sendSuccess(res, 'Success', campaignResponse);
+		} catch (ex) {
+			next(ex);
+		}
+	};
+
+
+	public archiveCampaign = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const campaignIds = req.body.campaignIds as CampaignActionDto;
+			const userId: number = req.user.id;
+			const userResponse = await this.campaignService.archive(campaignIds, userId);
+			AppResponseHelper.sendSuccess(res, 'Success', userResponse);
+		} catch (ex) {
+			next(ex);
+		}
+	};
+
+	public bulkDeleteCampaign = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const campaignIds = req.body.campaignIds as CampaignActionDto;
+			const userId: number = req.user.id;
+			const userResponse = await this.campaignService.bulkDelete(campaignIds, userId);
+			AppResponseHelper.sendSuccess(res, 'Success', userResponse);
+		} catch (ex) {
+			next(ex);
+		}
+	};
+	public unArchiveCampaign = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const userIds = req.body.campaignIds as CampaignActionDto;
+			const userId: number = req.user.id;
+			const userResponse = await this.campaignService.unArchive(userIds, userId);
+			AppResponseHelper.sendSuccess(res, 'Success', userResponse);
 		} catch (ex) {
 			next(ex);
 		}

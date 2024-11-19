@@ -79,6 +79,17 @@ class TemplateController {
 			next(ex);
 		}
 	};
+
+	public bulkDeleteTemplate = async (req: RequestWithUser, res: Response, next: NextFunction) => {
+		try {
+			const templateIds = req.body.templateIds as TemplateActionDto;
+			const userId: number = req.user.id;
+			const userResponse = await this.templateService.bulkDelete(templateIds, userId);
+			AppResponseHelper.sendSuccess(res, 'Success', userResponse);
+		} catch (ex) {
+			next(ex);
+		}
+	};
 	public unArchiveTemplate = async (req: RequestWithUser, res: Response, next: NextFunction) => {
 		try {
 			const userIds = req.body.templateIds as TemplateActionDto;

@@ -1,4 +1,4 @@
-import { IsArray, IsDate, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsBoolean, IsDate, IsEnum, IsObject, IsOptional, IsString } from 'class-validator';
 import { CampaignStatusType } from '../enums/campaign.enums';
 import { Channel } from '@/models/enums/campaign.enums';
 import { FilterResponse } from '../interfaces/filter.interface';
@@ -39,8 +39,12 @@ export class CampaignListFilterDto {
 	@IsEnum(CampaignStatusType)
 	public status: CampaignStatusType;
 
+	@IsBoolean()
+	@IsOptional()
+	public isArchive: boolean;
+
 	@IsArray()
 	dynamicFilter: FilterResponse[];
 }
 
-export class CampaignListRequestDto extends ListRequestDto<CampaignListFilterDto> {}
+export class CampaignListRequestDto extends ListRequestDto<CampaignListFilterDto> { }

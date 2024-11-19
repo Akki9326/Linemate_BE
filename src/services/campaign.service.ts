@@ -1,6 +1,6 @@
 import DB from '@/databases';
 import { Op, WhereOptions, BelongsTo, Sequelize } from 'sequelize';
-import { AssignCampaign, CampaignMasterDto } from '@/models/dtos/campaign.dto';
+import { AssignCampaign, CampaignActionDto, CampaignMasterDto } from '@/models/dtos/campaign.dto';
 import { BadRequestException } from '@/exceptions/BadRequestException';
 import { AppMessages, CampaignMessage, TemplateMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
 import { applyingCampaign } from '@/utils/helpers/cohort.helper';
@@ -359,6 +359,10 @@ export class CampaignService {
 		}
 
 		if (pageModel?.filter) {
+			if (pageModel?.filter?.isArchive == true || pageModel?.filter?.isArchive == false) {
+				condition.isArchived = pageModel?.filter?.isArchive;
+			}
+
 			if (pageModel?.filter?.dynamicFilter && pageModel?.filter?.dynamicFilter?.length) {
 				await this.mappingDynamicFilter(condition, pageModel.filter.dynamicFilter);
 			}
@@ -786,5 +790,64 @@ export class CampaignService {
 
 	public async automaticFiredCampaign(campiagnId: number) {
 		return this.fireCampaign(campiagnId, TriggerType.automatic);
+	}
+
+	public async unArchive(campaignIds: CampaignActionDto, userId: number) {
+		const campaignToUnArchive = await this.campaignMaster.findAll({
+			where: {
+				id: {
+					[Op.in]: campaignIds,
+				},
+				isDeleted: false,
+			},
+		});
+		if (!campaignToUnArchive.length) {
+			throw new BadRequestException(CampaignMessage.notFoundUnArchiveCampaign);
+		}
+		for (const campaign of campaignToUnArchive) {
+			campaign.isArchived = false;
+			campaign.updatedBy = userId;
+			await campaign.save();
+		}
+		return campaignToUnArchive.map(campaign => ({ id: campaign.id }));
+	}
+	public async archive(campaignIds: CampaignActionDto, userId: number) {
+		const campaignToArchive = await this.campaignMaster.findAll({
+			where: {
+				id: {
+					[Op.in]: campaignIds,
+				},
+				isDeleted: false,
+			},
+		});
+		if (!campaignToArchive.length) {
+			throw new BadRequestException(CampaignMessage.notFoundArchiveCampaign);
+		}
+		for (const campaign of campaignToArchive) {
+			campaign.isArchived = true;
+			campaign.updatedBy = userId;
+			await campaign.save();
+		}
+		return campaignToArchive.map(campaign => ({ id: campaign.id }));
+	}
+
+	public async bulkDelete(campaignIds: CampaignActionDto, userId: number) {
+		const campaignToDelete = await this.campaignMaster.findAll({
+			where: {
+				id: {
+					[Op.in]: campaignIds,
+				},
+				isDeleted: false,
+			},
+		});
+		if (!campaignToDelete.length) {
+			throw new BadRequestException(CampaignMessage.notFoundDeleteCampaign);
+		}
+		for (const campaign of campaignToDelete) {
+			campaign.isDeleted = true;
+			campaign.updatedBy = userId;
+			await campaign.save();
+		}
+		return campaignToDelete.map(campaign => ({ id: campaign.id }));
 	}
 }
