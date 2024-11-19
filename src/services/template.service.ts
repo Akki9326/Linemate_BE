@@ -903,8 +903,10 @@ export class TemplateService {
 		if (!requestBody?.tenantId) {
 			throw new BadRequestException(TenantMessage.requiredTenantId);
 		}
+		let channel = requestBody?.channel
 		if (!requestBody?.channel) {
-			throw new BadRequestException(TenantMessage.requiredChannel);
+			channel = Channel.whatsapp
+			// throw new BadRequestException(TenantMessage.requiredChannel);
 		}
 		const dir = `tenant/${requestBody?.tenantId}/templates/${file.name}`;
 
@@ -912,7 +914,7 @@ export class TemplateService {
 		const s3Response: { imageUrl: string; id?: number } = {
 			imageUrl,
 		};
-		if (requestBody?.channel === Channel.whatsapp) {
+		if (channel === Channel.whatsapp) {
 			const communication = await this.communicationService.findIntegrationDetails(requestBody?.tenantId, Channel.whatsapp);
 			if (communication) {
 				const response = await TemplateGenerator.uploadFynoFile(file, communication);

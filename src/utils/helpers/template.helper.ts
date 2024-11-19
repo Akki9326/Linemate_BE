@@ -274,7 +274,7 @@ export const TemplateGenerator = {
 			integration_id: communication?.integrationId,
 			provider_id: FYNO_WHATSAPP_PROVIDER_ID,
 			name: name,
-			category: TemplateCategory.Marketing,
+			category: TemplateCategory.Utility,
 			languages: [
 				{
 					language: language,
