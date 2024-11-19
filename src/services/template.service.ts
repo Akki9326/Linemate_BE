@@ -889,7 +889,7 @@ export class TemplateService {
 					required: false,
 				},
 			],
-			...(isPaginationEnabled && { limit: pageModel.limit, offset: (pageModel.page - 1) * pageModel.limit }), // Apply pagination if enabled
+			...(isPaginationEnabled && { limit: pageModel.limit, offset: (pageModel.page - 1) * (pageModel.limit || 0) }), // Apply pagination if enabled
 		});
 
 		return templateResult;

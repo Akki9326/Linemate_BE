@@ -22,7 +22,7 @@ export class CohortService {
 	private variableMatrix = DB.VariableMatrix;
 	private variableServices = new VariableServices();
 
-	constructor() { }
+	constructor() {}
 
 	public async getCustomFields(tenantId: number) {
 		try {
@@ -360,11 +360,11 @@ export class CohortService {
 	}
 
 	public async all(pageModel: CohortListDto, tenantId: number) {
-		const { page = 1, limit = 100 } = pageModel;
+		const { page = 1, limit } = pageModel;
 		const validSortFields = Object.keys(CohortMasterModel.rawAttributes).concat(['EnrolledUserCount', 'createdBy']);
 		const sortField = validSortFields.includes(pageModel.sortField) ? pageModel.sortField : 'id';
 		const sortOrder = Object.values(SortOrder).includes(pageModel.sortOrder as SortOrder) ? pageModel.sortOrder : SortOrder.ASC;
-		const offset = (page - 1) * limit;
+		const offset = (page - 1) * (limit || 0);
 		let condition: WhereOptions = { isDeleted: false };
 
 		if (!tenantId) {

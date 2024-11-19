@@ -285,11 +285,11 @@ export class ContentService {
 	}
 
 	public async all(pageModel: ContentListRequestDto, tenantId: number) {
-		const { page = 1, limit = 100 } = pageModel;
+		const { page = 1, limit } = pageModel;
 		const validSortFields = Object.keys(ContentModel.rawAttributes);
 		const sortField = validSortFields.includes(pageModel.sortField) ? pageModel.sortField : 'id';
 		const sortOrder = Object.values(SortOrder).includes(pageModel.sortOrder as SortOrder) ? pageModel.sortOrder : SortOrder.ASC;
-		const offset = (page - 1) * limit;
+		const offset = (page - 1) * (limit || 0);
 		if (!tenantId) {
 			throw new BadRequestException(AppMessages.headerTenantId);
 		}
