@@ -30,6 +30,10 @@ class CampaignRoute implements Routes {
 		this.router.put(`${this.path}/v1/:id`, validationMiddleware(CampaignMasterDto, 'body'), authMiddleware, this.campaignController.update);
 		this.router.post(`${this.path}/v1/:id/clone`, authMiddleware, this.campaignController.cloneCampaign);
 		this.router.post(`${this.path}/v1/fire-campaign/:id`, authMiddleware, this.campaignController.fireCampaign);
+		
+		this.router.post(`${this.path}/v1/archive`, authMiddleware, this.campaignController.archiveCampaign);
+		this.router.post(`${this.path}/v1/un-archive`, authMiddleware, this.campaignController.unArchiveCampaign);
+		this.router.post(`${this.path}/v1/delete`, authMiddleware, this.campaignController.bulkDeleteCampaign);
 	}
 }
 

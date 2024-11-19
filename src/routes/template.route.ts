@@ -22,6 +22,7 @@ class TemplateRoute implements Routes {
 		this.router.get(`${this.path}/v1/:id`, authMiddleware, this.templateController.one);
 		this.router.post(`${this.path}/v1/list`, authMiddleware, headerMiddleware, this.templateController.list);
 		this.router.post(`${this.path}/v1/archive`, authMiddleware, this.templateController.archiveTemplate);
+		this.router.post(`${this.path}/v1/delete`, authMiddleware, this.templateController.bulkDeleteTemplate);
 		this.router.post(`${this.path}/v1/un-archive`, authMiddleware, this.templateController.unArchiveTemplate);
 		this.router.delete(`${this.path}/v1/:id`, authMiddleware, this.templateController.delete);
 		this.router.post(

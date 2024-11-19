@@ -101,6 +101,9 @@ export const CampaignMessage = {
 	fynoApiError: 'error fetching data try later',
 	campaignExpired: 'campaign is expired',
 	campaignNameTaken: 'campaign name already taken',
+	notFoundUnArchiveCampaign: 'No campaigns found',
+	notFoundArchiveCampaign: 'No campaigns found',
+	notFoundDeleteCampaign: 'No campaigns found to delete',
 };
 export const CommunicationMessage = {
 	communicationNotFound: 'communication not found',

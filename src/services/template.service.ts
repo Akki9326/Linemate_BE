@@ -968,4 +968,24 @@ export class TemplateService {
 		}
 		return templateToArchive.map(template => ({ id: template.id }));
 	}
+
+	public async bulkDelete(templateIds: TemplateActionDto, userId: number) {
+		const templateToDelete = await this.template.findAll({
+			where: {
+				id: {
+					[Op.in]: templateIds,
+				},
+				isDeleted: false,
+			},
+		});
+		if (!templateToDelete.length) {
+			throw new BadRequestException(TemplateMessage.notFoundArchiveTemplate);
+		}
+		for (const template of templateToDelete) {
+			template.isDeleted = true;
+			template.updatedBy = userId;
+			await template.save();
+		}
+		return templateToDelete.map(template => ({ id: template.id }));
+	}
 }

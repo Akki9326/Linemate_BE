@@ -354,8 +354,10 @@ class AssessmentServices {
 				const assessmentAnswer = new this.assessmentAnswerMatrix();
 				assessmentAnswer.assessmentResultId = assessmentResult.id;
 				assessmentAnswer.questionId = answerRequest.questionId;
-				assessmentAnswer.userAnswerIds = answerRequest.userAnswerIds;
-				await assessmentAnswer.save();
+				if (answerRequest.userAnswerIds && answerRequest.userAnswerIds.filter(u => u).length) {
+					assessmentAnswer.userAnswerIds = answerRequest.userAnswerIds;
+					await assessmentAnswer.save();
+				}
 			}
 		} else {
 			throw new BadRequestException(assessmentMessage.assessmentTimeOver);

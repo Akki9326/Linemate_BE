@@ -132,7 +132,7 @@ export class RoleService {
 			offset,
 			limit: limit,
 			order: [[sortField, sortOrder]],
-			attributes: ['id', 'name', 'createdAt', 'tenantId', [literal(`COALESCE(array_length("userIds", 1), 0)`), 'usersCount']],
+			attributes: ['id', 'name', 'description', 'createdAt', 'tenantId', [literal(`COALESCE(array_length("userIds", 1), 0)`), 'usersCount']],
 			include: [
 				{
 					association: new BelongsTo(this.users, this.role, { as: 'Creator', foreignKey: 'createdBy' }),
