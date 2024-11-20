@@ -31,6 +31,7 @@ export enum FilterKey {
 	UserType = 'userType',
 	AssignedCompanies = 'assignedCompanies',
 	UserStatus = 'userStatus',
+	CampaignTag = 'campaignTag',
 }
 export const commonFilterConfig = [
 	{
@@ -144,6 +145,11 @@ export const commonFilterConfig = [
 				filterTitle: 'Next Trigger',
 				filterKey: FilterKey.NextTrigger,
 				filterType: FiltersEnum.DateRange,
+			},
+			{
+				filterTitle: 'Tags',
+				filterKey: FilterKey.CampaignTag,
+				filterType: FiltersEnum.DropDown,
 			},
 		],
 	},

@@ -3,15 +3,8 @@ import { IntervalUnitType, ReoccurenceType, TriggerType } from '@/models/enums/c
 import { CampaignService } from './campaign.service';
 import { differenceInDays, differenceInMonths, differenceInWeeks, format, startOfDay } from 'date-fns';
 import { logger } from '@/utils/services/logger';
+import { ReoccurenceDetails } from '@/models/interfaces/campaignMaster.interface';
 
-interface ReoccurenceDetails {
-	repeatEvery: number;
-	intervalTimeUnit: string;
-	afterOccurences: number;
-	startDate: Date;
-	endDate: Date;
-	time: string;
-}
 
 export class CampaignCronService {
 	private campaignMaster = DB.CampaignMaster;
@@ -60,7 +53,6 @@ export class CampaignCronService {
 				}
 
 				if (lastTrigerInfo.length) {
-
 					const lastTriger = lastTrigerInfo[0];
 
 					const lastTrigerDate = new Date(lastTriger.firedOn);

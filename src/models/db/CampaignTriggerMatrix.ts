@@ -1,6 +1,7 @@
 import { Sequelize, DataTypes } from 'sequelize';
 import { AppDBModel } from './app-db.model';
 import { TriggerType } from '../enums/campaign.enums';
+import { CampaignMasterModel } from './campaignMastel';
 
 export class CampaignTriggerMatrixModel extends AppDBModel {
 	public id: number;
@@ -72,5 +73,10 @@ export default function (sequelize: Sequelize): typeof CampaignTriggerMatrixMode
 			sequelize,
 		},
 	);
+
+	CampaignTriggerMatrixModel.belongsTo(CampaignMasterModel, { foreignKey: 'campaignId' });
+	CampaignMasterModel.hasMany(CampaignTriggerMatrixModel, { foreignKey: 'campaignId', as: 'campaignTriggers' });
+
+
 	return CampaignTriggerMatrixModel;
 }
