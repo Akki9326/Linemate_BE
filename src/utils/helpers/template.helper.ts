@@ -36,13 +36,12 @@ import { TemplateMessage } from './app-message.helper';
 export const TemplateGenerator = {
 	isValidUrl: (url: string) => {
 		const urlPattern = new RegExp(
-			'^(https?:\\/\\/)?' +
-				'((([a-zA-Z0-9$-_@.&+!*"(),]|[a-zA-Z0-9-])+\\.)+[a-zA-Z]{2,})' +
-				'(\\/[a-zA-Z0-9$-_@.&+!*"(),]|[a-zA-Z0-9-]+)*' +
-				'(\\?[a-zA-Z0-9$-_@.&+!*"(),]|[a-zA-Z0-9-]+)*' +
-				'(#[a-zA-Z0-9$-_@.&+!*"(),]|[a-zA-Z0-9-]+)*' +
-				'\\/$',
-			'i',
+			'^(https?:\\/\\/)' + // Protocol
+			'((([a-zA-Z0-9-_]+)\\.)+[a-zA-Z]{2,})' + // Subdomains and domain name
+			'(\\/[-a-zA-Z0-9@:%._+~#=]*)*' + // Path
+			'(\\?[;&a-zA-Z0-9@:%_+.~#?&=]*)?' + // Query string
+			'(#[a-zA-Z0-9-_]*)?$', // Fragment
+			'i'
 		);
 		return urlPattern.test(url);
 	},
