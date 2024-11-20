@@ -1,6 +1,7 @@
 import { DataTypes, Sequelize } from 'sequelize';
 import { AppDB_Common_Fields, AppDBModel } from './app-db.model';
 import { CampaignStatusType, Channel } from '../enums/campaign.enums';
+import { CampaignTriggerMatrixModel } from './CampaignTriggerMatrix';
 
 export class CampaignMasterModel extends AppDBModel {
 	public id: number;
@@ -14,10 +15,15 @@ export class CampaignMasterModel extends AppDBModel {
 	public tags: string[];
 	public status: CampaignStatusType;
 	public isArchived: boolean;
+	public isDeleted: boolean;
 	public tenantId: number;
 	public reoccurenceType: string;
 	public reoccurenceDetails: object;
 	public deliveryStatus: number;
+	public lastTriggerDate: Date;
+	public nextTriggerDate: Date;
+
+	public campaignTriggers: CampaignTriggerMatrixModel[];
 }
 
 export default function (sequelize: Sequelize): typeof CampaignMasterModel {
@@ -85,6 +91,16 @@ export default function (sequelize: Sequelize): typeof CampaignMasterModel {
 			deliveryStatus: {
 				type: DataTypes.INTEGER,
 				defaultValue: 0,
+			},
+			lastTriggerDate: {
+				type: DataTypes.DATE,
+				defaultValue: 0,
+				allowNull: true,
+			},
+			nextTriggerDate: {
+				type: DataTypes.DATE,
+				defaultValue: 0,
+				allowNull: true,
 			},
 		},
 		{

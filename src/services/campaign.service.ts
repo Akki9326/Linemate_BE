@@ -6,7 +6,7 @@ import { AppMessages, CampaignMessage, TemplateMessage, TenantMessage } from '@/
 import { applyingCampaign } from '@/utils/helpers/cohort.helper';
 import { CampaignListRequestDto } from '@/models/dtos/campaign-list.dto';
 import { CampaignMatrixDto } from '@/models/dtos/campaignMatrix.dto';
-import { ReoccurenceType, CampaignStatusType, TriggerType } from '@/models/enums/campaign.enums';
+import { ReoccurenceType, CampaignStatusType, TriggerType, IntervalUnitType } from '@/models/enums/campaign.enums';
 import { CampaignMasterModel } from '@/models/db/campaignMastel';
 import { SortOrder } from '@/models/enums/sort-order.enum';
 import { AssignCampaignUserId } from '@/models/interfaces/assignCampaign';
@@ -21,10 +21,12 @@ import {
 } from '@/utils/helpers/campaign.helper';
 import { FilterResponse } from '@/models/interfaces/filter.interface';
 import { FilterKey } from '@/models/enums/filter.enum';
-import { parseISO } from 'date-fns';
+import { addDays, addMonths, addWeeks, parse, parseISO } from 'date-fns';
 import { CommunicationService } from './communication.service';
 import { CampaignMatrixModel } from '@/models/db/campaignMatrix';
 import { CampaignTriggerMatrixModel } from '@/models/db/CampaignTriggerMatrix';
+import { ReoccurenceDetails } from '@/models/interfaces/campaignMaster.interface';
+import { enIN } from 'date-fns/locale';
 
 export class CampaignService {
 	private campaignMaster = DB.CampaignMaster;
@@ -71,18 +73,6 @@ export class CampaignService {
 			if (campaignDetails?.rules?.length) {
 				campaignDetails['userIds'] = (await applyingCampaign(campaignDetails?.tenantId, campaignDetails?.rules)) || [];
 			}
-
-			// const userIdArr = campaignDetails['userIds'];
-			// const campaignUser = await this.user.findAll({
-			// 	where: {
-			// 		id: {
-			// 			[Op.in]: userIdArr,
-			// 		},
-			// 		tenantIds: {
-			// 			[Op.contains]: [campaignDetails.tenantId],
-			// 		},
-			// 	},
-			// });
 			const template = await this.template.findOne({
 				where: {
 					id: campaignDetails.whatsappTemplateId,
@@ -123,6 +113,7 @@ export class CampaignService {
 			campaign.deliveryStatus = campaignDetails.deliveryStatus;
 			// campaign.fynoCampaignId = fynoCampaign.upload_id;
 			campaign.createdBy = userId;
+			campaign.lastTriggerDate = null;
 
 			if (campaignDetails?.reoccurenceType === ReoccurenceType.custom) {
 				campaign.reoccurenceType = campaignDetails.reoccurenceType;
@@ -134,6 +125,7 @@ export class CampaignService {
 				campaign.reoccurenceDetails = campaignDetails.reoccurenceDetails;
 			}
 
+			campaign.nextTriggerDate = await this.getNextTriggeredOn(campaign, []);
 			campaign = await campaign.save({ transaction });
 			await transaction.commit();
 			if (campaignDetails?.userIds?.length) {
@@ -198,7 +190,7 @@ export class CampaignService {
 				campaign.reoccurenceType = campaignDetails.reoccurenceType;
 				campaign.reoccurenceDetails = campaignDetails?.reoccurenceDetails;
 			}
-
+			campaign.nextTriggerDate = await this.getNextTriggeredOn(campaign);
 			const updatedCampaign = await campaign.save({ transaction });
 			await transaction.commit();
 
@@ -234,6 +226,8 @@ export class CampaignService {
 					'whatsappTemplateId',
 					'smsTemplateId',
 					'viberTemplateId',
+					'nextTriggerDate',
+					'lastTriggerDate',
 				],
 				include: [
 					{
@@ -313,19 +307,24 @@ export class CampaignService {
 			if (filter.filterKey === FilterKey.LastTrigger) {
 				const parsedStartDate = parseISO(String(filter.minValue));
 				const parsedEndDate = parseISO(String(filter.maxValue));
-				condition['reoccurenceDetails.startDate'] = {
+				condition['lastTriggerDate'] = {
 					[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
 				};
 			}
 			if (filter.filterKey === FilterKey.NextTrigger) {
 				const parsedStartDate = parseISO(String(filter.minValue));
 				const parsedEndDate = parseISO(String(filter.maxValue));
-				condition['reoccurenceDetails.endDate'] = {
+				condition['nextTriggerDate'] = {
 					[Op.between]: [new Date(parsedStartDate), new Date(parsedEndDate)],
 				};
 			}
 			if (filter.filterKey === FilterKey.Status && filter?.selectedValue) {
 				condition['status'] = filter.selectedValue;
+			}
+			if (filter.filterKey === FilterKey.CampaignTag && filter?.selectedValue) {
+				condition['tags'] = {
+					[Op.contains]: [filter.selectedValue],
+				};
 			}
 			if (filter.filterKey === FilterKey.Channel && filter?.selectedValue) {
 				condition['channel'] = {
@@ -368,12 +367,20 @@ export class CampaignService {
 			}
 		}
 
-		const campaignResule = await this.campaignMaster.findAll({
+		const campaignResult = await this.campaignMaster.findAll({
 			where: condition,
 			offset,
 			limit,
 			order: [[sortField, sortOrder]],
 			include: [
+				{
+					model: this.campaignTriggerMatrix,
+					as: 'campaignTriggers',
+					where: { isFired: true },
+					attributes: ['id', 'firedOn', 'fireType'],
+					order: [['firedOn', 'DESC']],
+					required: false,
+				},
 				{
 					association: new BelongsTo(this.user, this.campaignMaster, { as: 'Creator', foreignKey: 'createdBy' }),
 					attributes: ['id', 'firstName', 'lastName'],
@@ -395,8 +402,90 @@ export class CampaignService {
 
 		return {
 			count,
-			rows: campaignResule,
+			rows: campaignResult.map(cr => {
+				return {
+					...cr.dataValues,
+				};
+			}),
 		};
+	}
+
+	private async getNextTriggeredOn(campaign: CampaignMasterModel, triggerDetails: CampaignTriggerMatrixModel[] = null) {
+		let existingTriggers;
+		if (triggerDetails) {
+			existingTriggers = triggerDetails;
+		}
+		else {
+			existingTriggers = await this.campaignTriggerMatrix.findAll({
+				where: { isFired: true, id: campaign.id },
+				attributes: ['id', 'firedOn', 'fireType'],
+				order: [['firedOn', 'DESC']],
+			});
+		}
+		const reoccurenceDetails = campaign.reoccurenceDetails as ReoccurenceDetails;
+		if (campaign.reoccurenceType == ReoccurenceType.custom) {
+			const startDateTime = parse(`${reoccurenceDetails.time}`, 'HH:mm', new Date(reoccurenceDetails.startDate), {
+				locale: enIN,
+			});
+
+			if (reoccurenceDetails && startDateTime >= new Date()) {
+				return startDateTime;
+			}
+
+			if (reoccurenceDetails.endDate) {
+				const endDateTime = parse(`${reoccurenceDetails.time}`, 'HH:mm', new Date(reoccurenceDetails.endDate), {
+					locale: enIN,
+				});
+
+				if (reoccurenceDetails && endDateTime < new Date()) {
+					return null;
+				}
+			}
+
+			if (
+				reoccurenceDetails.afterOccurences > 0 &&
+				existingTriggers.filter(ct => ct.fireType == TriggerType.automatic).length >= reoccurenceDetails.afterOccurences
+			) {
+				return null;
+			}
+
+			let nextSchedule = startDateTime;
+			while (nextSchedule < new Date()) {
+				if (reoccurenceDetails.intervalTimeUnit == IntervalUnitType.day) {
+					nextSchedule = addDays(nextSchedule, 1);
+				} else if (reoccurenceDetails.intervalTimeUnit == IntervalUnitType.week) {
+					nextSchedule = addWeeks(nextSchedule, 1);
+				} else if (reoccurenceDetails.intervalTimeUnit == IntervalUnitType.month) {
+					nextSchedule = addMonths(nextSchedule, 1);
+				}
+			}
+
+			return nextSchedule;
+		} else if (campaign.reoccurenceType == ReoccurenceType.once) {
+			if (existingTriggers.filter(ct => ct.fireType == TriggerType.automatic).length) return null;
+			else
+				return parse(`${reoccurenceDetails.time}`, 'HH:mm', new Date(), {
+					locale: enIN,
+				});
+		}
+	}
+
+	public async getTagsByTenant(tenantId: number) {
+		const ctags = await this.campaignMaster.findAll({
+			where: {
+				isDeleted: false,
+				tenantId: tenantId,
+			},
+			attributes: ['tags'],
+		});
+
+		const allTags = ctags
+			.map(c => c.tags)
+			.reduce(function (a, b) {
+				return a.concat(b);
+			}, []);
+
+		return Array.from(new Set(allTags));
 	}
 
 	public async addTrigger(triggerDetails: CampaignMatrixDto, userId: number) {
@@ -649,7 +738,7 @@ export class CampaignService {
 					attributes: ['id', 'firstName', 'lastName', 'profilePhoto'],
 					required: false,
 				},
-			]
+			],
 		});
 
 		const campaignAnalytics = [];
@@ -746,7 +835,7 @@ export class CampaignService {
 		const template = await this.template.findOne({
 			where: {
 				id: campign.whatsappTemplateId,
-			}
+			},
 		});
 
 		if (!template) {
@@ -781,11 +870,19 @@ export class CampaignService {
 		};
 
 		await this.campaignTriggerMatrix.create(triggerDetails);
+		const nextTriggerDate = await this.getNextTriggeredOn(campign);
+		await this.campaignMaster.update(
+			{ lastTriggerDate: now, nextTriggerDate },
+			{
+				where: {
+					id: campiagnId,
+				},
+			},
+		);
 
 		return {
-			id: campiagnId
+			id: campiagnId,
 		};
-
 	}
 
 	public async automaticFiredCampaign(campiagnId: number) {

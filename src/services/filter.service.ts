@@ -10,13 +10,15 @@ import VariableServices from './variable.service';
 import { ContentStatus, ConteTypes } from '@/models/enums/contentType.enum';
 import { CampaignStatusType, Channel } from '@/models/enums/campaign.enums';
 import { UserStatus, UserType } from '@/models/enums/user-types.enum';
+import { CampaignService } from './campaign.service';
 
 export class FilterService {
 	private variableServices = new VariableServices();
 	private cohortService = new CohortService();
 	private languageService = new LanguageService();
+	private campaignService = new CampaignService();
 
-	constructor() {}
+	constructor() { }
 
 	private async getCustomFields(tenantId: number): Promise<FilterResponse[]> {
 		try {
@@ -39,6 +41,19 @@ export class FilterService {
 			return customVariables.map(cohort => ({
 				id: cohort.id,
 				name: cohort.name,
+			}));
+		} catch (error) {
+			return [];
+		}
+	}
+
+
+	private async getAvailableTags(tenantId: number) {
+		try {
+			const tags = await this.campaignService.getTagsByTenant(tenantId);
+			return tags.map(tag => ({
+				id: tag,
+				name: tag,
 			}));
 		} catch (error) {
 			return [];
@@ -167,6 +182,16 @@ export class FilterService {
 						options: Object.values(UserStatus)?.length ? FilterHelper.formatOptions(Object.values(UserStatus)) : [],
 					});
 				}
+				if (field.filterKey === FilterKey.CampaignTag) {
+					const availableTags = await this.getAvailableTags(tenantId);
+					filterResponse.push({
+						filterTitle: field.filterTitle,
+						filterKey: field.filterKey,
+						filterType: field.filterType,
+						selectedValue: '',
+						options: availableTags,
+					});
+				}
 			} else if (field.filterType === FiltersEnum.NumberRange) {
 				filterResponse.push({
 					filterTitle: field.filterTitle,
@@ -180,6 +205,7 @@ export class FilterService {
 
 		return filterResponse;
 	}
+
 
 	public async list(tenantId: number, filterFor: FilterFor) {
 		if (!filterFor) {

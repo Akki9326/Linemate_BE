@@ -32,3 +32,12 @@ export interface BetweenDateValue {
 	startDate: string;
 	endDate: string;
 }
+
+export interface ReoccurenceDetails {
+	repeatEvery: number;
+	intervalTimeUnit: string;
+	afterOccurences: number;
+	startDate: Date;
+	endDate: Date;
+	time: string;
+}
