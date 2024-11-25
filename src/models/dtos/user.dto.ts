@@ -36,7 +36,6 @@ export class UserDto {
 	public mobileNumber: string;
 
 	@IsArray()
-	@IsOptional()
 	public tenantIds: number[];
 
 	@IsString()
