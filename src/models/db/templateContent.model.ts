@@ -17,7 +17,7 @@ export class TemplateContentModel extends AppDBModel {
 	public headerPlaceHolder: number[];
 	public headerMediaType: string;
 	public body: string;
-	public bodyPlaceHolder: number[];
+	public bodyPlaceHolder: string[];
 	public footer: string;
 	public contentUrl: string;
 	public caption: string;

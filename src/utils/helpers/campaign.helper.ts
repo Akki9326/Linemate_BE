@@ -8,31 +8,19 @@ import { BadRequestException } from '@/exceptions/BadRequestException';
 
 // Helper to generate Csv having users data
 
-export const generateCsvFile = async (workspaceId, campaigns) => {
+export const generateCsvFile = async (workspaceId: string, placeholders: string[], campaignUsers) => {
 	const csvContent = [];
-	csvContent.push(['distinct_id', 'whatsapp']);
+	csvContent.push(['distinct_id', 'whatsapp', ...(placeholders || [])]);
 
-	// Get all the users from the campaign
-	// for (let i = 0; i < campaigns?.length; i++) {
-	// 	const campaign = campaigns[i].userId;
-	// 	// Fetch details of user
-	// 	const user = await UserModel.findOne({
-	// 		where: {
-	// 			id: campaign,
-	// 		},
-	// 		attributes: ['mobileNumber'],
-	// 		raw: true,
-	// 	});
-	// 	if (user) {
-	// 		csvContent.push(['', user.mobileNumber]);
-	// 	}
-	// }
+	for (let i = 0; i < campaignUsers?.length; i++) {
+		const user = campaignUsers[i];
+		let allFields = [];
+		if (placeholders && placeholders.length) {
 
-	for (let i = 0; i < campaigns?.length; i++) {
-		const campaign = campaigns[i].mobileNumber;
-		if (campaign) {
-			csvContent.push(['', campaign]);
+			allFields = placeholders.map(ph => user[ph] || '');
 		}
+
+		csvContent.push(['', user.mobileNumber, ...allFields]);
 	}
 
 	xlsx.utils.book_new();
@@ -189,7 +177,6 @@ export const getNotificationForCampaign = async (workspaceId: string, templateNa
 		} else {
 			throw new BadRequestException(`Notification Details not found for ${templateName}`);
 		}
-
 	} catch (error) {
 		if (axios.isAxiosError(error)) {
 			logger.error('Error response data:', error.response?.data);

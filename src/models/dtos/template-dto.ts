@@ -139,7 +139,7 @@ export class TemplateContentCardDto {
 
 	@IsArray()
 	@IsOptional()
-	public bodyPlaceHolder: number[];
+	public bodyPlaceHolder: string[];
 
 	@IsArray()
 	@IsOptional()
@@ -223,7 +223,7 @@ export class TemplateDto {
 
 	@IsArray()
 	@IsOptional()
-	public bodyPlaceHolder: number[];
+	public bodyPlaceHolder: string[];
 
 	@IsString()
 	@IsOptional()

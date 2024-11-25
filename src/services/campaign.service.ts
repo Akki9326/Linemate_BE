@@ -27,6 +27,7 @@ import { CampaignMatrixModel } from '@/models/db/campaignMatrix';
 import { CampaignTriggerMatrixModel } from '@/models/db/CampaignTriggerMatrix';
 import { ReoccurenceDetails } from '@/models/interfaces/campaignMaster.interface';
 import { enIN } from 'date-fns/locale';
+import { VariableHelper } from '@/utils/helpers/variable.helper';
 
 export class CampaignService {
 	private campaignMaster = DB.CampaignMaster;
@@ -35,6 +36,7 @@ export class CampaignService {
 	private user = DB.Users;
 	private tenant = DB.Tenant;
 	private template = DB.Template;
+	private templateContent = DB.TemplateContent;
 	private campaignTriggerMatrix = DB.CampaignTriggerMatrix;
 	private sequelize: Sequelize;
 	public communicationService = new CommunicationService();
@@ -414,8 +416,7 @@ export class CampaignService {
 		let existingTriggers;
 		if (triggerDetails) {
 			existingTriggers = triggerDetails;
-		}
-		else {
+		} else {
 			existingTriggers = await this.campaignTriggerMatrix.findAll({
 				where: { isFired: true, id: campaign.id },
 				attributes: ['id', 'firedOn', 'fireType'],
@@ -838,7 +839,11 @@ export class CampaignService {
 			},
 		});
 
-		if (!template) {
+		const templateContent = await this.templateContent.findOne({
+			where: { templateId: campign.whatsappTemplateId, isDeleted: false },
+		});
+
+		if (!template || !templateContent) {
 			throw new BadRequestException(TemplateMessage.templateNotFound);
 		}
 
@@ -846,7 +851,22 @@ export class CampaignService {
 			throw new BadRequestException("No user found in the campaign's rule criteria");
 		}
 
-		const fynoCampaignUploadId = await generateCsvFile(workspaceId, campaignUser);
+		let campaignUserWithVariables;
+		if (templateContent.bodyPlaceHolder?.length) {
+			campaignUserWithVariables = await Promise.all(
+				campaignUser.map(async cu => {
+					const tenantVariables = await VariableHelper.findTenantVariableDetails(cu.id, campign.tenantId);
+					return {
+						...cu.dataValues,
+						...tenantVariables.reduce((obj, next) => {
+							obj[next.name] = next.value;
+						}, {}),
+					};
+				}),
+			);
+		} else campaignUserWithVariables = campaignUser;
+
+		const fynoCampaignUploadId = await generateCsvFile(workspaceId, templateContent.bodyPlaceHolder as string[], campaignUserWithVariables);
 
 		const fynoCampaign = await createCampaignOnFyno(workspaceId, fynoCampaignUploadId?.upload_id, newCampaignName);
 		if (!fynoCampaign) {
