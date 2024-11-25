@@ -16,7 +16,7 @@ export class TemplateContentCardsModel extends AppDBModel {
 	public mediaSample: string;
 	public mediaHandle: string;
 	public body: string;
-	public bodyPlaceHolder: number[];
+	public bodyPlaceHolder: string[];
 	public buttonIds: number[];
 }
 
@@ -80,7 +80,7 @@ export default function (sequelize: Sequelize): typeof TemplateContentCardsModel
 			},
 			bodyPlaceHolder: {
 				allowNull: true,
-				type: DataTypes.ARRAY(DataTypes.INTEGER),
+				type: DataTypes.ARRAY(DataTypes.STRING),
 				defaultValue: [],
 			},
 			buttonIds: {

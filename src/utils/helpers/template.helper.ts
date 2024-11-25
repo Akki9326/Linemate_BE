@@ -297,12 +297,12 @@ export const TemplateGenerator = {
 			| { type: string; latitude: string; longitude: string; name: string; address: string }
 			| { type: string; url: string }
 			| undefined;
-		const { messageType, messageText, caption, contentUrl, latitude, longitude, locationName, isPreviewUrl, address } = templateDetails;
+		const { messageType, body, caption, contentUrl, latitude, longitude, locationName, isPreviewUrl, address } = templateDetails;
 		switch (messageType) {
 			case MessageType.Text:
 				content = {
 					type: MessageType.Text,
-					text: messageText,
+					text: body,
 					preview_url: isPreviewUrl,
 				};
 				break;
@@ -354,6 +354,26 @@ export const TemplateGenerator = {
 		}
 		return content;
 	},
+	// generateSimplePlaceHolders(templateDetails: TemplateDto) {
+	// 	const { messageType, messageText, caption } = templateDetails;
+
+	// 	let keys = [];
+	// 	switch (messageType) {
+	// 		case MessageType.Text:
+	// 			keys = this.getPlaceHolderKeys(messageText);
+	// 			break;
+	// 		case MessageType.Video:
+	// 		case MessageType.Image:
+	// 		case MessageType.Audio:
+	// 		case MessageType.File:
+	// 			keys = this.getPlaceHolderKeys(caption);
+	// 			break;
+	// 		default:
+	// 			break;
+	// 	}
+
+
+	// },
 	quickButtonsMapping: (buttons: TemplateButtonDto[]) => {
 		return {
 			buttons: buttons.map(button => {
@@ -383,18 +403,18 @@ export const TemplateGenerator = {
 		} else {
 			const mappedButton = Array.isArray(buttons)
 				? buttons.map(section => {
-						return {
-							title: section.sectionName,
-							rows: section.buttons.map(button => {
-								return {
-									id: uuidv4(),
-									title: button.title,
-									description: button.buttonDescription,
-									buttonId: button.buttonId,
-								};
-							}),
-						};
-				  })
+					return {
+						title: section.sectionName,
+						rows: section.buttons.map(button => {
+							return {
+								id: uuidv4(),
+								title: button.title,
+								description: button.buttonDescription,
+								buttonId: button.buttonId,
+							};
+						}),
+					};
+				})
 				: [];
 			return {
 				button: menuButtonName,
@@ -430,8 +450,28 @@ export const TemplateGenerator = {
 
 		return content;
 	},
+	// generateInteractivePlaceHolders(templateDetails: TemplateDto) {
+	// 	const keys = this.getPlaceHolderKeys(templateDetails.body);
+	// 	return keys.reduce((obj, key) => {
+	// 		obj[key] = key; // Assign the default value
+	// 		return obj;
+	// 	}, {});
+	// },
+	// getPlaceHolderKeys(str: string) {
+	// 	const regex = /{{(.*?)}}/g;
+	// 	const matches = [];
+	// 	let match;
+
+	// 	// Use exec to find all matches
+	// 	while ((match = regex.exec(str)) !== null) {
+	// 		matches.push(match[1].trim()); // Trim the result to remove extra spaces
+	// 	}
+
+	// 	return matches;
+	// },
 	fynoTemplatePayload: (templateDetails: TemplateDto, providerTemplateId: string, communication: CommunicationResponse) => {
 		const { name, messageType, contentSubType, templateType } = templateDetails;
+		let placeholders = {};
 		if (templateType === TemplateType.Interactive) {
 			if (!contentSubType) {
 				throw new BadRequestException('contentSubType is not defined');
@@ -462,6 +502,11 @@ export const TemplateGenerator = {
 			};
 		}
 
+		placeholders = (templateDetails.bodyPlaceHolder || []).reduce((obj, key) => {
+			obj[key] = key; // Assign the default value
+			return obj;
+		}, {});
+
 		const payload: FynoTemplatePayload = {
 			name: name,
 			event: {
@@ -476,7 +521,7 @@ export const TemplateGenerator = {
 				channels: {
 					whatsapp: content,
 				},
-				placeholders: {},
+				placeholders,
 			},
 		};
 		return payload;
