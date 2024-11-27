@@ -515,7 +515,7 @@ class UserService {
 		if (!user) {
 			throw new BadRequestException(AppMessages.userNotFound);
 		}
-		if (!userData.tenantIds || !userData.tenantIds.length) {
+		if (userData.userType !== UserType.ChiefAdmin && !userData.tenantIds.length) {
 			throw new BadRequestException(TenantMessage.requiredTenant);
 		}
 		const tenantDetails = await this.tenant.findAll({
