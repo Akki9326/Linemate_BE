@@ -860,6 +860,7 @@ export class CampaignService {
 						...cu.dataValues,
 						...tenantVariables.reduce((obj, next) => {
 							obj[next.name] = next.value;
+							return obj;
 						}, {}),
 					};
 				}),
