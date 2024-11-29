@@ -1,14 +1,16 @@
 import DB from '@/databases';
-import { BadRequestException } from '@/exceptions/BadRequestException';
 import { CommunicationModel } from '@/models/db/communication.model';
+import { TemplateModel } from '@/models/db/template.model';
 import { Channel } from '@/models/enums/campaign.enums';
 import { TemplateStatus } from '@/models/enums/template.enum';
 import { TemplateGenerator } from '@/utils/helpers/template.helper';
 import { logger } from '@/utils/services/logger';
-import { BelongsTo } from 'sequelize';
+import { BelongsTo, Op } from 'sequelize';
+import { TemplateService } from './template.service';
 
 export class TemplateCronService {
 	private template = DB.Template;
+	private templateService = new TemplateService();
 	private communication = DB.CommunicationModel;
 	private workSpaceModel = DB.WorkSpaceModel;
 
@@ -23,12 +25,12 @@ export class TemplateCronService {
 						const workspaceTemplates = await this.fetchTemplatesForWorkspace(item['workSpace'].tenantId);
 						templateArray.push(...workspaceTemplates);
 
-						const fynoTemplateList = await TemplateGenerator.getExternalTemplateList(item['workSpace'].fynoWorkSpaceId);
-
-						if (fynoTemplateList?.length || workspaceTemplates?.length) {
-							await this.processTemplates(workspaceTemplates, fynoTemplateList, item);
+						if (workspaceTemplates?.length) {
+							const fynoTemplateList = await TemplateGenerator.getExternalTemplateList(item['workSpace'].fynoWorkSpaceId);
+							if (fynoTemplateList?.length) {
+								await this.processTemplates(workspaceTemplates, fynoTemplateList, item);
+							}
 						}
-
 					} catch (ex) {
 						logger.error(`Error Processing Template for Tenent # ${item['workSpace'].tenantId}. Ex: ${ex.message}`, ex);
 					}
@@ -58,7 +60,9 @@ export class TemplateCronService {
 			where: {
 				tenantId,
 				channel: Channel.whatsapp,
-				status: TemplateStatus.DRAFT,
+				status: {
+					[Op.in]: [TemplateStatus.DRAFT, TemplateStatus.PENDING]
+				},
 			},
 		});
 	}
@@ -69,20 +73,41 @@ export class TemplateCronService {
 				const newStatus = matchingExternalTemplate.status.toLowerCase();
 				const shouldCreateTemplate = newStatus === TemplateStatus.APPROVED;
 				if (shouldCreateTemplate) {
-					await this.createFynoTemplate(matchingExternalTemplate, communicationItem, template);
-				}
-
-				await this.updateTemplateStatus(template, newStatus, matchingExternalTemplate.template_id);
+					const resp = await this.createFynoTemplate(matchingExternalTemplate, communicationItem, template);
+					await this.templateService.handleFynoTemplateResponse(resp, template, undefined);
+				} else await this.updateTemplateStatus(template, newStatus, null);
 			}
 		}
 	}
-	private async createFynoTemplate(matchingExternalTemplate, communicationItem, template) {
-		const content = {
+	private async createFynoTemplate(matchingExternalTemplate, communicationItem, template: TemplateModel) {
+		const whatsapp = {
 			content: {
-				type: template?.templateType,
-				content: matchingExternalTemplate.content,
+				type: matchingExternalTemplate.type,
+				language: matchingExternalTemplate.language,
+				wa_params: {
+					external_template_data: {
+						template_id: matchingExternalTemplate.template_id,
+						name: matchingExternalTemplate.name,
+						custom_name: matchingExternalTemplate.custom_name,
+						language: matchingExternalTemplate.language,
+						provider_name: 'Meta Facebook',
+					},
+					body: {},
+				},
 			},
 		};
+
+		const bodyPlaceHolder = {};
+		const templatePlaceHolder = {};
+
+		if (matchingExternalTemplate?.content?.body?.sample?.length) {
+			matchingExternalTemplate.content.body.sample.forEach((key, index) => {
+				bodyPlaceHolder['$' + (index + 1)] = `{{${key}}}`;
+				templatePlaceHolder[key] = key;
+			});
+
+			whatsapp.content.wa_params['body'] = bodyPlaceHolder;
+		}
 
 		const payload = {
 			name: template.name,
@@ -96,13 +121,17 @@ export class TemplateCronService {
 			template: {
 				template_id: matchingExternalTemplate.template_id,
 				channels: {
-					whatsapp: content,
+					whatsapp,
 				},
-				placeholders: {},
+				placeholders: templatePlaceHolder,
 			},
 		};
 
-		await TemplateGenerator.createFynoTemplate(payload, { fynoWorkSpaceId: communicationItem['workSpace'].fynoWorkSpaceId });
+		if (template.providerTemplateId) {
+			return await TemplateGenerator.updateFynoTemplate(payload, template.name, { fynoWorkSpaceId: communicationItem['workSpace'].fynoWorkSpaceId });
+		} else {
+			return await TemplateGenerator.createFynoTemplate(payload, { fynoWorkSpaceId: communicationItem['workSpace'].fynoWorkSpaceId });
+		}
 	}
 
 	private async updateTemplateStatus(template, newStatus, providerTemplateId) {
