@@ -70,16 +70,21 @@ export class TemplateCronService {
 	}
 	private async processTemplates(templates, fynoTemplateList, communicationItem) {
 		for (const template of templates) {
-			const matchingExternalTemplate = fynoTemplateList.find(extTemplate => extTemplate.name === template.name);
-			if (matchingExternalTemplate) {
-				const newStatus = matchingExternalTemplate.status.toLowerCase();
-				const shouldCreateTemplate = newStatus === TemplateStatus.APPROVED;
-				if (shouldCreateTemplate) {
-					const resp = await this.createFynoTemplate(matchingExternalTemplate, communicationItem, template);
-					await this.templateService.handleFynoTemplateResponse(resp, template, undefined);
-				} else await this.updateTemplateStatus(template, newStatus, null);
+			try {
+				const matchingExternalTemplate = fynoTemplateList.find(extTemplate => extTemplate.name === template.name);
+				if (matchingExternalTemplate) {
+					const newStatus = matchingExternalTemplate.status.toLowerCase();
+					const shouldCreateTemplate = newStatus === TemplateStatus.APPROVED;
+					if (shouldCreateTemplate) {
+						const resp = await this.createFynoTemplate(matchingExternalTemplate, communicationItem, template);
+						await this.templateService.handleFynoTemplateResponse(resp, template, undefined);
+					} else await this.updateTemplateStatus(template, newStatus, null);
+				}
+			} catch (ex) {
+				logger.error(`Error Processing Template: ${template.id}-${template.name} . Ex: ${ex.message}`, ex);
 			}
 		}
+
 	}
 	private async createFynoTemplate(matchingExternalTemplate, communicationItem, template: TemplateModel) {
 		const whatsapp = {
