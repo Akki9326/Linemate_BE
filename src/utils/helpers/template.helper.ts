@@ -251,6 +251,7 @@ export const TemplateGenerator = {
 			if (replacedWords?.length) {
 				replacedWords;
 			}
+
 			content.body = { text: updatedBody + '.', sample: replacedWords };
 		} else {
 			throw new BadRequestException('body is required');

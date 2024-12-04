@@ -12,13 +12,11 @@ import { FilterKey } from '@/models/enums/filter.enum';
 import { SortOrder } from '@/models/enums/sort-order.enum';
 import { ButtonType, ContentType, DefaultLanguage, MediaType, TemplateStatus, TemplateType, ViberContentType } from '@/models/enums/template.enum';
 import { FilterResponse } from '@/models/interfaces/filter.interface';
-import { ExternalTemplatePayload } from '@/models/interfaces/template.interface';
 import { AppMessages, TemplateMessage, TenantMessage } from '@/utils/helpers/app-message.helper';
 import { TemplateGenerator } from '@/utils/helpers/template.helper';
 import S3Services from '@/utils/services/s3.services';
 import { parseISO } from 'date-fns';
 import { BelongsTo, Op, Sequelize, Transaction, WhereOptions } from 'sequelize';
-import { CommunicationResponse } from './../models/interfaces/communication.interface';
 import { CommunicationService } from './communication.service';
 import { ContentService } from './content.service';
 
@@ -460,14 +458,7 @@ export class TemplateService {
 			if (templateDetails.templateType === TemplateType.ExternalTemplate) {
 				payload = TemplateGenerator.externalTemplatePayload(templateDetails, template?.providerTemplateId, communication);
 				const response = await TemplateGenerator.createExternalTemplate(payload, communication);
-				await this.handleExternalTemplateResponse(
-					response,
-					transaction,
-					template,
-					templateDetails,
-					payload as ExternalTemplatePayload,
-					communication,
-				);
+				await this.handleExternalTemplateResponse(response, transaction, template);
 			} else {
 				payload = TemplateGenerator.fynoTemplatePayload(templateDetails, template?.providerTemplateId, communication);
 				let response = {};
@@ -481,15 +472,7 @@ export class TemplateService {
 		}
 	}
 
-	private async handleExternalTemplateResponse(
-		response: any,
-		transaction: Transaction,
-		template: TemplateModel,
-		templateDetails: TemplateDto,
-		payload: ExternalTemplatePayload,
-		communication: CommunicationResponse,
-	) {
-		let notificationPayload = {};
+	private async handleExternalTemplateResponse(response: any, transaction: Transaction, template: TemplateModel) {
 		if (response[0].status === TemplateStatus.ERROR) {
 			template.status = response[0].status || TemplateStatus.ERROR;
 			throw new BadRequestException(response[0]?._message?.error_user_msg || response[0]?._message?.message || 'Error saving template.');
@@ -499,26 +482,14 @@ export class TemplateService {
 				template.providerTemplateId = response[0]?.message?.id;
 			}
 			if (template.status === TemplateStatus.APPROVED || template.status === TemplateStatus.PENDING) {
-				const templateData = await this.template.findOne({ where: { id: template.id }, transaction });
-				if (templateData?.notificationTemplateId) {
-					notificationPayload = TemplateGenerator.externalNotificationPayload(
-						template,
-						payload as ExternalTemplatePayload,
-						templateData.notificationTemplateId,
-						communication,
-					);
-					await TemplateGenerator.updateFynoTemplate(notificationPayload, template.name, communication);
-				} else {
-					notificationPayload = TemplateGenerator.externalNotificationPayload(template, payload as ExternalTemplatePayload, null, communication);
-					const notificationDetail = await TemplateGenerator.createFynoTemplate(notificationPayload, communication);
-					template.notificationTemplateId = notificationDetail.event?.event_flow?.template;
-				}
+				//Fyno Template Creation will be TakenCare by CronJob
+				template.status = TemplateStatus.PENDING;
 			}
 		}
 		await template.save({ transaction });
 	}
 
-	private async handleFynoTemplateResponse(response: any, template: TemplateModel, transaction: Transaction) {
+	public async handleFynoTemplateResponse(response: any, template: TemplateModel, transaction: Transaction) {
 		if (response.status === TemplateStatus.ERROR) {
 			template.status = response.status;
 			await template.save({ transaction });
@@ -903,9 +874,9 @@ export class TemplateService {
 		if (!requestBody?.tenantId) {
 			throw new BadRequestException(TenantMessage.requiredTenantId);
 		}
-		let channel = requestBody?.channel
+		let channel = requestBody?.channel;
 		if (!requestBody?.channel) {
-			channel = Channel.whatsapp
+			channel = Channel.whatsapp;
 			// throw new BadRequestException(TenantMessage.requiredChannel);
 		}
 		const dir = `tenant/${requestBody?.tenantId}/templates/${file.name}`;
