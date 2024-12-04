@@ -630,7 +630,7 @@ export const TemplateGenerator = {
 	},
 	getExternalTemplateList: async workSpaceId => {
 		try {
-			const response = await axios.get(`${FYNO_BASE_URL}/${workSpaceId}/external-template?type=template`, {
+			const response = await axios.get(`${FYNO_BASE_URL}/${workSpaceId}/external-template?type=template&limit=2000`, {
 				headers: {
 					Authorization: `Bearer ${FYNO_AUTH_TOKEN}`,
 				},
