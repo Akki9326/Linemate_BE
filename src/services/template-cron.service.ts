@@ -84,6 +84,7 @@ export class TemplateCronService {
 			content: {
 				type: matchingExternalTemplate.type,
 				language: matchingExternalTemplate.language,
+				whatsapp_template_name: matchingExternalTemplate.name,
 				wa_params: {
 					external_template_data: {
 						template_id: matchingExternalTemplate.template_id,
