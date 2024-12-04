@@ -61,8 +61,10 @@ export class TemplateCronService {
 				tenantId,
 				channel: Channel.whatsapp,
 				status: {
-					[Op.in]: [TemplateStatus.DRAFT, TemplateStatus.PENDING]
+					[Op.in]: [TemplateStatus.DRAFT, TemplateStatus.PENDING],
 				},
+				isActive: true,
+				isDeleted: false,
 			},
 		});
 	}
