@@ -252,6 +252,7 @@ export class ContentService {
 			description: content.description,
 			tenantId: content.tenantId,
 			uploadedFiles: uploadedFiles,
+			uploadedFilesIds: content.uploadedFileIds,
 		};
 		if (content.type == ConteTypes.Assessment) {
 			returnObj['assessment'] = content['assessment'];
